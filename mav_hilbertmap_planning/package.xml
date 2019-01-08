@@ -1,0 +1,24 @@
+<package>
+  <name>mav_hilbertmap_planning</name>
+  <version>0.0.1</version>
+  <description>A framework for trajectory planning with hilbertmaps</description>
+
+  <maintainer email="jalim@ethz.ch">Jaeyoung Lim</maintainer>
+
+  <author>Jaeyoung Lim</author>
+
+  <license>BSD-3</license>
+
+  <url type="website">https://github.com/Jaeyoung-Lim/mav_hilbertmap_planning</url>
+  <url type="bugtracker">https://github.com/Jaeyoung-Lim/mav_hilbertmap_planning/issues</url>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>hilbert_mapper</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
