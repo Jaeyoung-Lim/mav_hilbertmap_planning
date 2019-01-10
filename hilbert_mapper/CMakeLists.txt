@@ -1,20 +1,31 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(hilbert_mapper)
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen3_INCLUDE_DIRS})
-
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
-
 add_definitions(-std=c++11)
+
+find_package(catkin REQUIRED COMPONENTS
+        roscpp
+        rospy
+        pcl_ros
+)
+#catkin_simple(ALL_DEPS_REQUIRED)
+
+include_directories(
+        include
+        ${Boost_INCLUDE_DIR}
+        ${catkin_INCLUDE_DIRS}
+        ${PCL_INCLUDE_DIRS}
+)
 
 ############
 # BINARIES #
 ############
-cs_add_executable(hilbert_mapper
+add_executable(hilbert_mapper
         src/hilbert_mapper.cpp src/hilbert_mapper_node.cpp
         )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+)
 ##########
 # EXPORT #
 ##########

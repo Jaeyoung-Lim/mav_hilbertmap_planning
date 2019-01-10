@@ -13,6 +13,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
+    pointcloudSub_ = nh_.subscribe("/hilbertmapper/pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
 }
 hilbertMapper::~hilbertMapper() {
@@ -38,5 +39,12 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
     mavAtt_(1) = msg.pose.orientation.x;
     mavAtt_(2) = msg.pose.orientation.y;
     mavAtt_(3) = msg.pose.orientation.z;
+
+}
+
+void hilbertMapper::pointcloudCallback(const PointCloud::ConstPtr& msg){
+  printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+  BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+  printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
 
 }

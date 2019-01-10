@@ -15,19 +15,15 @@
 
 #include <Eigen/Dense>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <nav_msgs/Odometry.h>
-#include <nav_msgs/Path.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/State.h>
-#include <mavros_msgs/CommandBool.h>
-#include <mavros_msgs/AttitudeTarget.h>
-#include <std_srvs/SetBool.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace Eigen;
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+
 class hilbertMapper
 {
   private:
@@ -35,6 +31,7 @@ class hilbertMapper
     ros::NodeHandle nh_private_;
     ros::Timer cmdloop_timer_, statusloop_timer_;
     ros::Subscriber mavposeSub_;
+    ros::Subscriber pointcloudSub_;
 
     Eigen::Vector3d mavPos_;
     Eigen::Vector4d mavAtt_;
@@ -43,6 +40,7 @@ class hilbertMapper
     void statusloopCallback(const ros::TimerEvent& event);
 
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
+    void pointcloudCallback(const PointCloud::ConstPtr& msg);
 
 
 public:
