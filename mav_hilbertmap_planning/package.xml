@@ -14,7 +14,7 @@
 
   <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
-
+  <build_depend>hilbert_mapper</build_depend>
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>hilbert_mapper</run_depend>
 

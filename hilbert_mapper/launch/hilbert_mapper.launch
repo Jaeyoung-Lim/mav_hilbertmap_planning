@@ -1,0 +1,4 @@
+<launch>
+    <node name="hilbert_mapper" pkg="hilbert_mapper" type="hilbert_mapper" output="screen">
+    </node>
+</launch>
