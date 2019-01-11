@@ -8,7 +8,12 @@ find_package(catkin REQUIRED COMPONENTS
         rospy
         pcl_ros
 )
-#catkin_simple(ALL_DEPS_REQUIRED)
+
+catkin_package(
+        INCLUDE_DIRS include
+        CATKIN_DEPENDS roscpp rospy std_msgs mavros_msgs geometry_msgs mav_msgs sensor_msgs tf
+        #  DEPENDS system_lib
+)
 
 include_directories(
         include
@@ -17,15 +22,16 @@ include_directories(
         ${PCL_INCLUDE_DIRS}
 )
 
-############
-# BINARIES #
-############
 add_executable(hilbert_mapper
         src/hilbert_mapper.cpp src/hilbert_mapper_node.cpp
         )
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(hilbert_mapper
         ${catkin_LIBRARIES}
 )
+#target_link_libraries(${PROJECT_NAME}
+#        ${catkin_LIBRARIES}
+#        )
+
 ##########
 # EXPORT #
 ##########
