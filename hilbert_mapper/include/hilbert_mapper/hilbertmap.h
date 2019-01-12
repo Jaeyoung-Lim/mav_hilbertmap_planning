@@ -5,19 +5,26 @@
 #ifndef HILBERT_MAPPER_HILBERTMAP_H
 #define HILBERT_MAPPER_HILBERTMAP_H
 
+#include <Eigen/Dense>
+#include <cmath>
 
-class hilbertmap {
+class hilbertmap
+{
     private:
+
+        int num_anchorpoints_;
+
         Eigen::Vector3d pointcloud;
         Eigen::VectorXd weights;
-        Eigen::VectorXd anchorpoints;
-
-        double occupancyprob_;
-        Eigen::Vector3d gardient_occupancyprob_;
+        std::vector<Eigen::VectorXd> anchorpoints_;
+        std::vector<Eigen::VectorXd> bin_;
 
     public:
-        hilbertMap();
-        virtual ~hilbertMap();
+        hilbertmap(int num_feature);
+        virtual ~hilbertmap();
+        void updateWeights();
+        Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
+        double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
 };
 
 

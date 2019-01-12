@@ -19,6 +19,8 @@
 #include <pcl/point_types.h>
 #include <boost/foreach.hpp>
 
+#include "hilbert_mapper/hilbertmap.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -35,6 +37,7 @@ class hilbertMapper
 
     Eigen::Vector3d mavPos_;
     Eigen::Vector4d mavAtt_;
+    hilbertmap hilbertMap_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
