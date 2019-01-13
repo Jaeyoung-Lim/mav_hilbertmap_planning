@@ -13,11 +13,14 @@ class hilbertmap
     private:
 
         int num_anchorpoints_;
+        int max_interations_;
+        double eta_; //Learning Rate
 
-        Eigen::Vector3d pointcloud;
-        Eigen::VectorXd weights;
+    Eigen::Vector3d pointcloud;
+        Eigen::VectorXd weights_;
         std::vector<Eigen::VectorXd> anchorpoints_;
         std::vector<Eigen::VectorXd> bin_;
+
 
     public:
         hilbertmap(int num_feature);
