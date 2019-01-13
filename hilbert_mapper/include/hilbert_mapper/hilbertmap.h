@@ -12,22 +12,26 @@ class hilbertmap
 {
     private:
 
-        int num_anchorpoints_;
+        int num_features_;
         int max_interations_;
+        int num_samples_;
         double eta_; //Learning Rate
 
-    Eigen::Vector3d pointcloud;
+        Eigen::Vector3d pointcloud;
         Eigen::VectorXd weights_;
+        Eigen::MatrixXd A_;
         std::vector<Eigen::VectorXd> anchorpoints_;
         std::vector<Eigen::VectorXd> bin_;
 
+        double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
+        Eigen::VectorXd getNegativeLikelyhood();
 
-    public:
+public:
         hilbertmap(int num_feature);
         virtual ~hilbertmap();
         void updateWeights();
         Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
-        double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
+        Eigen::VectorXd getWeights();
 };
 
 
