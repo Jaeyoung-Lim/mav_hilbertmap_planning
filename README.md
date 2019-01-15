@@ -15,3 +15,6 @@ roslaunch hilbert_mapper hilbert_mapper.launch
 ```
 This will launch the `hilbert_mapper` node and the `local_planner` from the [PX4/Avoidance](https://github.com/PX4/avoidance) repo, which will pipe the pointcloud data from a intel-realsense into the hilbert mapper.
 This is a test setup to verify that the pipeline is running. 
+
+## Author
+This project is part of the masters thesis of Jaeyoung Lim, ETH Zurich
