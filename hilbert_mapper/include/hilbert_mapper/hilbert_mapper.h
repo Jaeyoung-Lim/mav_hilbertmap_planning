@@ -34,7 +34,7 @@ class hilbertMapper
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
     ros::Timer cmdloop_timer_, statusloop_timer_;
-    ros::Publisher statusPub_;
+    ros::Publisher mapinfoPub_;
     ros::Subscriber mavposeSub_;
     ros::Subscriber pointcloudSub_;
 
@@ -47,6 +47,7 @@ class hilbertMapper
 
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
     void pointcloudCallback(const PointCloud::ConstPtr& msg);
+    void publishMapInfo();
 
 
 public:

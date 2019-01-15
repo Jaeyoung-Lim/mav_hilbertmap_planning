@@ -64,3 +64,12 @@ double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
 Eigen::VectorXd hilbertmap::getWeights(){
     return weights_;
 }
+
+int hilbertmap::getBinSize() {
+    return bin_.size();
+}
+
+int hilbertmap::getNumAnchors(){
+    return anchorpoints_.size();
+
+}

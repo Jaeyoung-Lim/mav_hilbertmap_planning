@@ -32,6 +32,8 @@ public:
         void updateWeights();
         Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
         Eigen::VectorXd getWeights();
+        int getBinSize();
+        int getNumAnchors();
 };
 
 

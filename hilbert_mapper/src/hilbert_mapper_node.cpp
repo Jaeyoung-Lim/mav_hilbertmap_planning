@@ -13,7 +13,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
-    statusPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbertmapper/info", 1);
+    mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbertmapper/info", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     pointcloudSub_ = nh_.subscribe("/hilbertmapper/pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
@@ -32,9 +32,8 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 }
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
-
-    // TODO: Publish status of hilbertmapper
-
+    //Slower loop to publish status / info related topics
+    publishMapInfo();
 }
 
 void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
@@ -65,4 +64,15 @@ void hilbertMapper::pointcloudCallback(const PointCloud::ConstPtr& msg){
   // TODO: Save point clouds into BIN
 
 
+}
+
+void hilbertMapper::publishMapInfo(){
+    hilbert_msgs::MapperInfo msg;
+
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = "map";
+    msg.binsize = uint16_t(hilbertMap_.getBinSize());
+    msg.anchorpoints = uint16_t(hilbertMap_.getNumAnchors());
+
+    mapinfoPub_.publish(msg);
 }
