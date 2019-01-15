@@ -23,7 +23,7 @@ include_directories(
 )
 
 add_executable(hilbert_mapper
-        src/hilbert_mapper.cpp src/hilbert_mapper_node.cpp
+        src/hilbert_mapper.cpp src/hilbert_mapper_node.cpp src/hilbertmap.cpp
         )
 target_link_libraries(hilbert_mapper
         ${catkin_LIBRARIES}

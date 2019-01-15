@@ -7,7 +7,8 @@ using namespace std;
 //Constructor
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
-  nh_private_(nh_private) {
+  nh_private_(nh_private),
+  hilbertMap_(hilbertmap(100)) {
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
@@ -22,12 +23,15 @@ hilbertMapper::~hilbertMapper() {
 
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
+    // TODO: Update hilbertmap from bin (Stochastic gradient descent)
 
-
+    // TODO: Publish hilbertmaps after it is learned
     ros::spinOnce();
 }
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
+
+    // TODO: Publish status of hilbertmapper
 
 }
 
@@ -46,5 +50,17 @@ void hilbertMapper::pointcloudCallback(const PointCloud::ConstPtr& msg){
   printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
   BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
   printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+
+  // TODO: Sample pointclouds
+
+
+  // TODO: Sample pointclouds to inertial frame with pose
+
+
+  // TODO: Register occupied / unoccupied points to BIN
+
+
+  // TODO: Save point clouds into BIN
+
 
 }
