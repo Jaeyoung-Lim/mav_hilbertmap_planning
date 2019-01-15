@@ -2,5 +2,5 @@
 #
 
 std_msgs/Header header
-
-geometry_msgs/Vector3 position
+uint16 binsize
+uint16 anchorpoints

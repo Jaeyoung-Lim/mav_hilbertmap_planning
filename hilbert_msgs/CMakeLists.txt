@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(hilbert_msgs)
 
-find_package(catkin REQUIRED COMPONENTS geometry_msgs sensor_msgs message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs)
 
 include_directories(include)
 
 add_message_files(
   DIRECTORY msg
   FILES
-  MapperStatus.msg
+  MapperInfo.msg
 )
 
-generate_messages(DEPENDENCIES geometry_msgs sensor_msgs std_msgs)
+generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS geometry_msgs sensor_msgs message_runtime std_msgs)
+  CATKIN_DEPENDS message_runtime std_msgs)

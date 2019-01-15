@@ -15,6 +15,8 @@
 
 #include <Eigen/Dense>
 #include <geometry_msgs/PoseStamped.h>
+#include "hilbert_msgs/MapperInfo.h"
+
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <boost/foreach.hpp>
@@ -32,6 +34,7 @@ class hilbertMapper
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
     ros::Timer cmdloop_timer_, statusloop_timer_;
+    ros::Publisher statusPub_;
     ros::Subscriber mavposeSub_;
     ros::Subscriber pointcloudSub_;
 

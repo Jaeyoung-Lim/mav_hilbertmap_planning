@@ -23,7 +23,7 @@ void hilbertmap::updateWeights(){
     for(int i = 0; i < max_interations_; i ++){
         //TODO: Sample from bin
         std::vector<Eigen::Vector3d> samples;
-        samples = drawObservations();
+//        samples = drawObservations();
         // Do gradient descent
         //TODO: Study the effect of A_
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood();
