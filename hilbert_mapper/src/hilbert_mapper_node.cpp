@@ -26,6 +26,7 @@ hilbertMapper::~hilbertMapper() {
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
     // TODO: Update hilbertmap from bin (Stochastic gradient descent)
+    hilbertMap_.updateWeights();
 
     // TODO: Publish hilbertmaps after it is learned
     ros::spinOnce();
@@ -49,8 +50,10 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
 
 void hilbertMapper::pointcloudCallback(const PointCloud::ConstPtr& msg){
   printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-  BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
-  printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+  BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points){
+      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+      hilbertMap_.appendBin(pt, mavPos_);
+  }
 
   // TODO: Sample pointclouds
 

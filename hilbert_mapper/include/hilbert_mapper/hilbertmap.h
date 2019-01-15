@@ -7,6 +7,10 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 class hilbertmap
 {
@@ -16,12 +20,14 @@ class hilbertmap
         int max_interations_;
         int num_samples_;
         double eta_; //Learning Rate
+        double obs_resolution_;
+        double feature_resolution_;
 
         Eigen::Vector3d pointcloud;
         Eigen::VectorXd weights_;
         Eigen::MatrixXd A_;
         std::vector<Eigen::VectorXd> anchorpoints_;
-        std::vector<Eigen::VectorXd> bin_;
+        std::vector<pcl::PointXYZI> bin_;
 
         double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
         Eigen::VectorXd getNegativeLikelyhood();
@@ -30,6 +36,7 @@ public:
         hilbertmap(int num_feature);
         virtual ~hilbertmap();
         void updateWeights();
+        void appendBin(pcl::PointXYZ point, Eigen::Vector3d position);
         Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
         Eigen::VectorXd getWeights();
         int getBinSize();
