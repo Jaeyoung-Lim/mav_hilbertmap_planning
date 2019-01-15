@@ -5,7 +5,8 @@
 #include "hilbert_mapper/hilbertmap.h"
 
 hilbertmap::hilbertmap(int num_features):
-    num_features_(num_features) {
+    num_features_(num_features),
+    obs_resolution_(1.0){
 
     //TODO: Initialize number of anchorpoints
     for(int i = 0; i < num_features_; i++) {
@@ -46,13 +47,12 @@ void hilbertmap::appendBin(pcl::PointXYZ point, Eigen::Vector3d position) {
     Eigen::Vector3d bearing_v;
     Eigen::Vector3d occupied_point, unoccupied_point;
 
-    occupied_point << point.x, point.y, point.z;
+    occupied_point << point.data[0], point.data[1], point.data[2];
 
     bearing_v = occupied_point - position;
 
     for(int i = 0; i < bearing_v.norm()/obs_resolution_; i++){
         unoccupied_point = double(i) * bearing_v / bearing_v.norm() + position;
-
         bin_.emplace_back(pcl::PointXYZI(-1.0f));
         bin_.back().x = unoccupied_point(0);
         bin_.back().y = unoccupied_point(1);

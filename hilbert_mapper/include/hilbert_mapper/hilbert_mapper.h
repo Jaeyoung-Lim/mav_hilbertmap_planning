@@ -19,6 +19,7 @@
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>  // fromROSMsg
 #include <boost/foreach.hpp>
 
 #include "hilbert_mapper/hilbertmap.h"
@@ -46,7 +47,7 @@ class hilbertMapper
     void statusloopCallback(const ros::TimerEvent& event);
 
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
-    void pointcloudCallback(const sensor_msgs::PointCloud2& msg);
+    void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void publishMapInfo();
 
 

@@ -48,12 +48,14 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
 
 }
 
-void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2& msg){
-  printf ("Cloud: width = %d, height = %d\n", msg.width, msg.height);
-//  BOOST_FOREACH (const pcl::PointXYZ& pt, msg.data){
-//      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-//      hilbertMap_.appendBin(pt, mavPos_);
-//  }
+void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  pcl::fromROSMsg(*msg, cloud);
+
+  for(int i = 0; i < cloud.points.size(); ++i){
+      hilbertMap_.appendBin(cloud.points[i], mavPos_);
+  }
 
   // TODO: Sample pointclouds
 
