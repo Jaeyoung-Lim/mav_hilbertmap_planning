@@ -13,10 +13,10 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
-    mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbertmapper/info", 1);
+    mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
-    pointcloudSub_ = nh_.subscribe("/hilbertmapper/pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    pointcloudSub_ = nh_.subscribe("/local_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
 }
 hilbertMapper::~hilbertMapper() {
@@ -48,12 +48,12 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
 
 }
 
-void hilbertMapper::pointcloudCallback(const PointCloud::ConstPtr& msg){
-  printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-  BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points){
-      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-      hilbertMap_.appendBin(pt, mavPos_);
-  }
+void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2& msg){
+  printf ("Cloud: width = %d, height = %d\n", msg.width, msg.height);
+//  BOOST_FOREACH (const pcl::PointXYZ& pt, msg.data){
+//      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+//      hilbertMap_.appendBin(pt, mavPos_);
+//  }
 
   // TODO: Sample pointclouds
 

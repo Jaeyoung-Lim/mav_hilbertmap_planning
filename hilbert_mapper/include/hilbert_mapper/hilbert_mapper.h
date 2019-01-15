@@ -46,7 +46,7 @@ class hilbertMapper
     void statusloopCallback(const ros::TimerEvent& event);
 
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
-    void pointcloudCallback(const PointCloud::ConstPtr& msg);
+    void pointcloudCallback(const sensor_msgs::PointCloud2& msg);
     void publishMapInfo();
 
 
