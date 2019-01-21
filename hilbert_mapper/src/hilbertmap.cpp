@@ -6,7 +6,8 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    obs_resolution_(1.0){
+    obs_resolution_(1.0),
+    num_samples_(10){
 
     //TODO: Initialize number of anchorpoints
     for(int i = 0; i < num_features_; i++) {
@@ -42,17 +43,22 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(){
     return nll;
 }
 
-void hilbertmap::appendBin(pcl::PointXYZI point, Eigen::Vector3d position) {
+void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
-    if(point.intensity < 0.0){
-        bin_.emplace_back(pcl::PointXYZI(-1.0f));
+    std::srand(std::time(nullptr));
+    int num_observations = ptcloud.points.size();
+
+    for(int i = 0; i < std::min(num_observations, num_samples_); i++){
+        int idx = std::rand() % num_observations;
+
+        //TODO: Should we handle duplicate points?
+        if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(1.0f));
+
+        bin_.back().x = ptcloud[idx].x;
+        bin_.back().y = ptcloud[idx].y;
+        bin_.back().z = ptcloud[idx].z;
     }
-    else{
-        bin_.emplace_back(pcl::PointXYZI(1.0f));
-    }
-    bin_.back().x = point.x;
-    bin_.back().y = point.y;
-    bin_.back().z = point.z;
 
 }
 

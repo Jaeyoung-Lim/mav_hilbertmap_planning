@@ -57,6 +57,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
 
     // Crop PointCloud
     pcl::CropBox<pcl::PointXYZI> boxfilter;
+    //TODO: Set reference for cropping point clouds
     float minX = mavPos_(0) - 2.0;
     float minY = mavPos_(1) - 2.0;
     float minZ = mavPos_(2) - 2.0;
