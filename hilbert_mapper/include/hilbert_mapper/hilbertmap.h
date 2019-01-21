@@ -24,6 +24,7 @@ class hilbertmap
         double feature_resolution_;
 
         Eigen::Vector3d pointcloud;
+        Eigen::Vector3d map_center_;
         Eigen::VectorXd weights_;
         Eigen::MatrixXd A_;
         std::vector<Eigen::VectorXd> anchorpoints_;
@@ -36,11 +37,15 @@ public:
         hilbertmap(int num_feature);
         virtual ~hilbertmap();
         void updateWeights();
-        void appendBin(pcl::PointXYZ point, Eigen::Vector3d position);
+        void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+        void setMapProperties(int num_samples, int num_features);
+        void setMapCenter(Eigen::Vector3d map_center);
         Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
         Eigen::VectorXd getWeights();
         int getBinSize();
         int getNumAnchors();
+        Eigen::Vector3d getMapCenter();
+
 };
 
 

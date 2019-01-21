@@ -6,7 +6,8 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    obs_resolution_(1.0){
+    obs_resolution_(1.0),
+    num_samples_(10){
 
     //TODO: Initialize number of anchorpoints
     for(int i = 0; i < num_features_; i++) {
@@ -14,6 +15,7 @@ hilbertmap::hilbertmap(int num_features):
     }
 
     weights_ = Eigen::VectorXd::Zero(num_features_);
+    map_center_ = Eigen::Vector3d::Zero();
 
 }
 hilbertmap::~hilbertmap() {
@@ -42,27 +44,36 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(){
     return nll;
 }
 
-void hilbertmap::appendBin(pcl::PointXYZ point, Eigen::Vector3d position) {
+void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
-    Eigen::Vector3d bearing_v;
-    Eigen::Vector3d occupied_point, unoccupied_point;
+    std::srand(std::time(nullptr));
+    int num_observations = ptcloud.points.size();
 
-    occupied_point << point.data[0], point.data[1], point.data[2];
+    for(int i = 0; i < std::min(num_observations, num_samples_); i++){
+        int idx = std::rand() % num_observations;
 
-    bearing_v = occupied_point - position;
+        //TODO: Should we handle duplicate points?
+        if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(1.0f));
 
-    for(int i = 0; i < bearing_v.norm()/obs_resolution_; i++){
-        unoccupied_point = double(i) * bearing_v / bearing_v.norm() + position;
-        bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        bin_.back().x = unoccupied_point(0);
-        bin_.back().y = unoccupied_point(1);
-        bin_.back().z = unoccupied_point(2);
+        bin_.back().x = ptcloud[idx].x;
+        bin_.back().y = ptcloud[idx].y;
+        bin_.back().z = ptcloud[idx].z;
     }
-    bin_.emplace_back(pcl::PointXYZI(-1.0f));
-    bin_.back().x = occupied_point(0);
-    bin_.back().y = occupied_point(1);
-    bin_.back().z = occupied_point(2);
+
 }
+
+void hilbertmap::setMapProperties(int num_samples, int num_features){
+    num_samples_ = num_samples;
+    num_features_ = num_features;
+
+}
+
+void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
+    map_center_ = map_center;
+
+}
+
 
 Eigen::VectorXd hilbertmap::getkernelVector(Eigen::Vector3d x_query){
 
@@ -95,4 +106,8 @@ int hilbertmap::getBinSize() {
 int hilbertmap::getNumAnchors(){
     return anchorpoints_.size();
 
+}
+
+Eigen::Vector3d hilbertmap::getMapCenter(){
+    return map_center_;
 }
