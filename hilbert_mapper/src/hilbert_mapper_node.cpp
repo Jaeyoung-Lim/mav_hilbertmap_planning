@@ -8,7 +8,8 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  hilbertMap_(hilbertmap(100)) {
+  hilbertMap_(hilbertmap(100)),
+  index_pointcloud(0){
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
@@ -49,26 +50,26 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
 }
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
 
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  pcl::fromROSMsg(*msg, cloud);
+    pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
-  for(int i = 0; i < cloud.points.size(); ++i){
-      hilbertMap_.appendBin(cloud.points[i], mavPos_);
-  }
+    // Crop PointCloud
+    pcl::CropBox<pcl::PointXYZI> boxfilter;
+    float minX = mavPos_(0) - 2.0;
+    float minY = mavPos_(1) - 2.0;
+    float minZ = mavPos_(2) - 2.0;
+    float maxX = mavPos_(0) + 2.0;
+    float maxY = mavPos_(1) + 2.0;
+    float maxZ = mavPos_(2) + 2.0;
+    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 1.0));
+    boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+    boxfilter.setInputCloud(ptcloud);
+    boxfilter.filter(*cropped_ptcloud);
 
-  // TODO: Sample pointclouds
-
-
-  // TODO: Sample pointclouds to inertial frame with pose
-
-
-  // TODO: Register occupied / unoccupied points to BIN
-
-
-  // TODO: Save point clouds into BIN
-
-
+    // Register occupied / unoccupied points to BIN
+    // hilbertMap_.appendBin(cloud.points[i], mavPos_);
 }
 
 void hilbertMapper::publishMapInfo(){

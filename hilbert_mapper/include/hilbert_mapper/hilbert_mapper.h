@@ -20,6 +20,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>  // fromROSMsg
+#include <pcl/filters/crop_box.h>
 #include <boost/foreach.hpp>
 
 #include "hilbert_mapper/hilbertmap.h"
@@ -42,6 +43,7 @@ class hilbertMapper
     Eigen::Vector3d mavPos_;
     Eigen::Vector4d mavAtt_;
     hilbertmap hilbertMap_;
+    int index_pointcloud;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
