@@ -68,8 +68,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
 
-    // Register occupied / unoccupied points to BIN
-    // hilbertMap_.appendBin(cloud.points[i], mavPos_);
+    hilbertMap_.appendBin(*cropped_ptcloud);
 }
 
 void hilbertMapper::publishMapInfo(){
