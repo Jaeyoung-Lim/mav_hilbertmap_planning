@@ -37,6 +37,7 @@ public:
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+        void setMapProperties(int num_samples, int num_features);
         Eigen::VectorXd getkernelVector(Eigen::Vector3d x_query);
         Eigen::VectorXd getWeights();
         int getBinSize();

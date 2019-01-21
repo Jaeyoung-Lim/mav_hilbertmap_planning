@@ -19,6 +19,12 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
+    int num_samples, num_features;
+
+    nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
+    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
+
+    hilbertMap_.setMapProperties(num_samples, num_features);
 }
 hilbertMapper::~hilbertMapper() {
   //Destructor

@@ -62,6 +62,13 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
 }
 
+void hilbertmap::setMapProperties(int num_samples, int num_features){
+    num_samples_ = num_samples;
+    num_features_ = num_features;
+
+}
+
+
 Eigen::VectorXd hilbertmap::getkernelVector(Eigen::Vector3d x_query){
 
     Eigen::VectorXd phi_hat;
