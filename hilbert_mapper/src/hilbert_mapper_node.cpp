@@ -58,18 +58,20 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+    Eigen::Vector3d map_center;
 
     pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
     // Crop PointCloud
     pcl::CropBox<pcl::PointXYZI> boxfilter;
     //TODO: Set reference for cropping point clouds
-    float minX = mavPos_(0) - 2.0;
-    float minY = mavPos_(1) - 2.0;
-    float minZ = mavPos_(2) - 2.0;
-    float maxX = mavPos_(0) + 2.0;
-    float maxY = mavPos_(1) + 2.0;
-    float maxZ = mavPos_(2) + 2.0;
+    map_center = hilbertMap_.getMapCenter();
+    float minX = map_center(0) - 2.0;
+    float minY = map_center(1) - 2.0;
+    float minZ = map_center(2) - 2.0;
+    float maxX = map_center(0) + 2.0;
+    float maxY = map_center(1) + 2.0;
+    float maxZ = map_center(2) + 2.0;
     boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 1.0));
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);

@@ -15,6 +15,7 @@ hilbertmap::hilbertmap(int num_features):
     }
 
     weights_ = Eigen::VectorXd::Zero(num_features_);
+    map_center_ = Eigen::Vector3d::Zero();
 
 }
 hilbertmap::~hilbertmap() {
@@ -68,6 +69,11 @@ void hilbertmap::setMapProperties(int num_samples, int num_features){
 
 }
 
+void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
+    map_center_ = map_center;
+
+}
+
 
 Eigen::VectorXd hilbertmap::getkernelVector(Eigen::Vector3d x_query){
 
@@ -99,5 +105,9 @@ int hilbertmap::getBinSize() {
 
 int hilbertmap::getNumAnchors(){
     return anchorpoints_.size();
+
+}
+
+Eigen::Vector3d hilbertmap::getMapCenter(){
 
 }
