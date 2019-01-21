@@ -109,5 +109,5 @@ int hilbertmap::getNumAnchors(){
 }
 
 Eigen::Vector3d hilbertmap::getMapCenter(){
-
+    return map_center_;
 }
