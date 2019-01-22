@@ -7,10 +7,11 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     obs_resolution_(1.0),
-    num_samples_(10){
+    num_samples_(10),
+    max_iterations_(100){
 
-    //TODO: Initialize number of anchorpoints
     for(int i = 0; i < num_features_; i++) {
+        //TODO: Initialize Anchorpoints to grid
         anchorpoints_.emplace_back(Eigen::VectorXd::Zero(num_features_));
     }
 
@@ -23,23 +24,30 @@ hilbertmap::~hilbertmap() {
 }
 
 void hilbertmap::updateWeights(){
-    for(int i = 0; i < max_interations_; i ++){
-        //TODO: Sample from bin
-        std::vector<Eigen::Vector3d> samples;
-//        samples = drawObservations();
-        // Do gradient descent
+
+    std::srand(std::time(nullptr));
+    int idx[num_samples_];
+    int k;
+    int bin_size = bin_.size();
+    for(int i = 0; i < std::min(max_iterations_, bin_size); i ++){
+        for(int j = 0; j < std::min(num_samples_, bin_size); j++)   idx[j] = std::rand() % bin_size;
         //TODO: Study the effect of A_
-        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood();
+        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
     }
 }
 
-Eigen::VectorXd hilbertmap::getNegativeLikelyhood(){
-    Eigen::VectorXd nll, phi_x;
+Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
+    Eigen::VectorXd nll;
+    Eigen::VectorXd phi_x(num_features_);
+    Eigen::Vector3d query;
     nll = Eigen::VectorXd::Zero(num_features_);
     //TODO: Implement negative loglikelyhood
-    for(int i = 0; i < num_samples_; i++){
-//        phi_x = getkernelVector(x[i]);
-//        nll -= y[i] * phi_x / ( 1 + exp(y[i]*weights_.dot(phi_x)));
+    for(int i = 0; i < sizeof(index); i++){
+        int j = index[i];
+        query << bin_[j].x, bin_[j].y, bin_[j].z;
+        getkernelVector(query, phi_x);
+//        nll -= bin_[j].intensity * phi_x / ( 1 + exp(bin_[j].intensity*weights_.dot(phi_x)));
+//        std::cout << "nll: " << nll.norm() << std::endl;
     }
     return nll;
 }
@@ -74,14 +82,11 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
 }
 
+void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
 
-Eigen::VectorXd hilbertmap::getkernelVector(Eigen::Vector3d x_query){
-
-    Eigen::VectorXd phi_hat;
-
-    for(int i = 1; i <= num_features_; i++) phi_hat(i) = kernel(x_query, anchorpoints_[i]);
-
-    return phi_hat;
+    for(int i = 0; i < kernel_vector.size(); i++){
+        kernel_vector(i) = kernel(x_query, anchorpoints_[i]);
+    }
 }
 
 double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
@@ -105,7 +110,6 @@ int hilbertmap::getBinSize() {
 
 int hilbertmap::getNumAnchors(){
     return anchorpoints_.size();
-
 }
 
 Eigen::Vector3d hilbertmap::getMapCenter(){
