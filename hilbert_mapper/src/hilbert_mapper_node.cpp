@@ -8,7 +8,7 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  hilbertMap_(hilbertmap(100)),
+  hilbertMap_(hilbertmap(10)),
   index_pointcloud(0){
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
@@ -22,9 +22,9 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     int num_samples, num_features;
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
-    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
+//    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
 
-    hilbertMap_.setMapProperties(num_samples, num_features);
+//    hilbertMap_.setMapProperties(num_samples, num_features);
 }
 hilbertMapper::~hilbertMapper() {
   //Destructor

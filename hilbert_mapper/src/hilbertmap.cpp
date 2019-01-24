@@ -10,11 +10,12 @@ hilbertmap::hilbertmap(int num_features):
     num_samples_(10),
     max_iterations_(100),
     weights_(Eigen::VectorXd::Zero(num_features)),
-    A_(Eigen::MatrixXd::Identity(num_features, num_features)) {
+    A_(Eigen::MatrixXd::Identity(num_features, num_features)),
+    eta_(0.7){
 
     for(int i = 0; i < num_features_; i++) {
         //TODO: Initialize Anchorpoints to grid
-        anchorpoints_.emplace_back(Eigen::VectorXd::Zero(num_features_));
+        anchorpoints_.emplace_back(Eigen::Vector3d::Zero());
     }
     map_center_ = Eigen::Vector3d::Zero();
 
@@ -31,10 +32,10 @@ void hilbertmap::updateWeights(){
     int bin_size = bin_.size();
 
     for(int i = 0; i < std::min(max_iterations_, bin_size); i ++){
-        for(int j = 0; j < std::min(num_samples_, bin_size); j++)   idx[j] = std::rand() % bin_size;
-        //TODO: Study the effect of A_
-        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
-
+        for(int j = 0; j < std::min(num_samples_, bin_size); j++)
+            idx[j] = std::rand() % bin_size;
+            //TODO: Study the effect of A_
+            weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
     }
 }
 
@@ -49,10 +50,8 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
         int j = index[i];
         query << bin_[j].x, bin_[j].y, bin_[j].z;
         getkernelVector(query, phi_x);
-//        nll -=  phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
     }
-    nll = Eigen::VectorXd::Zero(num_features_);
-
     return nll;
 }
 
@@ -102,7 +101,7 @@ double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
 
     sigma = 1.0;
     r = (x - x_hat).norm();
-    kernel = exp(-0.5 * pow(r, 2) / pow(sigma, 2));
+    kernel = exp(-0.5 * pow(r/sigma, 2));
 
     return kernel;
 }
