@@ -56,7 +56,6 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>mav_msgs</build_depend>
-  <build_depend>mavros_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>hilbert_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
@@ -65,7 +64,6 @@
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>mavros_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>hilbert_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
