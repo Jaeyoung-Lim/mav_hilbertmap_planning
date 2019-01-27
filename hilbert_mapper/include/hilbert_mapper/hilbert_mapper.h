@@ -15,6 +15,8 @@
 
 #include <Eigen/Dense>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/MapMetaData.h>
 #include "hilbert_msgs/MapperInfo.h"
 
 #include <pcl_ros/point_cloud.h>
@@ -37,6 +39,8 @@ class hilbertMapper
     ros::NodeHandle nh_private_;
     ros::Timer cmdloop_timer_, statusloop_timer_;
     ros::Publisher mapinfoPub_;
+    ros::Publisher hilbertmapPub_;
+    ros::Publisher gridmapPub_;
     ros::Subscriber mavposeSub_;
     ros::Subscriber pointcloudSub_;
 
@@ -44,6 +48,7 @@ class hilbertMapper
     Eigen::Vector4d mavAtt_;
     hilbertmap hilbertMap_;
     int index_pointcloud;
+    string frame_id_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
@@ -51,6 +56,8 @@ class hilbertMapper
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
     void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void publishMapInfo();
+    void publishMap();
+    void publishgridMap();
 
 
 public:

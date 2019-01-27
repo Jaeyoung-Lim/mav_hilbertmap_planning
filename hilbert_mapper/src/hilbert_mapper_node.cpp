@@ -8,13 +8,15 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  hilbertMap_(hilbertmap(10)),
+  hilbertMap_(hilbertmap(1000)),
   index_pointcloud(0){
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
+    hilbertmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/hilbertmap", 1);
+    gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/hilbertmap", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
@@ -22,6 +24,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     int num_samples, num_features;
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
+    nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "map");
 //    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
 
 //    hilbertMap_.setMapProperties(num_samples, num_features);
@@ -42,6 +45,9 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
     publishMapInfo();
+//    publishMap();
+    publishgridMap();
+
 }
 
 void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
@@ -84,9 +90,53 @@ void hilbertMapper::publishMapInfo(){
     hilbert_msgs::MapperInfo msg;
 
     msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "map";
+    msg.header.frame_id = frame_id_;
     msg.binsize = uint16_t(hilbertMap_.getBinSize());
-    msg.anchorpoints = uint16_t(hilbertMap_.getNumAnchors());
+    msg.anchorpoints = uint16_t(hilbertMap_.getNumFeatures());
 
     mapinfoPub_.publish(msg);
+}
+
+void hilbertMapper::publishMap(){
+
+    sensor_msgs::PointCloud2 hilbert_map;
+
+    int num_features;
+    Eigen::Vector3d x_query;
+
+
+    hilbert_map.header.stamp = ros::Time::now();
+    hilbert_map.header.frame_id = frame_id_;
+
+    num_features = hilbertMap_.getNumFeatures();
+//
+//    for(int i = 0; i < num_features; i++){
+//        x_query = hilbertMap_.getFeature(i);
+//        //Get Occupancy information from hilbertmaps
+//        hilbert_map.data[i] = int(hilbertMap_.getOccupancyProb(x_query));
+//    }
+//    pcl::toROSMsg();
+//
+    hilbertmapPub_.publish(hilbert_map);
+}
+
+void hilbertMapper::publishgridMap(){
+
+    nav_msgs::OccupancyGrid grid_map;
+    int num_features;
+    std::vector<Eigen::Vector3d> x_grid;
+    Eigen::Vector3d x_query;
+
+    //Publish hilbertmap at anchorpoints through grid
+    grid_map.header.stamp = ros::Time::now();
+    grid_map.header.frame_id = frame_id_;
+    grid_map.info.height = 10;
+    grid_map.info.width = 10;
+//    grid_map.info.origin = hilbertMap_.getMapCenter();
+
+    //Get Occupancy information from hilbertmaps
+    for (unsigned int x = 0; x < grid_map.info.width; x++)
+        for (unsigned int y = 0; y < grid_map.info.height; y++)
+            grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
+    gridmapPub_.publish(grid_map);
 }
