@@ -15,8 +15,8 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
-    hilbertmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/hilbertmap", 1);
-    gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/hilbertmap", 1);
+    hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
+    gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
@@ -45,7 +45,7 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
     publishMapInfo();
-//    publishMap();
+    publishMap();
     publishgridMap();
 
 }
@@ -109,7 +109,7 @@ void hilbertMapper::publishMap(){
     hilbert_map.header.frame_id = frame_id_;
 
     num_features = hilbertMap_.getNumFeatures();
-//
+
 //    for(int i = 0; i < num_features; i++){
 //        x_query = hilbertMap_.getFeature(i);
 //        //Get Occupancy information from hilbertmaps
@@ -124,19 +124,36 @@ void hilbertMapper::publishgridMap(){
 
     nav_msgs::OccupancyGrid grid_map;
     int num_features;
+    double map_width, map_height;
+    double resolution;
     std::vector<Eigen::Vector3d> x_grid;
-    Eigen::Vector3d x_query;
+    Eigen::Vector3d x_query, map_center;
+
+    resolution = 0.01; // [m / cells]
+
+    map_center = hilbertMap_.getMapCenter();
+    map_width = hilbertMap_.getMapWidth();
 
     //Publish hilbertmap at anchorpoints through grid
     grid_map.header.stamp = ros::Time::now();
     grid_map.header.frame_id = frame_id_;
-    grid_map.info.height = 10;
-    grid_map.info.width = 10;
-//    grid_map.info.origin = hilbertMap_.getMapCenter();
+    grid_map.info.height = int(map_width / resolution);
+    grid_map.info.width = int(map_width / resolution);
+    grid_map.info.resolution = resolution;
+    grid_map.info.origin.position.x = map_center(0);
+    grid_map.info.origin.position.y = map_center(1);
+    grid_map.info.origin.position.z = map_center(2);
+    grid_map.info.origin.orientation.x = 0.0;
+    grid_map.info.origin.orientation.y = 0.0;
+    grid_map.info.origin.orientation.z = 0.0;
+    grid_map.info.origin.orientation.w = 1.0;
 
     //Get Occupancy information from hilbertmaps
-    for (unsigned int x = 0; x < grid_map.info.width; x++)
-        for (unsigned int y = 0; y < grid_map.info.height; y++)
+    for (unsigned int x = 0; x < grid_map.info.width; x++){
+        for (unsigned int y = 0; y < grid_map.info.height; y++){
+            x_query << x*grid_map.info.resolution - 0.5 * map_width, y*grid_map.info.resolution - 0.5 * map_width, 0.0*grid_map.info.resolution;
             grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
+        }
+    }
     gridmapPub_.publish(grid_map);
 }

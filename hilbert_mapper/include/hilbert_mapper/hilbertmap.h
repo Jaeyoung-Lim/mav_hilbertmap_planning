@@ -22,6 +22,8 @@ class hilbertmap
         double eta_; //Learning Rate
         double obs_resolution_;
         double feature_resolution_;
+        double width_;
+        double resolution_;
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
@@ -46,6 +48,7 @@ public:
         int getBinSize();
         int getNumFeatures();
         double getOccupancyProb(Eigen::Vector3d &x_query);
+        double getMapWidth();
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();

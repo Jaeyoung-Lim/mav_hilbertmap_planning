@@ -11,7 +11,9 @@ hilbertmap::hilbertmap(int num_features):
     max_iterations_(100),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
-    eta_(0.7){
+    eta_(0.7),
+    width_(1.0),
+    resolution_(10.0){
 
     int obs_size = 10;
     Eigen::Vector3d mesh_obs;
@@ -19,7 +21,7 @@ hilbertmap::hilbertmap(int num_features):
 
     init_mapcenter << 0.0, 0.0, 0.0;
 
-    generateGridPoints(anchorpoints_, init_mapcenter, 1, 1, 1, 10);
+    generateGridPoints(anchorpoints_, init_mapcenter, width_, width_, width_, resolution_);
 
     map_center_ = Eigen::Vector3d::Zero();
 
@@ -145,6 +147,10 @@ int hilbertmap::getBinSize() {
 
 int hilbertmap::getNumFeatures(){
     return anchorpoints_.size();
+}
+
+double hilbertmap::getMapWidth(){
+    return width_;
 }
 
 Eigen::Vector3d hilbertmap::getMapCenter(){
