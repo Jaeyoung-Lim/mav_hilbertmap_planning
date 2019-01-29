@@ -30,6 +30,10 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "map");
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
     nh_.param<double>("/hilbert_mapper/map/width", width, 1.0);
+    nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
+
 //    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
 
 //    hilbertMap_.setMapProperties(num_samples, num_features);
@@ -53,9 +57,9 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
 //    hilbertMap_.setMapCenter(mavPos_);
 
     //Pulbish map status related information
-    publishMapInfo();
-//    publishMap();
-    publishgridMap();
+    if(publish_mapinfo_) publishMapInfo();
+    if(publish_hilbertmap_) publishMap();
+    if(publish_gridmap_) publishgridMap();
 
 }
 
