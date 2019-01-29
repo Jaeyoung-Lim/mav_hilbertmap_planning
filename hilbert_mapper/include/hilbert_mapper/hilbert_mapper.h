@@ -42,6 +42,7 @@ class hilbertMapper
     ros::Publisher hilbertmapPub_;
     ros::Publisher gridmapPub_;
     ros::Subscriber mavposeSub_;
+    ros::Subscriber poseSub_;
     ros::Subscriber pointcloudSub_;
 
     Eigen::Vector3d mavPos_;
@@ -56,6 +57,7 @@ class hilbertMapper
     void statusloopCallback(const ros::TimerEvent& event);
 
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
+    void poseCallback(const geometry_msgs::Pose& msg);
     void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void publishMapInfo();
     void publishMap();

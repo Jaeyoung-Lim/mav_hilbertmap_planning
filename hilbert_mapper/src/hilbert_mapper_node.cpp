@@ -11,14 +11,16 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
   hilbertMap_(hilbertmap(1000)),
   index_pointcloud(0){
 
-    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
-    statusloop_timer_ = nh_.createTimer(ros::Duration(1), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
+    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
+    statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
     hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
+    poseSub_ = nh_.subscribe("/firefly/odometry_sensor1/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
+
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
@@ -46,8 +48,13 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
+
+    //Reset Map center
+//    hilbertMap_.setMapCenter(mavPos_);
+
+    //Pulbish map status related information
     publishMapInfo();
-    publishMap();
+//    publishMap();
     publishgridMap();
 
 }
@@ -62,6 +69,18 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
     mavAtt_(3) = msg.pose.orientation.z;
 
 }
+
+void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
+    mavPos_(0) = msg.position.x;
+    mavPos_(1) = msg.position.y;
+    mavPos_(2) = msg.position.z;
+    mavAtt_(0) = msg.orientation.w;
+    mavAtt_(1) = msg.orientation.x;
+    mavAtt_(2) = msg.orientation.y;
+    mavAtt_(3) = msg.orientation.z;
+
+}
+
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -135,7 +154,7 @@ void hilbertMapper::publishgridMap(){
     std::vector<Eigen::Vector3d> x_grid;
     Eigen::Vector3d x_query, map_center;
 
-    double resolution = 0.01; // [m / cells]
+    double resolution = 0.1; // [m / cells]
 
     map_center = hilbertMap_.getMapCenter();
     map_width = hilbertMap_.getMapWidth();
@@ -162,5 +181,6 @@ void hilbertMapper::publishgridMap(){
             grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
         }
     }
+
     gridmapPub_.publish(grid_map);
 }
