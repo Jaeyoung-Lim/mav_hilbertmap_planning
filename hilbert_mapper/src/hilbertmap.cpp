@@ -13,7 +13,7 @@ hilbertmap::hilbertmap(int num_features):
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
     width_(1.0),
-    resolution_(10.0){
+    resolution_(0.1) {
 
     int obs_size = 10;
     Eigen::Vector3d mesh_obs;
@@ -36,6 +36,9 @@ void hilbertmap::updateWeights(){
     int idx[num_samples_];
     int k;
     int bin_size = bin_.size();
+    ros::Time start_time;
+
+    start_time = ros::Time::now();
 
     for(int i = 0; i < std::min(max_iterations_, bin_size); i ++){
         for(int j = 0; j < std::min(num_samples_, bin_size); j++){
@@ -46,6 +49,8 @@ void hilbertmap::updateWeights(){
             Eigen::VectorXd prev_weights = weights_;
             weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
     }
+
+    time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
@@ -109,9 +114,9 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
 
     int num_cells[3];
 
-    num_cells[0]= resolution * int(width);
-    num_cells[1] = resolution * int(length);
-    num_cells[2] = resolution * int(height);
+    num_cells[0]= int(width/resolution);
+    num_cells[1] = int(length/resolution);
+    num_cells[2] = int(height/resolution);
 
     Eigen::Vector3d mesh_obs;
     //TODO: This is dirty
@@ -153,6 +158,18 @@ double hilbertmap::getMapWidth(){
     return width_;
 }
 
+double hilbertmap::getMapResolution(){
+    return resolution_;
+}
+
+double hilbertmap::getSgdTime(){
+    return time_sgd_;
+}
+
+double hilbertmap::getQueryTime(){
+    return time_query_;
+}
+
 Eigen::Vector3d hilbertmap::getMapCenter(){
     return map_center_;
 }
@@ -170,9 +187,15 @@ double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
 
     double probability;
     Eigen::VectorXd phi_x;
+    ros::Time start_time;
+
+    start_time = ros::Time::now();
+
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
     probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+
+    time_query_ = (ros::Time::now() - start_time).toSec();
 
     return probability;
 }
