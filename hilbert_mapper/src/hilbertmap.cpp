@@ -34,7 +34,6 @@ void hilbertmap::updateWeights(){
 
     std::srand(std::time(nullptr));
     int idx[num_samples_];
-    int k;
     int bin_size = bin_.size();
     ros::Time start_time;
 
@@ -51,6 +50,8 @@ void hilbertmap::updateWeights(){
     }
 
     time_sgd_ = (ros::Time::now() - start_time).toSec();
+    printf("ConvergenceTime: %6f\n", time_sgd_);
+
 }
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
@@ -99,7 +100,11 @@ void hilbertmap::setMapProperties(int num_samples, int num_features){
 }
 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
+
     map_center_ = map_center;
+    weights_ = Eigen::VectorXd::Zero(num_features_);
+    anchorpoints_.clear();
+    generateGridPoints(anchorpoints_, map_center, width_, width_, width_, resolution_);
 
 }
 
@@ -194,6 +199,7 @@ double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
     probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
 
     time_query_ = (ros::Time::now() - start_time).toSec();
+//    printf("QueryTime: %6f\n", time_query_);
 
     return probability;
 }
