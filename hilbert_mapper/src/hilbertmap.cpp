@@ -104,13 +104,12 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 }
 
 void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
-
     for(int i = 0; i < kernel_vector.size(); i++){
         kernel_vector(i) = kernel(x_query, anchorpoints_[i]);
     }
 }
 
-void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, int resolution){
+void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution){
 
     int num_cells[3];
 
@@ -190,7 +189,6 @@ double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
     ros::Time start_time;
 
     start_time = ros::Time::now();
-
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
     probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
