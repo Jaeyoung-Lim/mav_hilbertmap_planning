@@ -22,9 +22,12 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
+    double width;
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "map");
+    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
+    nh_.param<double>("/hilbert_mapper/map/width", width, 1.0);
 //    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
 
 //    hilbertMap_.setMapProperties(num_samples, num_features);
@@ -38,7 +41,6 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
     // TODO: Update hilbertmap from bin (Stochastic gradient descent)
     hilbertMap_.updateWeights();
 
-    // TODO: Publish hilbertmaps after it is learned
     ros::spinOnce();
 }
 
@@ -65,6 +67,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     Eigen::Vector3d map_center;
+    float map_width;
 
     pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
@@ -72,13 +75,14 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     pcl::CropBox<pcl::PointXYZI> boxfilter;
     //TODO: Set reference for cropping point clouds
     map_center = hilbertMap_.getMapCenter();
-    float minX = map_center(0) - 2.0;
-    float minY = map_center(1) - 2.0;
-    float minZ = map_center(2) - 2.0;
-    float maxX = map_center(0) + 2.0;
-    float maxY = map_center(1) + 2.0;
-    float maxZ = map_center(2) + 2.0;
-    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 1.0));
+    map_width = float(hilbertMap_.getMapWidth());
+    float minX = map_center(0) - map_width;
+    float minY = map_center(1) - map_width;
+    float minZ = map_center(2) - map_width;
+    float maxX = map_center(0) + map_width;
+    float maxY = map_center(1) + map_width;
+    float maxZ = map_center(2) + map_width;
+    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, -1.0));
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
@@ -93,6 +97,8 @@ void hilbertMapper::publishMapInfo(){
     msg.header.frame_id = frame_id_;
     msg.binsize = uint16_t(hilbertMap_.getBinSize());
     msg.anchorpoints = uint16_t(hilbertMap_.getNumFeatures());
+    msg.time_gradientdescent = float(hilbertMap_.getSgdTime());
+    msg.time_query = float(hilbertMap_.getQueryTime());
 
     mapinfoPub_.publish(msg);
 }
@@ -125,21 +131,22 @@ void hilbertMapper::publishgridMap(){
     nav_msgs::OccupancyGrid grid_map;
     int num_features;
     double map_width, map_height;
-    double resolution;
+    double map_resolution;
     std::vector<Eigen::Vector3d> x_grid;
     Eigen::Vector3d x_query, map_center;
 
-    resolution = 0.01; // [m / cells]
+    double resolution = 0.01; // [m / cells]
 
     map_center = hilbertMap_.getMapCenter();
     map_width = hilbertMap_.getMapWidth();
+    map_resolution = hilbertMap_.getMapResolution();
 
     //Publish hilbertmap at anchorpoints through grid
     grid_map.header.stamp = ros::Time::now();
     grid_map.header.frame_id = frame_id_;
     grid_map.info.height = int(map_width / resolution);
     grid_map.info.width = int(map_width / resolution);
-    grid_map.info.resolution = resolution;
+    grid_map.info.resolution = map_resolution;
     grid_map.info.origin.position.x = map_center(0);
     grid_map.info.origin.position.y = map_center(1);
     grid_map.info.origin.position.z = map_center(2);

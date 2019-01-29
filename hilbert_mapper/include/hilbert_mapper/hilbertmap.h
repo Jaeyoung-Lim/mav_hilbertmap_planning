@@ -24,6 +24,8 @@ class hilbertmap
         double feature_resolution_;
         double width_;
         double resolution_;
+        double time_query_; // Time for querying a single time
+        double time_sgd_; // Convergence time for stochastic gradient descent
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
@@ -49,6 +51,9 @@ public:
         int getNumFeatures();
         double getOccupancyProb(Eigen::Vector3d &x_query);
         double getMapWidth();
+        double getMapResolution();
+        double getSgdTime();
+        double getQueryTime();
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();
