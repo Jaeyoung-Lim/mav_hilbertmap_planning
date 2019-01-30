@@ -39,7 +39,9 @@ void hilbertmap::updateWeights(){
 
     start_time = ros::Time::now();
 
-    for(int i = 0; i < std::min(max_iterations_, bin_size); i ++){
+    for(int i = 0; i < max_iterations_; i ++){
+        //Draw samples from bin
+        if(bin_size <= 0) return;
         for(int j = 0; j < std::min(num_samples_, bin_size); j++){
             idx[j] = std::rand() % bin_size;
         }
