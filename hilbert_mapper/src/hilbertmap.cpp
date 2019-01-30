@@ -43,15 +43,12 @@ void hilbertmap::updateWeights(){
         for(int j = 0; j < std::min(num_samples_, bin_size); j++){
             idx[j] = std::rand() % bin_size;
         }
-
         //TODO: Study the effect of A_
-            Eigen::VectorXd prev_weights = weights_;
-            weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
+        Eigen::VectorXd prev_weights = weights_;
+        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
     }
 
     time_sgd_ = (ros::Time::now() - start_time).toSec();
-    printf("ConvergenceTime: %6f\n", time_sgd_);
-
 }
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){

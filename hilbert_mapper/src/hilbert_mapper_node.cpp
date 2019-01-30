@@ -11,7 +11,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
   hilbertMap_(hilbertmap(1000)),
   index_pointcloud(0){
 
-    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
+    cmdloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
@@ -19,6 +19,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
+    mavtransformSub_ = nh_.subscribe("/vicon/firefly_sbx/firefly_sbx", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
     poseSub_ = nh_.subscribe("/firefly/odometry_sensor1/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
 
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
@@ -45,8 +46,8 @@ hilbertMapper::~hilbertMapper() {
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
     // TODO: Update hilbertmap from bin (Stochastic gradient descent)
+    hilbertMap_.setMapCenter(mavPos_);
     hilbertMap_.updateWeights();
-
     ros::spinOnce();
 }
 
@@ -54,12 +55,21 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
 
     //Reset Map center
-//    hilbertMap_.setMapCenter(mavPos_);
-
     //Pulbish map status related information
     if(publish_mapinfo_) publishMapInfo();
     if(publish_hilbertmap_) publishMap();
     if(publish_gridmap_) publishgridMap();
+
+}
+
+void hilbertMapper::mavtransformCallback(const geometry_msgs::TransformStamped& msg){
+    mavPos_(0) = msg.transform.translation.x;
+    mavPos_(1) = msg.transform.translation.y;
+    mavPos_(2) = msg.transform.translation.z;
+    mavAtt_(0) = msg.transform.rotation.w;
+    mavAtt_(1) = msg.transform.rotation.x;
+    mavAtt_(2) = msg.transform.rotation.y;
+    mavAtt_(3) = msg.transform.rotation.z;
 
 }
 
