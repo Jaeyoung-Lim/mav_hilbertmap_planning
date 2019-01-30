@@ -16,9 +16,8 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>hilbert_mapper</build_depend>
   <build_depend>hilbert_msgs</build_depend>
-  <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>hilbert_mapper</run_depend>
-  <run_depend>hilbert_msgs</run_depend>
+  <build_depend>hilbert_loco_planner</build_depend>
+  <build_depend>mav_hilbert_navigator</build_depend>
 
   <export>
     <metapackage/>
