@@ -15,15 +15,10 @@ hilbertmap::hilbertmap(int num_features):
     width_(1.0),
     resolution_(0.1) {
 
-    int obs_size = 10;
-    Eigen::Vector3d mesh_obs;
-    Eigen::Vector3d init_mapcenter;
-
-    init_mapcenter << 0.0, 0.0, 0.0;
-
-    generateGridPoints(anchorpoints_, init_mapcenter, width_, width_, width_, resolution_);
-
     map_center_ = Eigen::Vector3d::Zero();
+
+    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
+
 
 }
 hilbertmap::~hilbertmap() {
@@ -49,7 +44,6 @@ void hilbertmap::updateWeights(){
         Eigen::VectorXd prev_weights = weights_;
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
     }
-
     time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
