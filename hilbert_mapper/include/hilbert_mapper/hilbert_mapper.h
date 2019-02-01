@@ -52,8 +52,8 @@ class hilbertMapper
     int index_pointcloud;
     string frame_id_;
     double resolution_;
+    double width_;
     bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_;
-    float width_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);

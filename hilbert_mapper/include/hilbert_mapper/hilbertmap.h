@@ -42,7 +42,7 @@ public:
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
-        void setMapProperties(int num_samples, int num_features);
+        void setMapProperties(int num_samples, int num_features, double width, double resolution);
         void setMapCenter(Eigen::Vector3d map_center);
         void getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector);
         void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);

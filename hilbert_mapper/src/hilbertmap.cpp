@@ -83,7 +83,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     }
 }
 
-void hilbertmap::setMapProperties(int num_samples, int num_features){
+void hilbertmap::setMapProperties(int num_samples, int num_features, double width, double resolution){
 
     num_samples_ = num_samples;
     num_features_ = num_features;

@@ -25,19 +25,17 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
-    double width;
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "map");
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
-    nh_.param<double>("/hilbert_mapper/map/width", width, 1.0);
+    nh_.param<double>("/hilbert_mapper/map/width", width_, 1.0);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
-
 //    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
 
-//    hilbertMap_.setMapProperties(num_samples, num_features);
+    hilbertMap_.setMapProperties(num_samples, num_features, width_, resolution_);
 }
 hilbertMapper::~hilbertMapper() {
   //Destructor
