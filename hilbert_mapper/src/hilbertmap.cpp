@@ -83,10 +83,10 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     }
 }
 
-void hilbertmap::setMapProperties(int num_samples, int num_features, double width, double resolution){
+void hilbertmap::setMapProperties(int num_samples, double width, double resolution){
 
     num_samples_ = num_samples;
-    num_features_ = num_features;
+    num_features_ = int(width / resolution);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
 
@@ -189,6 +189,7 @@ double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
     start_time = ros::Time::now();
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
+
     probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
 
     time_query_ = (ros::Time::now() - start_time).toSec();

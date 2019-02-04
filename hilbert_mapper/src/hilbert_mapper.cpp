@@ -33,9 +33,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
-//    nh_.param<int>("/hilbert_mapper/num_anchorpoints", num_features, 10);
-
-    hilbertMap_.setMapProperties(num_samples, num_features, width_, resolution_);
+    hilbertMap_.setMapProperties(num_samples, width_, resolution_);
 }
 hilbertMapper::~hilbertMapper() {
   //Destructor
@@ -161,7 +159,7 @@ void hilbertMapper::publishgridMap(){
 
     nav_msgs::OccupancyGrid grid_map;
     int num_features;
-    double map_width, map_height;
+    double map_width, map_height; // Map width in m
     double map_resolution;
     std::vector<Eigen::Vector3d> x_grid;
     Eigen::Vector3d x_query, map_center;
@@ -189,8 +187,10 @@ void hilbertMapper::publishgridMap(){
     //Get Occupancy information from hilbertmaps
     for (unsigned int x = 0; x < grid_map.info.width; x++){
         for (unsigned int y = 0; y < grid_map.info.height; y++){
+            std::cout << "debug" << std::endl;
             x_query << x*grid_map.info.resolution - 0.5 * map_width, y*grid_map.info.resolution - 0.5 * map_width, 0.0*grid_map.info.resolution;
             grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
+            std::cout << "debug1" << std::endl;
         }
     }
 
