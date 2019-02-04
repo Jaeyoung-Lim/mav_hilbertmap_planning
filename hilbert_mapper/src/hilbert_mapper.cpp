@@ -18,9 +18,9 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
-    mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
+    mavposeSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     mavtransformSub_ = nh_.subscribe("/hilbert_mapper/map_center/mavtf", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
-    poseSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
+    poseSub_ = nh_.subscribe("/hilbert_mapper/map_center/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
 
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
@@ -70,6 +70,7 @@ void hilbertMapper::mavtransformCallback(const geometry_msgs::TransformStamped& 
 }
 
 void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
+
     mavPos_(0) = msg.pose.position.x;
     mavPos_(1) = msg.pose.position.y;
     mavPos_(2) = msg.pose.position.z;
@@ -77,7 +78,6 @@ void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
     mavAtt_(1) = msg.pose.orientation.x;
     mavAtt_(2) = msg.pose.orientation.y;
     mavAtt_(3) = msg.pose.orientation.z;
-
 }
 
 void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
@@ -93,11 +93,11 @@ void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
 
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     Eigen::Vector3d map_center;
     float map_width;
-
     pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
     // Crop PointCloud
@@ -105,17 +105,16 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     //TODO: Set reference for cropping point clouds
     map_center = hilbertMap_.getMapCenter();
     map_width = float(hilbertMap_.getMapWidth());
-    float minX = map_center(0) - map_width;
-    float minY = map_center(1) - map_width;
-    float minZ = map_center(2) - map_width;
-    float maxX = map_center(0) + map_width;
-    float maxY = map_center(1) + map_width;
-    float maxZ = map_center(2) + map_width;
+    float minX = float(map_center(0) - map_width);
+    float minY = float(map_center(1) - map_width);
+    float minZ = float(map_center(2) - map_width);
+    float maxX = float(map_center(0) + map_width);
+    float maxY = float(map_center(1) + map_width);
+    float maxZ = float(map_center(2) + map_width);
     boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, -1.0));
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
-
     hilbertMap_.appendBin(*cropped_ptcloud);
 }
 
@@ -187,10 +186,8 @@ void hilbertMapper::publishgridMap(){
     //Get Occupancy information from hilbertmaps
     for (unsigned int x = 0; x < grid_map.info.width; x++){
         for (unsigned int y = 0; y < grid_map.info.height; y++){
-            std::cout << "debug" << std::endl;
             x_query << x*grid_map.info.resolution - 0.5 * map_width, y*grid_map.info.resolution - 0.5 * map_width, 0.0*grid_map.info.resolution;
             grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
-            std::cout << "debug1" << std::endl;
         }
     }
 

@@ -39,9 +39,9 @@ void hilbertMapPublisher::pubMapCenter() {
     mapcenterpose_msg.pose.position.y = mapcenter_(1);
     mapcenterpose_msg.pose.position.z = mapcenter_(2);
     mapcenterpose_msg.pose.orientation.w = 1.0;
-    mapcenterpose_msg.pose.orientation.w = 0.0;
-    mapcenterpose_msg.pose.orientation.w = 0.0;
-    mapcenterpose_msg.pose.orientation.w = 0.0;
+    mapcenterpose_msg.pose.orientation.x = 0.0;
+    mapcenterpose_msg.pose.orientation.y = 0.0;
+    mapcenterpose_msg.pose.orientation.z = 0.0;
 
     mapcenterPub_.publish(mapcenterpose_msg);
 }

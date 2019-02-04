@@ -43,6 +43,7 @@ void hilbertmap::updateWeights(){
         //TODO: Study the effect of A_
         Eigen::VectorXd prev_weights = weights_;
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
+//        std::cout << weights_.size() << "/"<< eta_ <<"/" <<A_.size() << "/"<<(getNegativeLikelyhood(idx)).size()<<"/"<<std::endl;
     }
     time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
@@ -58,9 +59,9 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
 
     for(int i = 0; i < sizeof(index)/sizeof(index[0]); i++){
         int j = index[i];
-        query << bin_[j].x, bin_[j].y, bin_[j].z;
+        query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(double(bin_[j].intensity) * weights_.dot(phi_x)));
     }
     return nll;
 }
@@ -72,7 +73,6 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
-
         //TODO: Should we handle duplicate points?
         if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
         else bin_.emplace_back(pcl::PointXYZI(1.0f));
@@ -87,6 +87,7 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
 
     num_samples_ = num_samples;
     num_features_ = int(width / resolution);
+    A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
 
