@@ -19,10 +19,10 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
     mavposeSub_ = nh_.subscribe("/mavros/local_position/pose", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
-    mavtransformSub_ = nh_.subscribe("/vicon/firefly_sbx/firefly_sbx", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
-    poseSub_ = nh_.subscribe("/firefly/odometry_sensor1/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
+    mavtransformSub_ = nh_.subscribe("/hilbert_mapper/map_center/mavtf", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
+    poseSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
 
-    pointcloudSub_ = nh_.subscribe("/voxblox_node/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
 
