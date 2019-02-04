@@ -13,6 +13,8 @@ hilbertMapPublisher::hilbertMapPublisher(const ros::NodeHandle& nh, const ros::N
     mapcenterPub_ = nh_.advertise<geometry_msgs::PoseStamped>("/mappublisher/pose", 1);
     pointcloudPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/mappublisher/pointcloud", 2);
 
+    nh_.param<int>("/hilbert_mappublisher/width", map_width_, 10);
+    nh_.param<double>("/hilbert_mappublisher/resolution", map_resolution_, 0.1);
 }
 
 hilbertMapPublisher::~hilbertMapPublisher() {
@@ -48,21 +50,24 @@ void hilbertMapPublisher::pubPointCloud(){
 
     sensor_msgs::PointCloud2 pointcloud_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
-    pcl::PointXYZI point;
-
     //Encode pointcloud data
-    point.x = 1024 * rand () / (RAND_MAX + 1.0f);
-    point.y = 1024 * rand () / (RAND_MAX + 1.0f);
-    point.z = 1.0;
+    for(int i = 0; i < map_width_; i ++) {
+        for (int j = 0; j < map_width_; j++) {
+            for (int k = 0; k < map_width_; k++) {
+                pcl::PointXYZI point;
 
-    pointCloud.points.push_back(point);
+                point.x = i * map_resolution_ - 0.5 * map_width_ * map_resolution_;
+                point.y = j * map_resolution_ - 0.5 * map_width_ * map_resolution_;
+                point.z = k * map_resolution_ - 0.5 * map_width_ * map_resolution_;
+                point.intensity = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z)/(map_width_*map_resolution_);
 
+                pointCloud.points.push_back(point);
+            }
+        }
+    }
     pcl::toROSMsg(pointCloud, pointcloud_msg);
 
     pointcloud_msg.header.stamp = ros::Time::now();
     pointcloud_msg.header.frame_id = "world";
-    
-
     pointcloudPub_.publish(pointcloud_msg);
-
 }

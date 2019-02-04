@@ -26,6 +26,9 @@ class hilbertMapPublisher
 
     Eigen::Vector3d mapcenter_;
 
+    int map_width_;
+    double map_resolution_;
+
     void cmdloopCallback(const ros::TimerEvent& event);
     void pubMapCenter();
     void pubPointCloud();
