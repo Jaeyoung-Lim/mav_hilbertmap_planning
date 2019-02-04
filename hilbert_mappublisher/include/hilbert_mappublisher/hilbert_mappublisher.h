@@ -1,11 +1,17 @@
-//  July/2018, ETHZ, Jaeyoung Lim, jalim@student.ethz.ch
+//  Jan/2019, ETHZ, Jaeyoung Lim, jalim@ethz.ch
 
 #ifndef HILBERT_MAPPUBLISHER_H
 #define HILBERT_MAPPUBLISHER_H
 
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
 #include <Eigen/Dense>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/PCLPointCloud2.h>
 
 
 class hilbertMapPublisher
@@ -15,14 +21,14 @@ class hilbertMapPublisher
     ros::NodeHandle nh_private_;
 
     ros::Timer cmdloop_timer_;
-    ros::Publisher mapcenter_pub_;
+    ros::Publisher mapcenterPub_;
+    ros::Publisher pointcloudPub_;
 
     Eigen::Vector3d mapcenter_;
 
-
-
     void cmdloopCallback(const ros::TimerEvent& event);
     void pubMapCenter();
+    void pubPointCloud();
 
 public:
     hilbertMapPublisher(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
