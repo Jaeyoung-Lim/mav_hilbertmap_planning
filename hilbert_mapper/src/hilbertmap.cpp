@@ -6,7 +6,7 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    num_samples_(10),
+    num_samples_(30),
     max_iterations_(100),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
@@ -28,8 +28,11 @@ hilbertmap::~hilbertmap() {
 void hilbertmap::updateWeights(){
 
     std::srand(std::time(nullptr));
-    int idx[num_samples_];
-    int bin_size = bin_.size();
+    std::vector<int> idx;
+    int bin_size;
+
+    idx.resize(num_samples_);
+    bin_size = bin_.size();
     ros::Time start_time;
 
     start_time = ros::Time::now();
@@ -37,9 +40,7 @@ void hilbertmap::updateWeights(){
     for(int i = 0; i < max_iterations_; i ++){
         //Draw samples from bin
         if(bin_size <= 0) return;
-        for(int j = 0; j < std::min(num_samples_, bin_size); j++){
-            idx[j] = std::rand() % bin_size;
-        }
+        for(int j = 0; j < num_samples_; j++)   idx[j] = std::rand() % bin_size;
         //TODO: Study the effect of A_
         Eigen::VectorXd prev_weights = weights_;
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
@@ -47,7 +48,7 @@ void hilbertmap::updateWeights(){
     time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
-Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
+Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
 
     Eigen::VectorXd nll;
     Eigen::VectorXd phi_x;
@@ -57,16 +58,11 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
     nll = Eigen::VectorXd::Zero(num_features_);
     phi_x = Eigen::VectorXd::Zero(num_features_);
 
-    for(int i = 0; i < sizeof(index)/sizeof(index[0]); i++){
+    for(int i = 0; i < index.size(); i++){
         int j = index[i];
         query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        if(bin_[j].intensity > 0.3){
-            label = 1.0;
-        }else{
-            label = -1.0;
-        }
-        nll =  nll - phi_x * label / ( 1 + exp(label * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
     }
     return nll;
 }
@@ -79,8 +75,8 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        else bin_.emplace_back(pcl::PointXYZI(ptcloud[idx].intensity));
+        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(-1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(1.0f));
 
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
@@ -88,13 +84,15 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     }
 }
 
-void hilbertmap::setMapProperties(int num_samples, double width, double resolution){
+void hilbertmap::setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold){
 
     num_samples_ = num_samples;
-    num_features_ = int(width / resolution);
+    num_features_ = std::pow(int(width / resolution), 3);
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
+
+    tsdf_threshold_ = tsdf_threshold;
 
 }
 
@@ -109,7 +107,12 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
 void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
     for(int i = 0; i < kernel_vector.size(); i++){
-        kernel_vector(i) = kernel(x_query, anchorpoints_[i]);
+        double kernel, r;
+
+        r = (x_query - anchorpoints_[i]).norm();
+        kernel = exp(-0.5 * pow(r/sigma_, 2));
+
+        kernel_vector(i) = kernel;
     }
 }
 
@@ -132,15 +135,6 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
         }
     }
 
-}
-
-double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
-    double kernel, r;
-
-    r = (x - x_hat).norm();
-    kernel = exp(-0.5 * pow(r/sigma_, 2));
-
-    return kernel;
 }
 
 Eigen::VectorXd hilbertmap::getWeights(){
@@ -182,6 +176,10 @@ Eigen::Vector3d hilbertmap::getFeature(int idx){
     feature = anchorpoints_[idx];
 
     return feature;
+}
+
+pcl::PointXYZI hilbertmap::getbinPoint(int idx){
+    return bin_[idx];
 }
 
 double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
