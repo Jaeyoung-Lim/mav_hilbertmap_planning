@@ -41,6 +41,7 @@ class hilbertMapper
     ros::Publisher mapinfoPub_;
     ros::Publisher hilbertmapPub_;
     ros::Publisher gridmapPub_;
+    ros::Publisher anchorPub_;
     ros::Subscriber mavposeSub_;
     ros::Subscriber mavtransformSub_;
     ros::Subscriber poseSub_;
@@ -53,7 +54,7 @@ class hilbertMapper
     string frame_id_;
     double resolution_;
     double width_;
-    bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_;
+    bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
@@ -65,6 +66,7 @@ class hilbertMapper
     void publishMapInfo();
     void publishMap();
     void publishgridMap();
+    void publishAnchorPoints();
 
 
 public:

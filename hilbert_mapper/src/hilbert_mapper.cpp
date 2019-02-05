@@ -16,6 +16,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
     hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
+    anchorPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/anchorpoints", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
     mavposeSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
@@ -33,6 +34,8 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
+
     hilbertMap_.setMapProperties(num_samples, width_, resolution_);
 }
 hilbertMapper::~hilbertMapper() {
@@ -55,6 +58,7 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     if(publish_mapinfo_) publishMapInfo();
     if(publish_hilbertmap_) publishMap();
     if(publish_gridmap_) publishgridMap();
+    if(publish_anchorpoints_) publishAnchorPoints();
 
 }
 
@@ -200,4 +204,30 @@ void hilbertMapper::publishgridMap(){
         }
     }
     gridmapPub_.publish(grid_map);
+}
+
+void hilbertMapper::publishAnchorPoints() {
+
+    sensor_msgs::PointCloud2 anchorpoint_msg;
+    pcl::PointCloud<pcl::PointXYZ> pointCloud;
+    Eigen::Vector3d x_feature, origin;
+
+    //Encode pointcloud data
+    int width_cells = int(width_ / resolution_);
+
+    for(int i = 0; i < hilbertMap_.getNumFeatures(); i ++) {
+        pcl::PointXYZ point;
+        x_feature = hilbertMap_.getFeature(i);
+        point.x = x_feature(0);
+        point.y = x_feature(1);
+        point.z = x_feature(2);
+
+        pointCloud.points.push_back(point);
+    }
+    pcl::toROSMsg(pointCloud, anchorpoint_msg);
+
+    anchorpoint_msg.header.stamp = ros::Time::now();
+    anchorpoint_msg.header.frame_id = frame_id_;
+
+    anchorPub_.publish(anchorpoint_msg);
 }
