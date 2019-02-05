@@ -7,7 +7,7 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(30),
-    max_iterations_(100),
+    max_iterations_(30),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
