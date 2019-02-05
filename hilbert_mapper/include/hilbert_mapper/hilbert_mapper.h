@@ -54,6 +54,7 @@ class hilbertMapper
     string frame_id_;
     double resolution_;
     double width_;
+    float tsdf_threshold_;
     bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_;
 
     void cmdloopCallback(const ros::TimerEvent& event);

@@ -5,7 +5,7 @@
     <remap from="/mappublisher/pointcloud" to="/hilbert_mapper/tsdf_pointcloud"/>
 
     <node name="hilbert_mappublisher" pkg="hilbert_mappublisher" type="hilbert_mappublisher" output="screen">
-        <param name="width" type="int" value="10" />
+        <param name="width" type="int" value="1" />
         <param name="resolution" type="double" value="0.1" />
     </node>
 </launch>

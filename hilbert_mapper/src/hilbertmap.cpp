@@ -32,7 +32,6 @@ void hilbertmap::updateWeights(){
     int bin_size;
 
     idx.resize(num_samples_);
-//    std::cout << idx.size() << std::endl;
     bin_size = bin_.size();
     ros::Time start_time;
 
@@ -76,7 +75,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < 0.5) bin_.emplace_back(pcl::PointXYZI(-1.0f));
+        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(-1.0f));
         else bin_.emplace_back(pcl::PointXYZI(ptcloud[idx].intensity));
 
         bin_.back().x = ptcloud[idx].x;
@@ -85,13 +84,15 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     }
 }
 
-void hilbertmap::setMapProperties(int num_samples, double width, double resolution){
+void hilbertmap::setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold){
 
     num_samples_ = num_samples;
     num_features_ = int(width / resolution);
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
+
+    tsdf_threshold_ = tsdf_threshold;
 
 }
 

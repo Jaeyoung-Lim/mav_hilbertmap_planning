@@ -25,6 +25,7 @@ class hilbertmap
         double time_query_; // Time for querying a single time
         double time_sgd_; // Convergence time for stochastic gradient descent
         double sigma_; // Covariance for RBF Kernel
+        float tsdf_threshold_;
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
@@ -41,7 +42,7 @@ public:
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
-        void setMapProperties(int num_samples, double width, double resolution);
+        void setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
         void getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector);
         void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
