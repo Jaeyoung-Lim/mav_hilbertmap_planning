@@ -6,7 +6,7 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    num_samples_(10),
+    num_samples_(30),
     max_iterations_(100),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
@@ -28,8 +28,12 @@ hilbertmap::~hilbertmap() {
 void hilbertmap::updateWeights(){
 
     std::srand(std::time(nullptr));
-    int idx[num_samples_];
-    int bin_size = bin_.size();
+    std::vector<int> idx;
+    int bin_size;
+
+    idx.resize(num_samples_);
+//    std::cout << idx.size() << std::endl;
+    bin_size = bin_.size();
     ros::Time start_time;
 
     start_time = ros::Time::now();
@@ -37,9 +41,7 @@ void hilbertmap::updateWeights(){
     for(int i = 0; i < max_iterations_; i ++){
         //Draw samples from bin
         if(bin_size <= 0) return;
-        for(int j = 0; j < std::min(num_samples_, bin_size); j++){
-            idx[j] = std::rand() % bin_size;
-        }
+        for(int j = 0; j < num_samples_; j++)   idx[j] = std::rand() % bin_size;
         //TODO: Study the effect of A_
         Eigen::VectorXd prev_weights = weights_;
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
@@ -47,7 +49,7 @@ void hilbertmap::updateWeights(){
     time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
-Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
+Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
 
     Eigen::VectorXd nll;
     Eigen::VectorXd phi_x;
@@ -57,16 +59,11 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
     nll = Eigen::VectorXd::Zero(num_features_);
     phi_x = Eigen::VectorXd::Zero(num_features_);
 
-    for(int i = 0; i < sizeof(index)/sizeof(index[0]); i++){
+    for(int i = 0; i < index.size(); i++){
         int j = index[i];
         query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        if(bin_[j].intensity > 0.3){
-            label = 1.0;
-        }else{
-            label = -1.0;
-        }
-        nll =  nll - phi_x * label / ( 1 + exp(label * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
     }
     return nll;
 }
@@ -79,7 +76,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
+        if(ptcloud[idx].intensity < 0.5) bin_.emplace_back(pcl::PointXYZI(-1.0f));
         else bin_.emplace_back(pcl::PointXYZI(ptcloud[idx].intensity));
 
         bin_.back().x = ptcloud[idx].x;

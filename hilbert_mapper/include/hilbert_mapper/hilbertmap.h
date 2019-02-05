@@ -34,7 +34,7 @@ class hilbertmap
         std::vector<pcl::PointXYZI> bin_;
 
         double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
-        Eigen::VectorXd getNegativeLikelyhood(int *index);
+        Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
 
 public:
         hilbertmap(int num_feature);
