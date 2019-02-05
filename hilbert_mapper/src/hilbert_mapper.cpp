@@ -8,7 +8,8 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  index_pointcloud(0){
+  index_pointcloud(0),
+  tsdf_server_(nh, nh_private) {
 
     hilbertMap_.reset(new hilbertmap(1000));
 

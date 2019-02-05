@@ -27,6 +27,8 @@
 
 #include "hilbert_mapper/hilbertmap.h"
 
+#include <voxblox_ros/tsdf_server.h>
+
 using namespace std;
 using namespace Eigen;
 
@@ -57,6 +59,8 @@ class hilbertMapper
     double width_;
     float tsdf_threshold_;
     bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_, publish_binpoints_;
+
+    voxblox::TsdfServer tsdf_server_; //Subscribe tsdf
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
