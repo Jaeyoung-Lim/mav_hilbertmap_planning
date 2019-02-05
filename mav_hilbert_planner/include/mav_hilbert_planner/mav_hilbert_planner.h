@@ -23,7 +23,7 @@
 #include <mav_visualization/helpers.h>
 #include <minkindr_conversions/kindr_msg.h>
 #include <hilbert_loco_planner/hilbert_loco_planner.h>
-#include <voxblox_ros/esdf_server.h>
+#include <voxblox_ros/tsdf_server.h>
 
 namespace mav_planning {
 
@@ -167,6 +167,7 @@ class MavHilbertPlanner {
 
   // Map!
   hilbertMapper hilbert_mapper_;
+  voxblox::TsdfServer tsdf_server_;
 
   // Planners -- yaw policy
   YawPolicy yaw_policy_;

@@ -26,6 +26,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       max_failures_(5),
       num_failures_(0),
       hilbert_mapper_(nh_, nh_private_),
+      tsdf_server_(nh_, nh_private_),
       loco_planner_(nh_, nh_private_) {
   // Set up some settings.
   constraints_.setParametersFromRos(nh_private_);
