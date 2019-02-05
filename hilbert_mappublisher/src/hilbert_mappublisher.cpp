@@ -13,8 +13,8 @@ hilbertMapPublisher::hilbertMapPublisher(const ros::NodeHandle& nh, const ros::N
     mapcenterPub_ = nh_.advertise<geometry_msgs::PoseStamped>("/mappublisher/pose", 1);
     pointcloudPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/mappublisher/pointcloud", 2);
 
-    nh_.param<int>("/hilbert_mappublisher/width", map_width_, 10);
-    nh_.param<double>("/hilbert_mappublisher/resolution", map_resolution_, 0.1);
+    nh_.param<int>("/hilbert_mappublisher/width", map_width_, 1); //[m]
+    nh_.param<double>("/hilbert_mappublisher/resolution", map_resolution_, 0.1); //[m/cells]
 }
 
 hilbertMapPublisher::~hilbertMapPublisher() {
@@ -50,16 +50,21 @@ void hilbertMapPublisher::pubPointCloud(){
 
     sensor_msgs::PointCloud2 pointcloud_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
+    int cellmap_width;
+    Eigen::Vector3d origin;
+    origin << 0.5 * map_width_, 0.5 * map_width_, 0.5 * map_width_;
+
+    cellmap_width = int(map_width_ / map_resolution_);
     //Encode pointcloud data
-    for(int i = 0; i < map_width_; i ++) {
-        for (int j = 0; j < map_width_; j++) {
-            for (int k = 0; k < map_width_; k++) {
+    for(int i = 0; i < cellmap_width; i ++) {
+        for (int j = 0; j < cellmap_width; j++) {
+            for (int k = 0; k < cellmap_width; k++) {
                 pcl::PointXYZI point;
 
-                point.x = i * map_resolution_ - 0.5 * map_width_ * map_resolution_;
-                point.y = j * map_resolution_ - 0.5 * map_width_ * map_resolution_;
-                point.z = k * map_resolution_ - 0.5 * map_width_ * map_resolution_;
-                point.intensity = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z)/(map_width_*map_resolution_);
+                point.x = i * map_resolution_ - origin(0);
+                point.y = j * map_resolution_ - origin(1);
+                point.z = k * map_resolution_ - origin(2);
+                point.intensity = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z)/map_width_;
 
                 pointCloud.points.push_back(point);
             }
