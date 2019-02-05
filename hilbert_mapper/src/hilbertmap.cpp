@@ -7,7 +7,7 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(30),
-    max_iterations_(100),
+    max_iterations_(30),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
@@ -106,14 +106,20 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 }
 
 void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
-    for(int i = 0; i < kernel_vector.size(); i++){
-        double kernel, r;
+// TODO: Vecotrized calculation is slower
 
-        r = (x_query - anchorpoints_[i]).norm();
-        kernel = exp(-0.5 * pow(r/sigma_, 2));
+//    Eigen::VectorXd r;
+//    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+//    for(int i; i < anchorpoints_.size(); i++){
+//        anchorpoints.col(i) = anchorpoints_[i];
+//    }
+//    r = (anchorpoints.colwise()-=x_query).colwise().squaredNorm();
+//    kernel_vector = (-0.5 * ( (1/sigma_) *r.array() ).pow(2)).exp().matrix();
+    double kernel, r;
 
-        kernel_vector(i) = kernel;
-    }
+    for(int i = 0; i < kernel_vector.size(); i++)
+        kernel_vector(i) = exp(-0.5 * pow((x_query - anchorpoints_[i]).norm()/sigma_, 2));
+
 }
 
 void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution){
