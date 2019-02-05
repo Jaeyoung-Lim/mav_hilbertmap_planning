@@ -106,8 +106,18 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 }
 
 void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
+// TODO: Vecotrized calculation is slower
+
+//    Eigen::VectorXd r;
+//    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+//    for(int i; i < anchorpoints_.size(); i++){
+//        anchorpoints.col(i) = anchorpoints_[i];
+//    }
+//    r = (anchorpoints.colwise()-=x_query).colwise().squaredNorm();
+//    kernel_vector = (-0.5 * ( (1/sigma_) *r.array() ).pow(2)).exp().matrix();
+ double kernel, r;
+
     for(int i = 0; i < kernel_vector.size(); i++){
-        double kernel, r;
 
         r = (x_query - anchorpoints_[i]).norm();
         kernel = exp(-0.5 * pow(r/sigma_, 2));
