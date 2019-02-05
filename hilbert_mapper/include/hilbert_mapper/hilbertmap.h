@@ -34,7 +34,6 @@ class hilbertmap
         std::vector<Eigen::Vector3d> anchorpoints_;
         std::vector<pcl::PointXYZI> bin_;
 
-        double kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat);
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
 
 public:
@@ -57,6 +56,7 @@ public:
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();
+        pcl::PointXYZI getbinPoint(int idx);
 
 };
 

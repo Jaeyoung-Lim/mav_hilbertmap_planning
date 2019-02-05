@@ -76,7 +76,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
         if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        else bin_.emplace_back(pcl::PointXYZI(ptcloud[idx].intensity));
+        else bin_.emplace_back(pcl::PointXYZI(1.0f));
 
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
@@ -87,7 +87,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 void hilbertmap::setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold){
 
     num_samples_ = num_samples;
-    num_features_ = int(width / resolution);
+    num_features_ = std::pow(int(width / resolution), 3);
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
@@ -107,7 +107,12 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
 void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
     for(int i = 0; i < kernel_vector.size(); i++){
-        kernel_vector(i) = kernel(x_query, anchorpoints_[i]);
+        double kernel, r;
+
+        r = (x_query - anchorpoints_[i]).norm();
+        kernel = exp(-0.5 * pow(r/sigma_, 2));
+
+        kernel_vector(i) = kernel;
     }
 }
 
@@ -130,15 +135,6 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
         }
     }
 
-}
-
-double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
-    double kernel, r;
-
-    r = (x - x_hat).norm();
-    kernel = exp(-0.5 * pow(r/sigma_, 2));
-
-    return kernel;
 }
 
 Eigen::VectorXd hilbertmap::getWeights(){
@@ -180,6 +176,10 @@ Eigen::Vector3d hilbertmap::getFeature(int idx){
     feature = anchorpoints_[idx];
 
     return feature;
+}
+
+pcl::PointXYZI hilbertmap::getbinPoint(int idx){
+    return bin_[idx];
 }
 
 double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){

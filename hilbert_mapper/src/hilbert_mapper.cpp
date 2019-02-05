@@ -17,7 +17,9 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
     hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
     anchorPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/anchorpoints", 1);
+    binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
+
 
     mavposeSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
     mavtransformSub_ = nh_.subscribe("/hilbert_mapper/map_center/mavtf", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
@@ -36,6 +38,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
 
     hilbertMap_.setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
 }
@@ -59,6 +62,7 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     if(publish_hilbertmap_) publishMap();
     if(publish_gridmap_) publishgridMap();
     if(publish_anchorpoints_) publishAnchorPoints();
+    if(publish_binpoints_) publishBinPoints();
 
 }
 
@@ -232,4 +236,22 @@ void hilbertMapper::publishAnchorPoints() {
     anchorpoint_msg.header.frame_id = frame_id_;
 
     anchorPub_.publish(anchorpoint_msg);
+}
+
+void hilbertMapper::publishBinPoints() {
+
+    sensor_msgs::PointCloud2 binpoint_msg;
+    pcl::PointCloud<pcl::PointXYZI> pointCloud;
+
+    for(int i = 0; i < hilbertMap_.getBinSize(); i ++) {
+        pcl::PointXYZI point;
+        point = hilbertMap_.getbinPoint(i);
+        pointCloud.points.push_back(point);
+    }
+    pcl::toROSMsg(pointCloud, binpoint_msg);
+
+    binpoint_msg.header.stamp = ros::Time::now();
+    binpoint_msg.header.frame_id = frame_id_;
+
+    binPub_.publish(binpoint_msg);
 }
