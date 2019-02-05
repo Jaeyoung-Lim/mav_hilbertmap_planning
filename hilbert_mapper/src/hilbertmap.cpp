@@ -115,15 +115,11 @@ void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kerne
 //    }
 //    r = (anchorpoints.colwise()-=x_query).colwise().squaredNorm();
 //    kernel_vector = (-0.5 * ( (1/sigma_) *r.array() ).pow(2)).exp().matrix();
- double kernel, r;
+    double kernel, r;
 
-    for(int i = 0; i < kernel_vector.size(); i++){
+    for(int i = 0; i < kernel_vector.size(); i++)
+        kernel_vector(i) = exp(-0.5 * pow((x_query - anchorpoints_[i]).norm()/sigma_, 2));
 
-        r = (x_query - anchorpoints_[i]).norm();
-        kernel = exp(-0.5 * pow(r/sigma_, 2));
-
-        kernel_vector(i) = kernel;
-    }
 }
 
 void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution){
