@@ -27,7 +27,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     int num_samples, num_features;
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
-    nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "map");
+    nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
     nh_.param<double>("/hilbert_mapper/map/width", width_, 1.0);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
@@ -100,9 +100,8 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     float map_width;
     pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
-    // Crop PointCloud
+    // Crop PointCloud around map center
     pcl::CropBox<pcl::PointXYZI> boxfilter;
-    //TODO: Set reference for cropping point clouds
     map_center = hilbertMap_.getMapCenter();
     map_width = float(hilbertMap_.getMapWidth());
     float minX = float(map_center(0) - map_width);
@@ -133,25 +132,37 @@ void hilbertMapper::publishMapInfo(){
 
 void hilbertMapper::publishMap(){
 
-    sensor_msgs::PointCloud2 hilbert_map;
+    sensor_msgs::PointCloud2 hilbert_map_msg;
+    pcl::PointCloud<pcl::PointXYZI> pointCloud;
+    Eigen::Vector3d x_query, origin;
 
-    int num_features;
-    Eigen::Vector3d x_query;
+    //Encode pointcloud data
+    int width_cells = int(width_ / resolution_);
+    origin << 0.5 * width_, 0.5 * width_, 0.0 * width_;
 
+    for(int i = 0; i < width_cells; i ++) {
+        for (int j = 0; j < width_cells; j++) {
+            for (int k = 0; k < width_cells; k++) {
+                pcl::PointXYZI point;
+                double occ_prob;
+                x_query << i * resolution_, j * resolution_ , k * resolution_;
+                x_query = x_query - origin;
 
-    hilbert_map.header.stamp = ros::Time::now();
-    hilbert_map.header.frame_id = frame_id_;
+                point.x = x_query(0);
+                point.y = x_query(1);
+                point.z = x_query(2);
+                point.intensity = hilbertMap_.getOccupancyProb(x_query);
 
-    num_features = hilbertMap_.getNumFeatures();
+                pointCloud.points.push_back(point);
+            }
+        }
+    }
+    pcl::toROSMsg(pointCloud, hilbert_map_msg);
 
-//    for(int i = 0; i < num_features; i++){
-//        x_query = hilbertMap_.getFeature(i);
-//        //Get Occupancy information from hilbertmaps
-//        hilbert_map.data[i] = int(hilbertMap_.getOccupancyProb(x_query));
-//    }
-//    pcl::toROSMsg();
-//
-    hilbertmapPub_.publish(hilbert_map);
+    hilbert_map_msg.header.stamp = ros::Time::now();
+    hilbert_map_msg.header.frame_id = frame_id_;
+
+    hilbertmapPub_.publish(hilbert_map_msg);
 }
 
 void hilbertMapper::publishgridMap(){
@@ -163,20 +174,18 @@ void hilbertMapper::publishgridMap(){
     std::vector<Eigen::Vector3d> x_grid;
     Eigen::Vector3d x_query, map_center;
 
-    double resolution = 0.1; // [m / cells]
-
     map_center = hilbertMap_.getMapCenter();
-    map_width = hilbertMap_.getMapWidth();
+    map_width = hilbertMap_.getMapWidth(); // [m]
     map_resolution = hilbertMap_.getMapResolution();
 
     //Publish hilbertmap at anchorpoints through grid
     grid_map.header.stamp = ros::Time::now();
     grid_map.header.frame_id = frame_id_;
-    grid_map.info.height = int(map_width / resolution);
-    grid_map.info.width = int(map_width / resolution);
-    grid_map.info.resolution = map_resolution;
-    grid_map.info.origin.position.x = map_center(0);
-    grid_map.info.origin.position.y = map_center(1);
+    grid_map.info.height = int(map_width / map_resolution); // [cells]
+    grid_map.info.width = int(map_width / map_resolution); // [cells]
+    grid_map.info.resolution = map_resolution; // [m/cell]
+    grid_map.info.origin.position.x = map_center(0) - 0.5 * map_width; //origin is the position of cell(0, 0) in the map
+    grid_map.info.origin.position.y = map_center(1)- 0.5 * map_width;
     grid_map.info.origin.position.z = map_center(2);
     grid_map.info.origin.orientation.x = 0.0;
     grid_map.info.origin.orientation.y = 0.0;
@@ -187,9 +196,8 @@ void hilbertMapper::publishgridMap(){
     for (unsigned int x = 0; x < grid_map.info.width; x++){
         for (unsigned int y = 0; y < grid_map.info.height; y++){
             x_query << x*grid_map.info.resolution - 0.5 * map_width, y*grid_map.info.resolution - 0.5 * map_width, 0.0*grid_map.info.resolution;
-            grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query) * 100.0));
+            grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query)* 100.0));
         }
     }
-
     gridmapPub_.publish(grid_map);
 }

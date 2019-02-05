@@ -20,12 +20,11 @@ class hilbertmap
         int max_iterations_;
         int num_samples_;
         double eta_; //Learning Rate
-        double obs_resolution_;
-        double feature_resolution_;
         double width_;
         double resolution_;
         double time_query_; // Time for querying a single time
         double time_sgd_; // Convergence time for stochastic gradient descent
+        double sigma_; // Covariance for RBF Kernel
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;

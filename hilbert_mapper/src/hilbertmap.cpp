@@ -6,14 +6,14 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    obs_resolution_(1.0),
     num_samples_(10),
     max_iterations_(100),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
     width_(1.0),
-    resolution_(0.1) {
+    resolution_(0.1),
+    sigma_(0.1) {
 
     map_center_ = Eigen::Vector3d::Zero();
 
@@ -43,7 +43,6 @@ void hilbertmap::updateWeights(){
         //TODO: Study the effect of A_
         Eigen::VectorXd prev_weights = weights_;
         weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
-//        std::cout << weights_.size() << "/"<< eta_ <<"/" <<A_.size() << "/"<<(getNegativeLikelyhood(idx)).size()<<"/"<<std::endl;
     }
     time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
@@ -53,6 +52,7 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
     Eigen::VectorXd nll;
     Eigen::VectorXd phi_x;
     Eigen::Vector3d query;
+    double label;
 
     nll = Eigen::VectorXd::Zero(num_features_);
     phi_x = Eigen::VectorXd::Zero(num_features_);
@@ -61,7 +61,12 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(int *index){
         int j = index[i];
         query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(double(bin_[j].intensity) * weights_.dot(phi_x)));
+        if(bin_[j].intensity > 0.3){
+            label = 1.0;
+        }else{
+            label = -1.0;
+        }
+        nll =  nll - phi_x * label / ( 1 + exp(label * weights_.dot(phi_x)));
     }
     return nll;
 }
@@ -75,7 +80,7 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
         if(ptcloud[idx].intensity < 0.0) bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        else bin_.emplace_back(pcl::PointXYZI(1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(ptcloud[idx].intensity));
 
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
@@ -130,12 +135,10 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
 }
 
 double hilbertmap::kernel(Eigen::Vector3d x, Eigen::Vector3d x_hat){
-    double kernel;
-    double radius, r, sigma;
+    double kernel, r;
 
-    sigma = 1.0;
     r = (x - x_hat).norm();
-    kernel = exp(-0.5 * pow(r/sigma, 2));
+    kernel = exp(-0.5 * pow(r/sigma_, 2));
 
     return kernel;
 }
