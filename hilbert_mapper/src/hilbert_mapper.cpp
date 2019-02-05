@@ -44,7 +44,6 @@ hilbertMapper::~hilbertMapper() {
 
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
-    // TODO: Update hilbertmap from bin (Stochastic gradient descent)
     hilbertMap_.setMapCenter(mavPos_);
     hilbertMap_.updateWeights();
     ros::spinOnce();
@@ -142,7 +141,7 @@ void hilbertMapper::publishMap(){
 
     //Encode pointcloud data
     int width_cells = int(width_ / resolution_);
-    origin << 0.5 * width_, 0.5 * width_, 0.0 * width_;
+    origin << 0.5 * width_, 0.5 * width_, 0.5 * width_;
 
     for(int i = 0; i < width_cells; i ++) {
         for (int j = 0; j < width_cells; j++) {
@@ -176,11 +175,12 @@ void hilbertMapper::publishgridMap(){
     double map_width, map_height; // Map width in m
     double map_resolution;
     std::vector<Eigen::Vector3d> x_grid;
-    Eigen::Vector3d x_query, map_center;
+    Eigen::Vector3d x_query, map_center, gridmap_center;
 
     map_center = hilbertMap_.getMapCenter();
     map_width = hilbertMap_.getMapWidth(); // [m]
     map_resolution = hilbertMap_.getMapResolution();
+    gridmap_center << -0.5 * map_width, -0.5 * map_width, 0.0;
 
     //Publish hilbertmap at anchorpoints through grid
     grid_map.header.stamp = ros::Time::now();
@@ -188,9 +188,9 @@ void hilbertMapper::publishgridMap(){
     grid_map.info.height = int(map_width / map_resolution); // [cells]
     grid_map.info.width = int(map_width / map_resolution); // [cells]
     grid_map.info.resolution = map_resolution; // [m/cell]
-    grid_map.info.origin.position.x = map_center(0) - 0.5 * map_width; //origin is the position of cell(0, 0) in the map
-    grid_map.info.origin.position.y = map_center(1)- 0.5 * map_width;
-    grid_map.info.origin.position.z = map_center(2);
+    grid_map.info.origin.position.x = map_center(0) + gridmap_center(0); //origin is the position of cell(0, 0) in the map
+    grid_map.info.origin.position.y = map_center(1) + gridmap_center(1);
+    grid_map.info.origin.position.z = map_center(2) + gridmap_center(2);
     grid_map.info.origin.orientation.x = 0.0;
     grid_map.info.origin.orientation.y = 0.0;
     grid_map.info.origin.orientation.z = 0.0;
@@ -199,7 +199,8 @@ void hilbertMapper::publishgridMap(){
     //Get Occupancy information from hilbertmaps
     for (unsigned int x = 0; x < grid_map.info.width; x++){
         for (unsigned int y = 0; y < grid_map.info.height; y++){
-            x_query << x*grid_map.info.resolution - 0.5 * map_width, y*grid_map.info.resolution - 0.5 * map_width, 0.0*grid_map.info.resolution;
+            x_query << x * map_resolution, y * map_resolution, 0.0;
+            x_query = x_query - map_center + gridmap_center;
             grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query)* 100.0));
         }
     }
