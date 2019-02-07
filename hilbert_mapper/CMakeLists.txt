@@ -9,10 +9,20 @@ catkin_simple(ALL_DEPS_REQUIRED)
 add_definitions(-std=c++11)
 
 ############
+# LIBRARIES #
+############
+cs_add_library(${PROJECT_NAME}
+        src/hilbertmap.cpp
+        src/hilbert_mapper.cpp
+        )
+
+############
 # BINARIES #
 ############
-cs_add_executable(hilbert_mapper
-        src/hilbert_mapper_node.cpp src/hilbert_mapper.cpp src/hilbertmap.cpp
+cs_add_executable(hilbert_mapper_node
+        src/hilbert_mapper_node.cpp
         )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(hilbert_mapper_node ${PROJECT_NAME})
 ##########
+cs_install()
+cs_export()
