@@ -1,0 +1,35 @@
+<launch>
+    <arg name="robot_name" default="my_robot" />
+    <arg name="voxel_size" default="0.20" />
+    <arg name="voxels_per_side" default="16" />
+    <arg name="world_frame" default="world" />
+
+    <node name="hilbert_mappublisher" pkg="hilbert_mappublisher" type="hilbert_mappublisher" output="screen">
+        <param name="width" type="int" value="1" />
+        <param name="resolution" type="double" value="0.1" />
+    </node>
+
+
+    <node name="voxblox_node" pkg="voxblox_ros" type="tsdf_server" output="screen" args="-alsologtostderr" clear_params="true">
+      <remap from="pointcloud" to="/mappublisher/pointcloud"/>
+      <remap from="voxblox_node/tsdf_map_out" to="tsdf_map" />
+      <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
+      <param name="tsdf_voxels_per_side" value="$(arg voxels_per_side)" />
+      <param name="publish_tsdf_map" value="true" />
+      <param name="publish_pointclouds" value="true" />
+      <param name="use_tf_transforms" value="true" />
+      <param name="update_mesh_every_n_sec" value="1.0" />
+      <param name="clear_sphere_for_planning" value="true" />
+      <param name="world_frame" value="$(arg world_frame)" />
+    </node>
+
+    <node name="hilbert_mapper" pkg="hilbert_mapper" type="hilbert_mapper" output="screen">
+      <remap from="odometry" to="great_estimator/odometry" />
+      <remap from="hilbert_mapper/tsdf_map_in" to="tsdf_map" />
+      <remap from="/mappublisher/pose" to="/hilbert_mapper/map_center/posestamped"/>
+      <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
+      <param name="tsdf_voxels_per_side" value="$(arg voxels_per_side)" />
+      <param name="update_mesh_every_n_sec" value="0.0" />
+      <param name="world_frame" value="$(arg world_frame)" />
+    </node>
+</launch>
