@@ -60,6 +60,7 @@
   <build_depend>tf</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>voxblox_ros</build_depend>
+  <build_depend>hilbert_mapper</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

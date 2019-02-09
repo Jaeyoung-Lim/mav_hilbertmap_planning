@@ -19,6 +19,7 @@
 #include <voxblox/core/common.h>
 #include <voxblox/core/tsdf_map.h>
 #include <voxblox/utils/planning_utils.h>
+#include "hilbert_mapper/hilbert_mapper.h"
 
 using namespace std;
 
@@ -30,7 +31,7 @@ public:
     HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ HilbertLocoPlanner();
 
-    void setTsdfMap(const std::shared_ptr<voxblox::TsdfMap>& esdf_map);
+    void setHilbertMap();
 
     bool getTrajectoryTowardGoal(
             const mav_msgs::EigenTrajectoryPoint& start,
@@ -47,15 +48,16 @@ public:
             const mav_msgs::EigenTrajectoryPoint& start,
             const mav_msgs::EigenTrajectoryPoint& goal,
             mav_trajectory_generation::Trajectory* trajectory);
+
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
 
     // Callbacks to bind to loco.
-    double getMapDistance(const Eigen::Vector3d& position) const;
-    double getMapDistanceAndGradient(const Eigen::Vector3d& position,
+    double getOccProb(const Eigen::Vector3d& position) const;
+    double getOccProbAndGradient(const Eigen::Vector3d& position,
                                      Eigen::Vector3d* gradient) const;
-    double getMapDistanceAndGradientVector(const Eigen::VectorXd& position,
+    double getOccProbAndGradientVector(const Eigen::VectorXd& position,
                                            Eigen::VectorXd* gradient) const;
 
     // Evaluate what we've got here.
@@ -81,7 +83,8 @@ private:
     loco_planner::Loco<kN> loco_;
 
     // Map.
-    std::shared_ptr<voxblox::TsdfMap> tsdf_map_;
+    hilbertMapper hilbert_map_;
+//    std::shared_ptr<voxblox::TsdfMap> tsdf_map_;
 };
 
 #endif

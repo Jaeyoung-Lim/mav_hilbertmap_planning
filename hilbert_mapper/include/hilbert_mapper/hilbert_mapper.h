@@ -74,6 +74,7 @@ class hilbertMapper
 public:
     hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ hilbertMapper();
+    double voxel_size(){ return 0.5 * resolution_; };
 };
 
 #endif
