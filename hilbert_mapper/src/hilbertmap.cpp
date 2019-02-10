@@ -105,7 +105,7 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
 }
 
-void hilbertmap::getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector){
+void hilbertmap::getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const{
 // TODO: Vecotrized calculation is slower
 
 //    Eigen::VectorXd r;
@@ -188,19 +188,19 @@ pcl::PointXYZI hilbertmap::getbinPoint(int idx){
     return bin_[idx];
 }
 
-double hilbertmap::getOccupancyProb(Eigen::Vector3d &x_query){
+double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
     double probability;
     Eigen::VectorXd phi_x;
     ros::Time start_time;
 
-    start_time = ros::Time::now();
+//    start_time = ros::Time::now();
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
     probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
 
-    time_query_ = (ros::Time::now() - start_time).toSec();
+//    time_query_ = (ros::Time::now() - start_time).toSec();
 //    printf("QueryTime: %6f\n", time_query_);
 
     return probability;

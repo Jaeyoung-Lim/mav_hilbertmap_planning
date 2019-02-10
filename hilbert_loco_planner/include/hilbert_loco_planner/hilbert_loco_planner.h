@@ -55,10 +55,8 @@ private:
 
     // Callbacks to bind to loco.
     double getOccProb(const Eigen::Vector3d& position) const;
-    double getOccProbAndGradient(const Eigen::Vector3d& position,
-                                     Eigen::Vector3d* gradient) const;
-    double getOccProbAndGradientVector(const Eigen::VectorXd& position,
-                                           Eigen::VectorXd* gradient) const;
+    double getOccProbAndGradient(const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const;
+    double getOccProbAndGradientVector(const Eigen::VectorXd& position, Eigen::VectorXd* gradient) const;
 
     // Evaluate what we've got here.
     bool isPathCollisionFree(

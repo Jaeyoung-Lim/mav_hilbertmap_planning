@@ -58,3 +58,15 @@ bool HilbertLocoPlanner::getTrajectoryTowardGoal(const mav_msgs::EigenTrajectory
 
     return success;
 }
+
+double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
+    return hilbert_map_.OccProb(position);
+}
+double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position,
+        Eigen::Vector3d* gradient) const{
+    return hilbert_map_.OccProb(position);
+};
+double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& position,
+        Eigen::VectorXd* gradient) const{
+    return hilbert_map_.OccProb(position);
+};

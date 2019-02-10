@@ -255,3 +255,7 @@ void hilbertMapper::publishBinPoints() {
 
     binPub_.publish(binpoint_msg);
 }
+
+double hilbertMapper::OccProb(const Eigen::Vector3d& x_query) const {
+    return hilbertMap_.getOccupancyProb(x_query);
+}
