@@ -15,7 +15,7 @@ cs_add_library(${PROJECT_NAME}
         src/hilbertmap.cpp
         src/hilbert_mapper.cpp
         )
-
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############
 # BINARIES #
 ############

@@ -16,3 +16,9 @@ cs_add_library(hilbert_loco_planner
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ##########
+
+##########
+# EXPORT #
+##########
+cs_install()
+cs_export()
