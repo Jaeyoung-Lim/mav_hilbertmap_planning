@@ -43,12 +43,13 @@ public:
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
         void setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
-        void getkernelVector(Eigen::Vector3d x_query, Eigen::VectorXd &kernel_vector);
+        void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
         void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
         
         int getBinSize();
         int getNumFeatures();
-        double getOccupancyProb(Eigen::Vector3d &x_query);
+        double getOccupancyProb(const Eigen::Vector3d &x_query) const;
+        double getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, Eigen::Vector3d* gradient) const;
         double getMapWidth();
         double getMapResolution();
         double getSgdTime();
