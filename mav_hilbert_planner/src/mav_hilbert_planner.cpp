@@ -5,7 +5,7 @@
 
 namespace mav_planning {
 
-MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
+MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
                                  const ros::NodeHandle& nh_private)
     : nh_(nh),
       nh_private_(nh_private),
@@ -48,11 +48,11 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
 
   // Publishers and subscribers.
   odometry_sub_ = nh_.subscribe(mav_msgs::default_topics::ODOMETRY, 1,
-                                &MavLocalPlanner::odometryCallback, this);
+                                &MavHilbertPlanner::odometryCallback, this);
   waypoint_sub_ =
-      nh_.subscribe("waypoint", 1, &MavLocalPlanner::waypointCallback, this);
+      nh_.subscribe("waypoint", 1, &MavHilbertPlanner::waypointCallback, this);
   waypoint_list_sub_ = nh_.subscribe(
-      "waypoint_list", 1, &MavLocalPlanner::waypointListCallback, this);
+      "waypoint_list", 1, &MavHilbertPlanner::waypointListCallback, this);
 
   command_pub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
       mav_msgs::default_topics::COMMAND_TRAJECTORY, 1);
@@ -65,16 +65,16 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
 
   // Services.
   start_srv_ = nh_private_.advertiseService(
-      "start", &MavLocalPlanner::startCallback, this);
+      "start", &MavHilbertPlanner::startCallback, this);
   pause_srv_ = nh_private_.advertiseService(
-      "pause", &MavLocalPlanner::pauseCallback, this);
+      "pause", &MavHilbertPlanner::pauseCallback, this);
   stop_srv_ = nh_private_.advertiseService(
-      "stop", &MavLocalPlanner::stopCallback, this);
+      "stop", &MavHilbertPlanner::stopCallback, this);
 
   // Start the planning timer. Will no-op most cycles.
   ros::TimerOptions timer_options(
       ros::Duration(replan_dt_),
-      boost::bind(&MavLocalPlanner::planningTimerCallback, this, _1),
+      boost::bind(&MavHilbertPlanner::planningTimerCallback, this, _1),
       &planning_queue_);
 
   planning_timer_ = nh_.createTimer(timer_options);
@@ -97,7 +97,7 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
   poly_smoother_.setParametersFromRos(nh_private_);
   poly_smoother_.setMinCollisionCheckResolution(voxel_size);
   poly_smoother_.setMapDistanceCallback(
-      std::bind(&MavLocalPlanner::getMapDistance, this, std::placeholders::_1));
+      std::bind(&MavHilbertPlanner::getMapDistance, this, std::placeholders::_1));
   poly_smoother_.setOptimizeTime(true);
   poly_smoother_.setSplitAtCollisions(avoid_collisions_);
 
@@ -105,7 +105,7 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
   loco_smoother_.setParametersFromRos(nh_private_);
   loco_smoother_.setMinCollisionCheckResolution(voxel_size);
   loco_smoother_.setDistanceAndGradientFunction(
-      std::bind(&MavLocalPlanner::getMapDistanceAndGradient, this,
+      std::bind(&MavHilbertPlanner::getMapDistanceAndGradient, this,
                 std::placeholders::_1, std::placeholders::_2));
   loco_smoother_.setOptimizeTime(true);
   loco_smoother_.setResampleTrajectory(true);
@@ -113,11 +113,11 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
   loco_smoother_.setNumSegments(5);
 }
 
-void MavLocalPlanner::odometryCallback(const nav_msgs::Odometry& msg) {
+void MavHilbertPlanner::odometryCallback(const nav_msgs::Odometry& msg) {
   mav_msgs::eigenOdometryFromMsg(msg, &odometry_);
 }
 
-void MavLocalPlanner::waypointCallback(const geometry_msgs::PoseStamped& msg) {
+void MavHilbertPlanner::waypointCallback(const geometry_msgs::PoseStamped& msg) {
   // Plan a path from the current position to the target pose stamped.
   ROS_INFO("[Mav Local Planner] Got a waypoint!");
   // Cancel any previous trajectory on getting a new one.
@@ -135,7 +135,7 @@ void MavLocalPlanner::waypointCallback(const geometry_msgs::PoseStamped& msg) {
   startPublishingCommands();
 }
 
-void MavLocalPlanner::waypointListCallback(
+void MavHilbertPlanner::waypointListCallback(
     const geometry_msgs::PoseArray& msg) {
   // Plan a path from the current position to the target pose stamped.
   ROS_INFO("[Mav Local Planner] Got a list of waypoints, %zu long!",
@@ -157,14 +157,14 @@ void MavLocalPlanner::waypointListCallback(
   startPublishingCommands();
 }
 
-void MavLocalPlanner::planningTimerCallback(const ros::TimerEvent& event) {
+void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
   // Wait on the condition variable from the publishing...
   if (should_replan_.wait_for(replan_dt_)) {
     planningStep();
   }
 }
 
-void MavLocalPlanner::planningStep() {
+void MavHilbertPlanner::planningStep() {
   if (current_waypoint_ < 0 ||
       static_cast<int>(waypoints_.size()) <= current_waypoint_) {
     return;
@@ -230,10 +230,10 @@ void MavLocalPlanner::planningStep() {
           replacePath(path);
           current_waypoint_ = free_waypoints.size() - waypoints_added;
           ROS_INFO(
-              "[Mav Local Planner] Used smoothing through %zu waypoints! Total "
-              "waypoint size: %zu, current point: %d, added? %d",
-              free_waypoints.size(), waypoints_.size(), current_waypoint_,
-              waypoints_added);
+                  "[Mav Local Planner] Used smoothing through %zu waypoints! Total "
+                  "waypoint size: %zu, current point: %d, added? %d",
+                  free_waypoints.size(), waypoints_.size(), current_waypoint_,
+                  waypoints_added);
         }
       }
     }
@@ -251,7 +251,7 @@ void MavLocalPlanner::planningStep() {
   visualizePath();
 }
 
-void MavLocalPlanner::avoidCollisionsTowardWaypoint() {
+void MavHilbertPlanner::avoidCollisionsTowardWaypoint() {
   if (current_waypoint_ >= waypoints_.size()) {
     return;
   }
@@ -396,7 +396,7 @@ void MavLocalPlanner::avoidCollisionsTowardWaypoint() {
   }
 }
 
-bool MavLocalPlanner::planPathThroughWaypoints(
+bool MavHilbertPlanner::planPathThroughWaypoints(
     const mav_msgs::EigenTrajectoryPointVector& waypoints,
     mav_msgs::EigenTrajectoryPointVector* path) {
   CHECK_NOTNULL(path);
@@ -423,7 +423,7 @@ bool MavLocalPlanner::planPathThroughWaypoints(
   return success;
 }
 
-bool MavLocalPlanner::nextWaypoint() {
+bool MavHilbertPlanner::nextWaypoint() {
   if (waypoints_.size() <= static_cast<size_t>(current_waypoint_)) {
     current_waypoint_ = -1;
     return false;
@@ -433,7 +433,7 @@ bool MavLocalPlanner::nextWaypoint() {
   }
 }
 
-void MavLocalPlanner::replacePath(
+void MavHilbertPlanner::replacePath(
     const mav_msgs::EigenTrajectoryPointVector& path) {
   std::lock_guard<std::recursive_mutex> guard(path_mutex_);
   path_queue_.clear();
@@ -443,7 +443,7 @@ void MavLocalPlanner::replacePath(
   path_index_ = 0;
 }
 
-void MavLocalPlanner::startPublishingCommands() {
+void MavHilbertPlanner::startPublishingCommands() {
   // Call the service call to takeover publishing commands.
   if (position_hold_client_.exists()) {
     std_srvs::Empty empty_call;
@@ -456,13 +456,13 @@ void MavLocalPlanner::startPublishingCommands() {
   // Need advanced timer options to assign callback queue to this timer.
   ros::TimerOptions timer_options(
       ros::Duration(command_publishing_dt_),
-      boost::bind(&MavLocalPlanner::commandPublishTimerCallback, this, _1),
+      boost::bind(&MavHilbertPlanner::commandPublishTimerCallback, this, _1),
       &command_publishing_queue_);
 
   command_publishing_timer_ = nh_.createTimer(timer_options);
 }
 
-void MavLocalPlanner::commandPublishTimerCallback(
+void MavHilbertPlanner::commandPublishTimerCallback(
     const ros::TimerEvent& event) {
   constexpr size_t kQueueBuffer = 0;
   if (path_index_ < path_queue_.size()) {
@@ -514,7 +514,7 @@ void MavLocalPlanner::commandPublishTimerCallback(
   // Does there need to be an else????
 }
 
-void MavLocalPlanner::abort() {
+void MavHilbertPlanner::abort() {
   // No need to check anything on stop, just clear all the paths.
   clearTrajectory();
   // Make sure to clear the queue in the controller as well (we send about a
@@ -522,14 +522,14 @@ void MavLocalPlanner::abort() {
   sendCurrentPose();
 }
 
-void MavLocalPlanner::clearTrajectory() {
+void MavHilbertPlanner::clearTrajectory() {
   std::lock_guard<std::recursive_mutex> guard(path_mutex_);
   command_publishing_timer_.stop();
   path_queue_.clear();
   path_index_ = 0;
 }
 
-void MavLocalPlanner::sendCurrentPose() {
+void MavHilbertPlanner::sendCurrentPose() {
   // Sends the current pose with velocity 0 to the controller to clear the
   // controller's trajectory queue.
   // More or less an abort operation.
@@ -542,7 +542,7 @@ void MavLocalPlanner::sendCurrentPose() {
   command_pub_.publish(msg);
 }
 
-bool MavLocalPlanner::startCallback(std_srvs::Empty::Request& request,
+bool MavHilbertPlanner::startCallback(std_srvs::Empty::Request& request,
                                     std_srvs::Empty::Response& response) {
   if (path_queue_.size() <= path_index_) {
     ROS_WARN("Trying to start an empty or finished trajectory queue!");
@@ -552,7 +552,7 @@ bool MavLocalPlanner::startCallback(std_srvs::Empty::Request& request,
   return true;
 }
 
-bool MavLocalPlanner::pauseCallback(std_srvs::Empty::Request& request,
+bool MavHilbertPlanner::pauseCallback(std_srvs::Empty::Request& request,
                                     std_srvs::Empty::Response& response) {
   if (path_queue_.size() <= path_index_) {
     ROS_WARN("Trying to pause an empty or finished trajectory queue!");
@@ -562,13 +562,13 @@ bool MavLocalPlanner::pauseCallback(std_srvs::Empty::Request& request,
   return true;
 }
 
-bool MavLocalPlanner::stopCallback(std_srvs::Empty::Request& request,
+bool MavHilbertPlanner::stopCallback(std_srvs::Empty::Request& request,
                                    std_srvs::Empty::Response& response) {
   abort();
   return true;
 }
 
-void MavLocalPlanner::visualizePath() {
+void MavHilbertPlanner::visualizePath() {
   // TODO: Split trajectory into two chunks: before and after.
   visualization_msgs::MarkerArray marker_array;
   visualization_msgs::Marker path_marker;
@@ -583,28 +583,24 @@ void MavLocalPlanner::visualizePath() {
   path_marker_pub_.publish(marker_array);
 }
 
-double MavLocalPlanner::getMapDistance(const Eigen::Vector3d& position) const {
-  double distance = 0.0;
-  const bool kInterpolate = false;
-  if (!hilbert_map_.getOccupancyAtPosition(
-          position, kInterpolate, &distance)) {
+double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const {
+  double occprob = 0.0;
+  if (!hilbert_map_.getOccProbAtPosition(position, occprob)) {
     return 0.0;
   }
-  return distance;
+  return occprob;
 }
 
-double MavLocalPlanner::getMapDistanceAndGradient(
+double MavHilbertPlanner::getMapDistanceAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
-  double distance = 0.0;
-  const bool kInterpolate = false;
-  if (!hilbert_map_.getDistanceAndGradientAtPosition(
-          position, kInterpolate, &distance, gradient)) {
+  double occprob = 0.0;
+  if (!hilbert_map_.getOccProbAndGradientAtPosition(position, occprob, gradient)) {
     return 0.0;
   }
-  return distance;
+  return occprob;
 }
 
-bool MavLocalPlanner::isPathCollisionFree(
+bool MavHilbertPlanner::isPathCollisionFree(
     const mav_msgs::EigenTrajectoryPointVector& path) const {
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
     if (getMapDistance(point.position_W) < constraints_.robot_radius - 0.1) {
@@ -614,7 +610,7 @@ bool MavLocalPlanner::isPathCollisionFree(
   return true;
 }
 
-bool MavLocalPlanner::isPathFeasible(
+bool MavHilbertPlanner::isPathFeasible(
     const mav_msgs::EigenTrajectoryPointVector& path) const {
   // This is easier to check in the trajectory but then we are limited in how
   // we do the smoothing.

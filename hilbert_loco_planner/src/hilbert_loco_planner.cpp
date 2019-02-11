@@ -59,6 +59,80 @@ bool HilbertLocoPlanner::getTrajectoryTowardGoal(const mav_msgs::EigenTrajectory
     return success;
 }
 
+bool HilbertLocoPlanner::getTrajectoryTowardGoalFromInitialTrajectory(
+        double start_time,
+        const mav_trajectory_generation::Trajectory& trajectory_in,
+        const mav_msgs::EigenTrajectoryPoint& goal,
+        mav_trajectory_generation::Trajectory* trajectory) {
+    mav_msgs::EigenTrajectoryPoint start;
+    start_time = std::min(trajectory->getMaxTime(), start_time);
+    bool success =  mav_trajectory_generation::sampleTrajectoryAtTime(trajectory_in, start_time, &start);
+    if (!success) {
+        return false;
+    }
+}
+
+bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
+        const mav_msgs::EigenTrajectoryPoint& start,
+        const mav_msgs::EigenTrajectoryPoint& goal,
+        mav_trajectory_generation::Trajectory* trajectory) {
+//    CHECK(esdf_map_);
+
+    ROS_DEBUG_STREAM("[Voxblox Loco Planner] Start: "
+                             << start.position_W.transpose()
+                             << " goal: " << goal.position_W.transpose());
+
+    constexpr double kTotalTimeScale = 1.2;
+    double total_time =
+            kTotalTimeScale * mav_trajectory_generation::computeTimeVelocityRamp(
+                    start.position_W, goal.position_W,
+                    constraints_.v_max, constraints_.a_max);
+
+    // Check that start and goal aren't basically the same thing...
+    constexpr double kMinTime = 0.01;
+    if (total_time < kMinTime) {
+        return false;
+    }
+
+    // If we're doing hotstarts, need to save the previous d_p.
+    loco_.setupFromTrajectoryPoints(start, goal, num_segments_, total_time);
+    Eigen::VectorXd x0, x;
+    loco_.getParameterVector(&x0);
+    x = x0;
+    loco_.solveProblem();
+
+    // Check if this path is collision-free.
+    constexpr double kCollisionSamplingDt = 0.1;
+    mav_msgs::EigenTrajectoryPoint::Vector path;
+    bool success = false;
+    int i = 0;
+    for (i = 0; i < num_random_restarts_; i++) {
+        loco_.getTrajectory(trajectory);
+        mav_trajectory_generation::sampleWholeTrajectory(
+                *trajectory, kCollisionSamplingDt, &path);
+        success = isPathCollisionFree(path);
+        if (success) {
+            // Awesome, collision-free path.
+            break;
+        }
+
+        // Otherwise let's do some random restarts.
+        x = x0 + random_restart_magnitude_ * Eigen::VectorXd::Random(x.size());
+        loco_.setParameterVector(x);
+        loco_.solveProblem();
+    }
+
+    if (success) {
+        // TODO(helenol): Retime the trajectory!
+    }
+
+    if (verbose_) {
+        ROS_INFO("[Voxblox Loco Planner] Found solution (%d) after %d restarts.",
+                 success, i);
+    }
+    return success;
+}
+
 double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
     double occprob = 0.0;
     if (!hilbert_map_.getOccProbAtPosition(position, occprob)) {
@@ -85,4 +159,11 @@ double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& po
     double occprob = getOccProbAndGradient(position, &gradient_3d);
     *gradient = gradient_3d;
     return occprob;
+}
+
+bool HilbertLocoPlanner::isPathCollisionFree(const mav_msgs::EigenTrajectoryPointVector& path) const {
+    return false;
+}
+bool HilbertLocoPlanner::isPathFeasible(const mav_msgs::EigenTrajectoryPointVector& path) const {
+    return true;
 }

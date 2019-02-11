@@ -15,6 +15,7 @@
 #include <mav_planning_common/physical_constraints.h>
 #include <mav_planning_common/utils.h>
 #include <mav_trajectory_generation/timing.h>
+#include <mav_trajectory_generation/trajectory_sampling.h>
 #include <mav_visualization/helpers.h>
 #include <voxblox/core/common.h>
 #include <voxblox/core/tsdf_map.h>

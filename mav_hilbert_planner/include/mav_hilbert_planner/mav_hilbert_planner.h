@@ -27,9 +27,9 @@
 
 namespace mav_planning {
 
-class MavLocalPlanner {
+class MavHilbertPlanner {
  public:
-  MavLocalPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+  MavHilbertPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
 
   // Input data.
   void odometryCallback(const nav_msgs::Odometry& msg);
