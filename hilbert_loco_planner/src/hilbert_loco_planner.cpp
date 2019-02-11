@@ -77,8 +77,12 @@ double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position
 }
 
 double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& position, Eigen::VectorXd* gradient) const {
-    double occprob = 0.0;
-
+    CHECK_EQ(position.size(), 3);
+    if (gradient == nullptr) {
+        return getOccProbAndGradient(position, nullptr);
+    }
+    Eigen::Vector3d gradient_3d;
+    double occprob = getOccProbAndGradient(position, &gradient_3d);
+    *gradient = gradient_3d;
     return occprob;
-
 }
