@@ -49,6 +49,7 @@ public:
         int getBinSize();
         int getNumFeatures();
         double getOccupancyProb(const Eigen::Vector3d &x_query) const;
+        double getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, Eigen::Vector3d* gradient) const;
         double getMapWidth();
         double getMapResolution();
         double getSgdTime();

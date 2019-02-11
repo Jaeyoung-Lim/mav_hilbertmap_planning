@@ -25,12 +25,12 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
       path_index_(0),
       max_failures_(5),
       num_failures_(0),
-      esdf_server_(nh_, nh_private_),
+      hilbert_map_(nh_, nh_private_),
       loco_planner_(nh_, nh_private_) {
   // Set up some settings.
   constraints_.setParametersFromRos(nh_private_);
-  esdf_server_.setTraversabilityRadius(constraints_.robot_radius);
-  loco_planner_.setEsdfMap(esdf_server_.getEsdfMapPtr());
+//  esdf_server_.setTraversabilityRadius(constraints_.robot_radius);
+//  loco_planner_.setHilbertfMap(hilbert_map_.getHilbertMapPtr());
 
   nh_private_.param("verbose", verbose_, verbose_);
   nh_private_.param("global_frame_id", global_frame_id_, global_frame_id_);
@@ -88,7 +88,7 @@ MavLocalPlanner::MavLocalPlanner(const ros::NodeHandle& nh,
   yaw_policy_.setYawPolicy(YawPolicy::PolicyType::kVelocityVector);
 
   // Set up smoothers.
-  const double voxel_size = esdf_server_.getEsdfMapPtr()->voxel_size();
+  const double voxel_size = hilbert_map_.voxel_size();
 
   // Straight-line smoother.
   ramp_smoother_.setParametersFromRos(nh_private_);
@@ -586,7 +586,7 @@ void MavLocalPlanner::visualizePath() {
 double MavLocalPlanner::getMapDistance(const Eigen::Vector3d& position) const {
   double distance = 0.0;
   const bool kInterpolate = false;
-  if (!esdf_server_.getEsdfMapPtr()->getDistanceAtPosition(
+  if (!hilbert_map_.getOccupancyAtPosition(
           position, kInterpolate, &distance)) {
     return 0.0;
   }
@@ -597,7 +597,7 @@ double MavLocalPlanner::getMapDistanceAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
   double distance = 0.0;
   const bool kInterpolate = false;
-  if (!esdf_server_.getEsdfMapPtr()->getDistanceAndGradientAtPosition(
+  if (!hilbert_map_.getDistanceAndGradientAtPosition(
           position, kInterpolate, &distance, gradient)) {
     return 0.0;
   }

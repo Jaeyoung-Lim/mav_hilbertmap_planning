@@ -256,6 +256,14 @@ void hilbertMapper::publishBinPoints() {
     binPub_.publish(binpoint_msg);
 }
 
-double hilbertMapper::OccProb(const Eigen::Vector3d& x_query) const {
-    return hilbertMap_.getOccupancyProb(x_query);
+bool hilbertMapper::getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const {
+    occprob = hilbertMap_.getOccupancyProb(x_query);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
+}
+
+bool hilbertMapper::getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob ,Eigen::Vector3d* gradient) const {
+    occprob = hilbertMap_.getOccupancyProbAndGradient(x_query, gradient);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
 }

@@ -170,13 +170,13 @@ class MavLocalPlanner {
   int num_failures_;
 
   // Map!
-  voxblox::EsdfServer esdf_server_;
+  hilbertMapper hilbert_map_;
 
   // Planners -- yaw policy
   YawPolicy yaw_policy_;
 
   // Planners -- local planners.
-  VoxbloxLocoPlanner loco_planner_;
+  HilbertLocoPlanner loco_planner_;
 
   // Planners -- path smoothers.
   VelocityRampSmoother ramp_smoother_;

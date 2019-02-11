@@ -205,3 +205,28 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
     return probability;
 }
+
+double hilbertmap::getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, Eigen::Vector3d* gradient) const {
+
+    double probability;
+    Eigen::VectorXd phi_x;
+    Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    ros::Time start_time;
+
+    phi_x = Eigen::VectorXd::Zero(num_features_);
+    getkernelVector(x_query, phi_x);
+
+    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+
+    //  Calculate gradient
+    //  dk = ( -1/(0.5*radius^2) ) * phi_hat .*delta_x;
+    for(int i; i < anchorpoints_.size(); i++){
+        anchorpoints.row(i) = anchorpoints_[i];
+    }
+    delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
+    Eigen::VectorXd dummy = (-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x.transpose();
+    std::cout << dummy << std::endl;
+    *gradient = ((-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x).transpose();
+    return probability;
+}

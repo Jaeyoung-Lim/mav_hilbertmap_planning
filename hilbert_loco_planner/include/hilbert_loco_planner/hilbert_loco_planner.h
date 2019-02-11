@@ -82,7 +82,6 @@ private:
 
     // Map.
     hilbertMapper hilbert_map_;
-//    std::shared_ptr<voxblox::TsdfMap> tsdf_map_;
 };
 
 #endif
