@@ -68,7 +68,7 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
     return nll;
 }
 
-void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
+void hilbertmap::appendBinfromPointCloud(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
     std::srand(std::time(nullptr));
     int num_observations = ptcloud.points.size();
@@ -82,6 +82,35 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
         bin_.back().z = ptcloud[idx].z;
+    }
+}
+
+void hilbertmap::appendBinfromTsdfMap(const std::shared_ptr<voxblox::TsdfMap> &tsdf_map) {
+
+    const voxblox::Layer<voxblox::TsdfVoxel>& layer = tsdf_map->getTsdfLayer();
+
+    voxblox::BlockIndexList blocks;
+    layer.getAllAllocatedBlocks(&blocks);
+
+    size_t vps = layer.voxels_per_side();
+    size_t num_voxels_per_block = vps * vps * vps;
+
+    voxblox::Color color;
+
+    for (const voxblox::BlockIndex& index : blocks) {
+        // Iterate over all voxels in said blocks.
+        const voxblox::Block<voxblox::TsdfVoxel>& block = layer.getBlockByIndex(index);
+
+        for (size_t linear_index = 0; linear_index < num_voxels_per_block; ++linear_index) {
+            voxblox::Point coord = block.computeCoordinatesFromLinearIndex(linear_index);
+            //TODO: Need check for appending bin?
+            pcl::PointXYZI point;
+            point.x = coord.x();
+            point.y = coord.y();
+            point.z = coord.z();
+            point.intensity = 1.0f;
+            bin_.push_back(point);
+        }
     }
 }
 

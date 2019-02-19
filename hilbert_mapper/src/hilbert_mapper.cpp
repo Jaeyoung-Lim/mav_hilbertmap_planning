@@ -51,7 +51,7 @@ void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
-
+    hilbertMap_.appendBinfromTsdfMap(tsdf_server_.getTsdfMapPtr());
     //Reset Map center
     //Pulbish map status related information
     if(publish_mapinfo_) publishMapInfo();
@@ -90,6 +90,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
+    hilbertMap_.appendBinfromPointCloud(*cropped_ptcloud);
     hilbertMap_->appendBin(*cropped_ptcloud);
 }
 

@@ -9,7 +9,10 @@
 #include <cmath>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-
+#include <voxblox/core/tsdf_map.h>
+#include <voxblox/core/common.h>
+#include <voxblox/core/layer.h>
+#include <voxblox/core/voxel.h>
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 class hilbertmap
@@ -40,7 +43,8 @@ public:
         hilbertmap(int num_feature);
         virtual ~hilbertmap();
         void updateWeights();
-        void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+        void appendBinfromPointCloud(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+        void appendBinfromTsdfMap(const std::shared_ptr<voxblox::TsdfMap> &tsdf_map);
         void setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
