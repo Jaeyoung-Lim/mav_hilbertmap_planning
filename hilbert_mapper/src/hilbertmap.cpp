@@ -50,6 +50,7 @@ void hilbertmap::updateWeights(){
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
 
+
     Eigen::VectorXd nll;
     Eigen::VectorXd phi_x;
     Eigen::Vector3d query;
@@ -225,8 +226,6 @@ double hilbertmap::getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, E
         anchorpoints.row(i) = anchorpoints_[i];
     }
     delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
-    Eigen::VectorXd dummy = (-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x.transpose();
-    std::cout << dummy << std::endl;
     *gradient = ((-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x).transpose();
     return probability;
 }
