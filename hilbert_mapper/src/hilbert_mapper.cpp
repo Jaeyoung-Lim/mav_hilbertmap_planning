@@ -21,10 +21,6 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
 
-    mavposeSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
-    mavtransformSub_ = nh_.subscribe("/hilbert_mapper/map_center/mavtf", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
-    poseSub_ = nh_.subscribe("/hilbert_mapper/map_center/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
-
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
@@ -39,7 +35,6 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
-
     hilbertMap_.setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
 }
 hilbertMapper::~hilbertMapper() {
@@ -65,43 +60,10 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
 
 }
 
-void hilbertMapper::mavtransformCallback(const geometry_msgs::TransformStamped& msg){
-    mavPos_(0) = msg.transform.translation.x;
-    mavPos_(1) = msg.transform.translation.y;
-    mavPos_(2) = msg.transform.translation.z;
-    mavAtt_(0) = msg.transform.rotation.w;
-    mavAtt_(1) = msg.transform.rotation.x;
-    mavAtt_(2) = msg.transform.rotation.y;
-    mavAtt_(3) = msg.transform.rotation.z;
-
-}
-
-void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
-
-    mavPos_(0) = msg.pose.position.x;
-    mavPos_(1) = msg.pose.position.y;
-    mavPos_(2) = msg.pose.position.z;
-    mavAtt_(0) = msg.pose.orientation.w;
-    mavAtt_(1) = msg.pose.orientation.x;
-    mavAtt_(2) = msg.pose.orientation.y;
-    mavAtt_(3) = msg.pose.orientation.z;
-}
-
-void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
-    mavPos_(0) = msg.position.x;
-    mavPos_(1) = msg.position.y;
-    mavPos_(2) = msg.position.z;
-    mavAtt_(0) = msg.orientation.w;
-    mavAtt_(1) = msg.orientation.x;
-    mavAtt_(2) = msg.orientation.y;
-    mavAtt_(3) = msg.orientation.z;
-
-}
-
 void hilbertMapper::setMapCenter(Eigen::Vector3d &position){
     mavPos_ = position;
     hilbertMap_.setMapCenter(mavPos_);
-    std::cout << "hooray" << std::endl;
+
 }
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){

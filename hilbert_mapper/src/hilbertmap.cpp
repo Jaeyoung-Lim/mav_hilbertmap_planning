@@ -89,11 +89,18 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
 
     num_samples_ = num_samples;
     num_features_ = std::pow(int(width / resolution), 3);
+    width_ = width;
+    resolution_ = resolution;
+
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
 
     tsdf_threshold_ = tsdf_threshold;
+
+    // Reinitialize anchor points
+    anchorpoints_.clear();
+    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
 
 }
 
@@ -130,13 +137,13 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
     num_cells[0]= int(width/resolution);
     num_cells[1] = int(length/resolution);
     num_cells[2] = int(height/resolution);
-
+    std::cout << center.transpose() << std::endl;
     Eigen::Vector3d mesh_obs;
     //TODO: This is dirty
     for(int i = 0; i < num_cells[0]; i++){
         for(int j = 0; j < num_cells[1]; j++){
             for(int k = 0; k < num_cells[2]; k++){
-                mesh_obs << i * width/double(num_cells[0]) - 0.5 * width, j * length/double(num_cells[1])- 0.5 * length, k * height/double(num_cells[2])- 0.5 * height;
+                mesh_obs << i * width/double(num_cells[0]) - 0.5 * width + center(0), j * length/double(num_cells[1])- 0.5 * length  + center(1), k * height/double(num_cells[2])- 0.5 * height  + center(2);
                 gridpoints.emplace_back(Eigen::Vector3d(mesh_obs(0), mesh_obs(1), mesh_obs(2)));
             }
         }
