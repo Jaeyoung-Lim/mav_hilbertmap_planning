@@ -48,7 +48,6 @@ hilbertMapper::~hilbertMapper() {
 
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
-    hilbertMap_.setMapCenter(mavPos_);
     hilbertMap_.updateWeights();
     ros::spinOnce();
 }
@@ -99,6 +98,11 @@ void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
 
 }
 
+void hilbertMapper::setMapCenter(Eigen::Vector3d &position){
+    mavPos_ = position;
+    hilbertMap_.setMapCenter(mavPos_);
+    std::cout << "hooray" << std::endl;
+}
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
