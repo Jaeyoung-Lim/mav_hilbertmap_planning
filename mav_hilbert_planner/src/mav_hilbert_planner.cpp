@@ -159,6 +159,7 @@ void MavHilbertPlanner::waypointListCallback(
 
 void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
   // Wait on the condition variable from the publishing...
+  hilbert_map_.setMapCenter(odometry_.position_W);
   if (should_replan_.wait_for(replan_dt_)) {
     planningStep();
   }
