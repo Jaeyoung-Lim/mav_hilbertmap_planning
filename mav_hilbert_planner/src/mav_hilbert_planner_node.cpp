@@ -1,7 +1,7 @@
 #include "mav_hilbert_planner/mav_hilbert_planner.h"
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "mav_local_planner");
+  ros::init(argc, argv, "mav_hilbert_planner");
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
 
