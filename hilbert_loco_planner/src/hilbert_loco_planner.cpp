@@ -7,21 +7,21 @@ using namespace std;
 HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  loco_(3),
-  hilbert_map_(nh, nh_private){
+  loco_(3){
 
 }
 HilbertLocoPlanner::~HilbertLocoPlanner() {
   //Destructor
 }
 
-void HilbertLocoPlanner::setHilbertMap() {
-    //TODO: bind this with hilbertmap
+void HilbertLocoPlanner::setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map) {
+    CHECK(hilbert_map);
+    hilbert_map_ = hilbert_map;
 
     loco_.setDistanceAndGradientFunction(
             std::bind(&HilbertLocoPlanner::getOccProbAndGradientVector, this,
                       std::placeholders::_1, std::placeholders::_2));
-    loco_.setMapResolution(hilbert_map_.voxel_size());
+    loco_.setMapResolution(hilbert_map_->voxel_size());
 }
 
 bool HilbertLocoPlanner::getTrajectoryTowardGoal(const mav_msgs::EigenTrajectoryPoint& start,
@@ -135,7 +135,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
 
 double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
     double occprob = 0.0;
-    if (!hilbert_map_.getOccProbAtPosition(position, occprob)) {
+    if (!hilbert_map_->getOccProbAtPosition(position, occprob)) {
         return 0.0;
     }
     return occprob;
@@ -143,7 +143,7 @@ double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
 
 double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
     double occprob = 0.0;
-    if(!hilbert_map_.getOccProbAndGradientAtPosition(position, occprob, gradient)){
+    if(!hilbert_map_->getOccProbAndGradientAtPosition(position, occprob, gradient)){
         return 0.0;
     }
     return occprob;

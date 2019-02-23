@@ -50,7 +50,7 @@ class hilbertMapper
 
     Eigen::Vector3d mavPos_;
     Eigen::Vector4d mavAtt_;
-    hilbertmap hilbertMap_;
+    std::shared_ptr<hilbertmap> hilbertMap_;
     int index_pointcloud;
     string frame_id_;
     double resolution_;
@@ -72,9 +72,12 @@ public:
     hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ hilbertMapper();
     double voxel_size(){ return 0.5 * resolution_; };
-    bool getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const;
-    bool getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob, Eigen::Vector3d* gradient) const;
     void setMapCenter(Eigen::Vector3d &position);
+    
+    inline std::shared_ptr<hilbertmap> getHilbertMapPtr() { return hilbertMap_; }
+    inline std::shared_ptr<const hilbertmap> getHilbertMapPtr() const {
+      return hilbertMap_;
+    }
 };
 
 #endif

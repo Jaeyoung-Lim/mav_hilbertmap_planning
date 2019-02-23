@@ -170,7 +170,7 @@ class MavHilbertPlanner {
   int num_failures_;
 
   // Map!
-  hilbertMapper hilbert_map_;
+  hilbertMapper hilbert_mapper_;
 
   // Planners -- yaw policy
   YawPolicy yaw_policy_;

@@ -32,7 +32,7 @@ public:
     HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ HilbertLocoPlanner();
 
-    void setHilbertMap();
+    void setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map);
 
     bool getTrajectoryTowardGoal(
             const mav_msgs::EigenTrajectoryPoint& start,
@@ -82,7 +82,7 @@ private:
     loco_planner::Loco<kN> loco_;
 
     // Map.
-    hilbertMapper hilbert_map_;
+    std::shared_ptr<hilbertmap> hilbert_map_;
 };
 
 #endif

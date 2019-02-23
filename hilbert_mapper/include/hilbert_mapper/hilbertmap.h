@@ -50,6 +50,10 @@ public:
         int getNumFeatures();
         double getOccupancyProb(const Eigen::Vector3d &x_query) const;
         double getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, Eigen::Vector3d* gradient) const;
+        double voxel_size(){ return 0.5 * resolution_; };
+        bool getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const;
+        bool getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob, Eigen::Vector3d* gradient) const;
+
         double getMapWidth();
         double getMapResolution();
         double getSgdTime();

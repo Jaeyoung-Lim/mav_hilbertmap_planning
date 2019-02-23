@@ -25,12 +25,12 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       path_index_(0),
       max_failures_(5),
       num_failures_(0),
-      hilbert_map_(nh_, nh_private_),
+      hilbert_mapper_(nh_, nh_private_),
       loco_planner_(nh_, nh_private_) {
   // Set up some settings.
   constraints_.setParametersFromRos(nh_private_);
 //  esdf_server_.setTraversabilityRadius(constraints_.robot_radius);
-//  loco_planner_.setHilbertfMap(hilbert_map_.getHilbertMapPtr());
+  // loco_planner_.setHilbertMap(hilbert_mapper_.getHilbertMapPtr());
 
   nh_private_.param("verbose", verbose_, verbose_);
   nh_private_.param("global_frame_id", global_frame_id_, global_frame_id_);
@@ -88,7 +88,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   yaw_policy_.setYawPolicy(YawPolicy::PolicyType::kVelocityVector);
 
   // Set up smoothers.
-  const double voxel_size = hilbert_map_.voxel_size();
+  const double voxel_size = hilbert_mapper_.voxel_size();
 
   // Straight-line smoother.
   ramp_smoother_.setParametersFromRos(nh_private_);
@@ -159,7 +159,7 @@ void MavHilbertPlanner::waypointListCallback(
 
 void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
   // Wait on the condition variable from the publishing...
-  hilbert_map_.setMapCenter(odometry_.position_W);
+  // hilbert_mapper_.setMapCenter(odometry_.position_W);
   if (should_replan_.wait_for(replan_dt_)) {
     planningStep();
   }
@@ -586,7 +586,7 @@ void MavHilbertPlanner::visualizePath() {
 
 double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const {
   double occprob = 0.0;
-  if (!hilbert_map_.getOccProbAtPosition(position, occprob)) {
+  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, occprob)) {
     return 0.0;
   }
   return occprob;
@@ -595,7 +595,7 @@ double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const 
 double MavHilbertPlanner::getMapDistanceAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
   double occprob = 0.0;
-  if (!hilbert_map_.getOccProbAndGradientAtPosition(position, occprob, gradient)) {
+  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAndGradientAtPosition(position, occprob, gradient)) {
     return 0.0;
   }
   return occprob;

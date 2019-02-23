@@ -137,7 +137,7 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
     num_cells[0]= int(width/resolution);
     num_cells[1] = int(length/resolution);
     num_cells[2] = int(height/resolution);
-    std::cout << center.transpose() << std::endl;
+
     Eigen::Vector3d mesh_obs;
     //TODO: This is dirty
     for(int i = 0; i < num_cells[0]; i++){
@@ -235,4 +235,16 @@ double hilbertmap::getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, E
     delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
     *gradient = ((-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x).transpose();
     return probability;
+}
+
+bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const {
+    occprob = getOccupancyProb(x_query);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
+}
+
+bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob ,Eigen::Vector3d* gradient) const {
+    occprob = getOccupancyProbAndGradient(x_query, gradient);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
 }
