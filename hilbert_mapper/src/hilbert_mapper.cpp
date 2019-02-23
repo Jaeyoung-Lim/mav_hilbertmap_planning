@@ -8,8 +8,9 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  hilbertMap_(hilbertmap(1000)),
   index_pointcloud(0){
+
+    hilbertMap_.reset(new hilbertmap(1000));
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
@@ -20,10 +21,6 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
-
-    mavposeSub_ = nh_.subscribe("/hilbert_mapper/map_center/posestamped", 1, &hilbertMapper::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
-    mavtransformSub_ = nh_.subscribe("/hilbert_mapper/map_center/mavtf", 1, &hilbertMapper::mavtransformCallback, this,ros::TransportHints().tcpNoDelay());
-    poseSub_ = nh_.subscribe("/hilbert_mapper/map_center/pose", 1, &hilbertMapper::poseCallback, this,ros::TransportHints().tcpNoDelay());
 
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
@@ -39,8 +36,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
-
-    hilbertMap_.setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
+    hilbertMap_->setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
 }
 hilbertMapper::~hilbertMapper() {
   //Destructor
@@ -48,8 +44,7 @@ hilbertMapper::~hilbertMapper() {
 
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
-    hilbertMap_.setMapCenter(mavPos_);
-    hilbertMap_.updateWeights();
+    hilbertMap_->updateWeights();
     ros::spinOnce();
 }
 
@@ -66,39 +61,11 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
 
 }
 
-void hilbertMapper::mavtransformCallback(const geometry_msgs::TransformStamped& msg){
-    mavPos_(0) = msg.transform.translation.x;
-    mavPos_(1) = msg.transform.translation.y;
-    mavPos_(2) = msg.transform.translation.z;
-    mavAtt_(0) = msg.transform.rotation.w;
-    mavAtt_(1) = msg.transform.rotation.x;
-    mavAtt_(2) = msg.transform.rotation.y;
-    mavAtt_(3) = msg.transform.rotation.z;
+void hilbertMapper::setMapCenter(Eigen::Vector3d &position){
+    mavPos_ = position;
+    hilbertMap_->setMapCenter(mavPos_);
 
 }
-
-void hilbertMapper::mavposeCallback(const geometry_msgs::PoseStamped& msg){
-
-    mavPos_(0) = msg.pose.position.x;
-    mavPos_(1) = msg.pose.position.y;
-    mavPos_(2) = msg.pose.position.z;
-    mavAtt_(0) = msg.pose.orientation.w;
-    mavAtt_(1) = msg.pose.orientation.x;
-    mavAtt_(2) = msg.pose.orientation.y;
-    mavAtt_(3) = msg.pose.orientation.z;
-}
-
-void hilbertMapper::poseCallback(const geometry_msgs::Pose& msg){
-    mavPos_(0) = msg.position.x;
-    mavPos_(1) = msg.position.y;
-    mavPos_(2) = msg.position.z;
-    mavAtt_(0) = msg.orientation.w;
-    mavAtt_(1) = msg.orientation.x;
-    mavAtt_(2) = msg.orientation.y;
-    mavAtt_(3) = msg.orientation.z;
-
-}
-
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
@@ -110,8 +77,8 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
 
     // Crop PointCloud around map center
     pcl::CropBox<pcl::PointXYZI> boxfilter;
-    map_center = hilbertMap_.getMapCenter();
-    map_width = float(hilbertMap_.getMapWidth());
+    map_center = hilbertMap_->getMapCenter();
+    map_width = float(hilbertMap_->getMapWidth());
     float minX = float(map_center(0) - map_width);
     float minY = float(map_center(1) - map_width);
     float minZ = float(map_center(2) - map_width);
@@ -122,7 +89,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
-    hilbertMap_.appendBin(*cropped_ptcloud);
+    hilbertMap_->appendBin(*cropped_ptcloud);
 }
 
 void hilbertMapper::publishMapInfo(){
@@ -130,10 +97,10 @@ void hilbertMapper::publishMapInfo(){
 
     msg.header.stamp = ros::Time::now();
     msg.header.frame_id = frame_id_;
-    msg.binsize = uint16_t(hilbertMap_.getBinSize());
-    msg.anchorpoints = uint16_t(hilbertMap_.getNumFeatures());
-    msg.time_gradientdescent = float(hilbertMap_.getSgdTime());
-    msg.time_query = float(hilbertMap_.getQueryTime());
+    msg.binsize = uint16_t(hilbertMap_->getBinSize());
+    msg.anchorpoints = uint16_t(hilbertMap_->getNumFeatures());
+    msg.time_gradientdescent = float(hilbertMap_->getSgdTime());
+    msg.time_query = float(hilbertMap_->getQueryTime());
 
     mapinfoPub_.publish(msg);
 }
@@ -159,7 +126,7 @@ void hilbertMapper::publishMap(){
                 point.x = x_query(0);
                 point.y = x_query(1);
                 point.z = x_query(2);
-                point.intensity = hilbertMap_.getOccupancyProb(x_query);
+                point.intensity = hilbertMap_->getOccupancyProb(x_query);
 
                 pointCloud.points.push_back(point);
             }
@@ -182,9 +149,9 @@ void hilbertMapper::publishgridMap(){
     std::vector<Eigen::Vector3d> x_grid;
     Eigen::Vector3d x_query, map_center, gridmap_center;
 
-    map_center = hilbertMap_.getMapCenter();
-    map_width = hilbertMap_.getMapWidth(); // [m]
-    map_resolution = hilbertMap_.getMapResolution();
+    map_center = hilbertMap_->getMapCenter();
+    map_width = hilbertMap_->getMapWidth(); // [m]
+    map_resolution = hilbertMap_->getMapResolution();
     gridmap_center << -0.5 * map_width, -0.5 * map_width, 0.0;
 
     //Publish hilbertmap at anchorpoints through grid
@@ -206,7 +173,7 @@ void hilbertMapper::publishgridMap(){
         for (unsigned int y = 0; y < grid_map.info.height; y++){
             x_query << x * map_resolution, y * map_resolution, 0.0;
             x_query = x_query - map_center + gridmap_center;
-            grid_map.data.push_back(int(hilbertMap_.getOccupancyProb(x_query)* 100.0));
+            grid_map.data.push_back(int(hilbertMap_->getOccupancyProb(x_query)* 100.0));
         }
     }
     gridmapPub_.publish(grid_map);
@@ -220,10 +187,9 @@ void hilbertMapper::publishAnchorPoints() {
 
     //Encode pointcloud data
     int width_cells = int(width_ / resolution_);
-
-    for(int i = 0; i < hilbertMap_.getNumFeatures(); i ++) {
+    for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
         pcl::PointXYZ point;
-        x_feature = hilbertMap_.getFeature(i);
+        x_feature = hilbertMap_->getFeature(i);
         point.x = x_feature(0);
         point.y = x_feature(1);
         point.z = x_feature(2);
@@ -243,9 +209,9 @@ void hilbertMapper::publishBinPoints() {
     sensor_msgs::PointCloud2 binpoint_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
 
-    for(int i = 0; i < hilbertMap_.getBinSize(); i ++) {
+    for(int i = 0; i < hilbertMap_->getBinSize(); i ++) {
         pcl::PointXYZI point;
-        point = hilbertMap_.getbinPoint(i);
+        point = hilbertMap_->getbinPoint(i);
         pointCloud.points.push_back(point);
     }
     pcl::toROSMsg(pointCloud, binpoint_msg);
@@ -254,16 +220,4 @@ void hilbertMapper::publishBinPoints() {
     binpoint_msg.header.frame_id = frame_id_;
 
     binPub_.publish(binpoint_msg);
-}
-
-bool hilbertMapper::getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const {
-    occprob = hilbertMap_.getOccupancyProb(x_query);
-    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
-    return true;
-}
-
-bool hilbertMapper::getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob ,Eigen::Vector3d* gradient) const {
-    occprob = hilbertMap_.getOccupancyProbAndGradient(x_query, gradient);
-    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
-    return true;
 }

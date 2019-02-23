@@ -38,3 +38,6 @@
 *.make
 */cmake-build-debug/*
 *.swp
+
+#VSCode artifacts
+*.json

@@ -50,6 +50,7 @@ void hilbertmap::updateWeights(){
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
 
+
     Eigen::VectorXd nll;
     Eigen::VectorXd phi_x;
     Eigen::Vector3d query;
@@ -88,11 +89,18 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
 
     num_samples_ = num_samples;
     num_features_ = std::pow(int(width / resolution), 3);
+    width_ = width;
+    resolution_ = resolution;
+
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
 
     tsdf_threshold_ = tsdf_threshold;
+
+    // Reinitialize anchor points
+    anchorpoints_.clear();
+    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
 
 }
 
@@ -135,7 +143,7 @@ void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Ei
     for(int i = 0; i < num_cells[0]; i++){
         for(int j = 0; j < num_cells[1]; j++){
             for(int k = 0; k < num_cells[2]; k++){
-                mesh_obs << i * width/double(num_cells[0]) - 0.5 * width, j * length/double(num_cells[1])- 0.5 * length, k * height/double(num_cells[2])- 0.5 * height;
+                mesh_obs << i * width/double(num_cells[0]) - 0.5 * width + center(0), j * length/double(num_cells[1])- 0.5 * length  + center(1), k * height/double(num_cells[2])- 0.5 * height  + center(2);
                 gridpoints.emplace_back(Eigen::Vector3d(mesh_obs(0), mesh_obs(1), mesh_obs(2)));
             }
         }
@@ -225,8 +233,18 @@ double hilbertmap::getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, E
         anchorpoints.row(i) = anchorpoints_[i];
     }
     delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
-    Eigen::VectorXd dummy = (-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x.transpose();
-    std::cout << dummy << std::endl;
     *gradient = ((-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x).transpose();
     return probability;
+}
+
+bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const {
+    occprob = getOccupancyProb(x_query);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
+}
+
+bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob ,Eigen::Vector3d* gradient) const {
+    occprob = getOccupancyProbAndGradient(x_query, gradient);
+    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
+    return true;
 }
