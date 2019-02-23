@@ -187,7 +187,6 @@ void hilbertMapper::publishAnchorPoints() {
 
     //Encode pointcloud data
     int width_cells = int(width_ / resolution_);
-    std::cout << hilbertMap_->getFeature(0).transpose() << std::endl;
     for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
         pcl::PointXYZ point;
         x_feature = hilbertMap_->getFeature(i);

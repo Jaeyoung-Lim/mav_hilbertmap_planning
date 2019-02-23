@@ -30,7 +30,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   // Set up some settings.
   constraints_.setParametersFromRos(nh_private_);
 //  esdf_server_.setTraversabilityRadius(constraints_.robot_radius);
-  // loco_planner_.setHilbertMap(hilbert_mapper_.getHilbertMapPtr());
+  loco_planner_.setHilbertMap(hilbert_mapper_.getHilbertMapPtr());
 
   nh_private_.param("verbose", verbose_, verbose_);
   nh_private_.param("global_frame_id", global_frame_id_, global_frame_id_);
@@ -159,7 +159,7 @@ void MavHilbertPlanner::waypointListCallback(
 
 void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
   // Wait on the condition variable from the publishing...
-  // hilbert_mapper_.setMapCenter(odometry_.position_W);
+  hilbert_mapper_.setMapCenter(odometry_.position_W);
   if (should_replan_.wait_for(replan_dt_)) {
     planningStep();
   }
