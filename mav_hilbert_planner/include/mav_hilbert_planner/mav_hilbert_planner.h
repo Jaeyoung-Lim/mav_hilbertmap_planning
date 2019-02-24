@@ -72,10 +72,6 @@ class MavHilbertPlanner {
   // Functions to help out replanning.
   // Track a single waypoint, planning only in a short known horizon.
   void avoidCollisionsTowardWaypoint();
-  // Get a path through a bunch of waypoints.
-  bool planPathThroughWaypoints(
-      const mav_msgs::EigenTrajectoryPointVector& waypoints,
-      mav_msgs::EigenTrajectoryPointVector* path);
 
   // Map access.
   double getMapDistance(const Eigen::Vector3d& position) const;
