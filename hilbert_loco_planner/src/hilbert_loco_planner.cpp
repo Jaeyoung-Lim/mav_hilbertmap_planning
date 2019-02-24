@@ -7,6 +7,13 @@ using namespace std;
 HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
+  verbose_(false),
+  visualize_(true),
+  frame_id_("odom"),
+  num_segments_(3),
+  num_random_restarts_(5),
+  random_restart_magnitude_(0.5),
+  planning_horizon_m_(4.0),
   loco_(3){
 
 }
@@ -37,7 +44,7 @@ bool HilbertLocoPlanner::getTrajectoryTowardGoal(const mav_msgs::EigenTrajectory
     if ((goal_point.position_W - start_point.position_W).norm() <
         kGoalReachedRange) {
         if (verbose_) {
-            ROS_INFO("[Voxblox Loco Planner] Goal already reached!");
+            ROS_INFO("[Hilbert Loco Planner] Goal already reached!");
         }
         return true;
     }
@@ -76,7 +83,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
         const mav_msgs::EigenTrajectoryPoint& start,
         const mav_msgs::EigenTrajectoryPoint& goal,
         mav_trajectory_generation::Trajectory* trajectory) {
-//    CHECK(esdf_map_);
+    CHECK(hilbert_map_);
 
     ROS_DEBUG_STREAM("[Voxblox Loco Planner] Start: "
                              << start.position_W.transpose()
