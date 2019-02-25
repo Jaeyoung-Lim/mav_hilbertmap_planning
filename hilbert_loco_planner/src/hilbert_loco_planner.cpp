@@ -153,7 +153,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
 
 double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
     double occprob = 0.0;
-    if (!hilbert_map_->getOccProbAtPosition(position, occprob)) {
+    if (!hilbert_map_->getOccProbAtPosition(position, &occprob)) {
         return 0.0;
     }
     return occprob;
@@ -161,7 +161,7 @@ double HilbertLocoPlanner::getOccProb(const Eigen::Vector3d& position) const {
 
 double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
     double occprob = 0.0;
-    if(!hilbert_map_->getOccProbAndGradientAtPosition(position, occprob, gradient)){
+    if(!hilbert_map_->getOccProbAndGradientAtPosition(position, &occprob, gradient)){
         return 0.0;
     }
     return occprob;
@@ -170,11 +170,15 @@ double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position
 
 double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& position, Eigen::VectorXd* gradient) const {
     CHECK_EQ(position.size(), 3);
+
+    Eigen::Vector3d gradient_3d;
+
     if (gradient == nullptr) {
         return getOccProbAndGradient(position, nullptr);
     }
-    Eigen::Vector3d gradient_3d;
+
     double occprob = getOccProbAndGradient(position, &gradient_3d);
+
     *gradient = gradient_3d;
     return occprob;
 }
