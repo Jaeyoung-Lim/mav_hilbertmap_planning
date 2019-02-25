@@ -173,81 +173,9 @@ void MavHilbertPlanner::planningStep() {
   mav_trajectory_generation::timing::MiniTimer timer;
   constexpr double kCloseToOdometry = 0.1;
 
-  // First, easiest case: if we're not avoiding collisions, just use the
-  // favorite path smoother. We only do this on the first planning call then
-  // ignore all the rest.
-  if (!avoid_collisions_) {
-    mav_msgs::EigenTrajectoryPointVector waypoints;
-    mav_msgs::EigenTrajectoryPoint current_point;
-    current_point.position_W = odometry_.position_W;
-    current_point.orientation_W_B = odometry_.orientation_W_B;
+  avoidCollisionsTowardWaypoint();
 
-    waypoints.push_back(current_point);
-    waypoints.insert(waypoints.end(), waypoints_.begin(), waypoints_.end());
-
-    mav_msgs::EigenTrajectoryPointVector path;
-
-    if (planPathThroughWaypoints(waypoints, &path)) {
-      replacePath(path);
-      current_waypoint_ = waypoints_.size();
-    } else {
-      ROS_ERROR("[Mav Local Planner] Waypoint planning failed!");
-    }
-  } else if (path_queue_.empty()) {
-    // First check how many waypoints we haven't covered yet are in free space.
-    mav_msgs::EigenTrajectoryPointVector free_waypoints;
-    // Do we need the odometry in here? Let's see.
-    mav_msgs::EigenTrajectoryPoint current_point;
-    current_point.position_W = odometry_.position_W;
-    current_point.orientation_W_B = odometry_.orientation_W_B;
-
-    // If the path doesn't ALREADY start near the odometry, the first waypoint
-    // should be the current pose.
-    int waypoints_added = 0;
-    if ((current_point.position_W - waypoints_.front().position_W).norm() >
-        kCloseToOdometry) {
-      free_waypoints.push_back(current_point);
-      waypoints_added = 1;
-    }
-
-    for (const mav_msgs::EigenTrajectoryPoint& waypoint : waypoints_) {
-      if (getMapDistance(waypoint.position_W) < constraints_.robot_radius) {
-        break;
-      }
-      free_waypoints.push_back(waypoint);
-    }
-
-    bool success = false;
-    if (free_waypoints.size() <= static_cast<size_t>(waypoints_added)) {
-      // Okay whatever just search for the first waypoint.
-      success = false;
-    } else {
-      // There is some hope! Maybe we can do path smoothing on these guys.
-      mav_msgs::EigenTrajectoryPointVector path;
-      bool success = planPathThroughWaypoints(free_waypoints, &path);
-      if (success) {
-        success = isPathCollisionFree(path);
-        if (success) {
-          replacePath(path);
-          current_waypoint_ = free_waypoints.size() - waypoints_added;
-          ROS_INFO(
-                  "[Mav Local Planner] Used smoothing through %zu waypoints! Total "
-                  "waypoint size: %zu, current point: %d, added? %d",
-                  free_waypoints.size(), waypoints_.size(), current_waypoint_,
-                  waypoints_added);
-        }
-      }
-    }
-    // Give up!
-    if (!success) {
-      avoidCollisionsTowardWaypoint();
-    }
-  } else {
-    // Otherwise let's just keep exploring.
-    avoidCollisionsTowardWaypoint();
-  }
-
-  ROS_INFO("[Mav Local Planner][Plan Step] Planning finished. Time taken: %f",
+  ROS_INFO("[Mav Hilbert Planner][Plan Step] Planning finished. Time taken: %f",
            timer.stop());
   visualizePath();
 }
@@ -395,33 +323,6 @@ void MavHilbertPlanner::avoidCollisionsTowardWaypoint() {
       }
     }
   }
-}
-
-bool MavHilbertPlanner::planPathThroughWaypoints(
-    const mav_msgs::EigenTrajectoryPointVector& waypoints,
-    mav_msgs::EigenTrajectoryPointVector* path) {
-  CHECK_NOTNULL(path);
-  bool success = false;
-  if (smoother_name_ == "loco") {
-    if (waypoints.size() == 2) {
-      success = loco_smoother_.getPathBetweenTwoPoints(waypoints[0],
-                                                       waypoints[1], path);
-    } else {
-      success = loco_smoother_.getPathBetweenWaypoints(waypoints, path);
-    }
-  } else if (smoother_name_ == "polynomial") {
-    success = poly_smoother_.getPathBetweenWaypoints(waypoints, path);
-
-  } else if (smoother_name_ == "ramp") {
-    success = ramp_smoother_.getPathBetweenWaypoints(waypoints, path);
-  } else {
-    // Default case is ramp!
-    ROS_ERROR(
-        "[Mav Local Planner] Unknown smoother type %s, using ramp instead.",
-        smoother_name_.c_str());
-    success = ramp_smoother_.getPathBetweenWaypoints(waypoints, path);
-  }
-  return success;
 }
 
 bool MavHilbertPlanner::nextWaypoint() {
