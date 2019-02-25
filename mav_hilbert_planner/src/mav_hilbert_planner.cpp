@@ -500,7 +500,7 @@ void MavHilbertPlanner::visualizePath() {
 
 double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const {
   double occprob = 0.0;
-  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, occprob)) {
+  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, &occprob)) {
     return 0.0;
   }
   return occprob;
@@ -509,7 +509,7 @@ double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const 
 double MavHilbertPlanner::getMapDistanceAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
   double occprob = 0.0;
-  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAndGradientAtPosition(position, occprob, gradient)) {
+  if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAndGradientAtPosition(position, &occprob, gradient)) {
     return 0.0;
   }
   return occprob;

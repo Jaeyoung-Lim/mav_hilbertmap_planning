@@ -214,37 +214,41 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
     return probability;
 }
 
-double hilbertmap::getOccupancyProbAndGradient(const Eigen::Vector3d &x_query, Eigen::Vector3d* gradient) const {
+bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double* occprob) const {
+    *occprob = getOccupancyProb(x_query);
+    if(*occprob > 1.0 || *occprob < 0.0) return false; //Sanity Check
+    return true;
+}
 
-    double probability;
+bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query, double* occprob ,Eigen::Vector3d* gradient) const {
+    bool success = false;
+    double occupancy_prob;
     Eigen::VectorXd phi_x;
-    Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
-    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    Eigen::Vector3d occupancy_gradient;
     ros::Time start_time;
 
+    Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    occupancy_prob = 1 / ( 1 + exp(weights_.dot(phi_x)));
 
     //  Calculate gradient
     //  dk = ( -1/(0.5*radius^2) ) * phi_hat .*delta_x;
-    for(int i; i < anchorpoints_.size(); i++){
-        anchorpoints.row(i) = anchorpoints_[i];
+    for(int i; i < anchorpoints_.size(); i++){ //Copy Anchorpoints
+        anchorpoints.col(i) = anchorpoints_[i];
     }
+
     delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
-    *gradient = ((-1/(0.5*pow(this->sigma_, 2))) * phi_x * delta_x).transpose();
-    return probability;
-}
+    occupancy_gradient = (-1/(0.5*pow(sigma_, 2))) * delta_x * phi_x;
 
-bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double &occprob) const {
-    occprob = getOccupancyProb(x_query);
-    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
-    return true;
-}
+    *occprob = occupancy_prob;
+    *gradient = occupancy_gradient;
 
-bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double &occprob ,Eigen::Vector3d* gradient) const {
-    occprob = getOccupancyProbAndGradient(x_query, gradient);
-    if(occprob > 1.0 || occprob < 0.0) return false; //Sanity Check
-    return true;
+    if(occupancy_prob > 1.0 || occupancy_prob < 0.0) return success; //Sanity Check
+    success = true;
+
+    return success;
 }
