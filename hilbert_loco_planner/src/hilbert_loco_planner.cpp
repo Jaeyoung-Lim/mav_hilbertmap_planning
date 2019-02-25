@@ -184,7 +184,7 @@ double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& po
 }
 
 bool HilbertLocoPlanner::isPathCollisionFree(const mav_msgs::EigenTrajectoryPointVector& path) const {
-    return false;
+    return true;
 }
 bool HilbertLocoPlanner::isPathFeasible(const mav_msgs::EigenTrajectoryPointVector& path) const {
     return true;
