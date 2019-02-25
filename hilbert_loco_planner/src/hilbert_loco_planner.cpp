@@ -25,10 +25,10 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
 
     loco_.setRobotRadius(constraints_.robot_radius);
 
-    double loco_epsilon_inflation = 0.5;
+    double loco_epsilon_inflation = 0.01; //Small epsilon for probability costs
     nh_private_.param("loco_epsilon_inflation", loco_epsilon_inflation,
                     loco_epsilon_inflation);
-    loco_.setEpsilon(constraints_.robot_radius + loco_epsilon_inflation);
+    loco_.setEpsilon(loco_epsilon_inflation);
 
 }
 
