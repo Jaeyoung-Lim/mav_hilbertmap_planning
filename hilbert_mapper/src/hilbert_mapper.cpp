@@ -109,29 +109,20 @@ void hilbertMapper::publishMap(){
 
     sensor_msgs::PointCloud2 hilbert_map_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
-    Eigen::Vector3d x_query, origin;
+    Eigen::Vector3d x_query;
 
     //Encode pointcloud data
-    int width_cells = int(width_ / resolution_);
-    origin << 0.5 * width_, 0.5 * width_, 0.5 * width_;
+    for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
+        pcl::PointXYZI point;
+        x_query = hilbertMap_->getFeature(i);
+        point.x = x_query(0);
+        point.y = x_query(1);
+        point.z = x_query(2);
+        point.intensity = hilbertMap_->getOccupancyProb(x_query);
 
-    for(int i = 0; i < width_cells; i ++) {
-        for (int j = 0; j < width_cells; j++) {
-            for (int k = 0; k < width_cells; k++) {
-                pcl::PointXYZI point;
-                double occ_prob;
-                x_query << i * resolution_, j * resolution_ , k * resolution_;
-                x_query = x_query - origin;
-
-                point.x = x_query(0);
-                point.y = x_query(1);
-                point.z = x_query(2);
-                point.intensity = hilbertMap_->getOccupancyProb(x_query);
-
-                pointCloud.points.push_back(point);
-            }
-        }
+        pointCloud.points.push_back(point);
     }
+
     pcl::toROSMsg(pointCloud, hilbert_map_msg);
 
     hilbert_map_msg.header.stamp = ros::Time::now();
@@ -186,7 +177,6 @@ void hilbertMapper::publishAnchorPoints() {
     Eigen::Vector3d x_feature, origin;
 
     //Encode pointcloud data
-    int width_cells = int(width_ / resolution_);
     for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
         pcl::PointXYZ point;
         x_feature = hilbertMap_->getFeature(i);
