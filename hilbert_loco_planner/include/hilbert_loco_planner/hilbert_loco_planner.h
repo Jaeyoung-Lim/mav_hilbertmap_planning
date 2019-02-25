@@ -30,7 +30,6 @@ public:
     static constexpr int kN = 10;
 
     HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
-    virtual ~ HilbertLocoPlanner();
 
     void setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map);
 

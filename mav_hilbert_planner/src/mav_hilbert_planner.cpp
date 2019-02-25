@@ -18,6 +18,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       command_publishing_dt_(1.0),
       replan_dt_(1.0),
       replan_lookahead_sec_(0.1),
+      maprefresh_dt_(10.0),
       avoid_collisions_(true),
       autostart_(true),
       smoother_name_("loco"),
@@ -26,6 +27,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       max_failures_(5),
       num_failures_(0),
       hilbert_mapper_(nh_, nh_private_),
+      tsdf_server_(nh_, nh_private_),
       loco_planner_(nh_, nh_private_) {
   // Set up some settings.
   constraints_.setParametersFromRos(nh_private_);
@@ -73,11 +75,19 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
 
   // Start the planning timer. Will no-op most cycles.
   ros::TimerOptions timer_options(
-      ros::Duration(replan_dt_),
+      ros::Duration(maprefresh_dt_),
       boost::bind(&MavHilbertPlanner::planningTimerCallback, this, _1),
       &planning_queue_);
 
   planning_timer_ = nh_.createTimer(timer_options);
+
+  ros::TimerOptions map_timer_options(
+    ros::Duration(replan_dt_),
+    boost::bind(&MavHilbertPlanner::hilbertmapTimerCallback, this, _1),
+    &hilbertmap_queue_);
+
+
+  hilbertmapupdate_timer_ = nh_.createTimer(map_timer_options);
 
   // Start the command publishing spinner.
   command_publishing_spinner_.start();
@@ -159,10 +169,13 @@ void MavHilbertPlanner::waypointListCallback(
 
 void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
   // Wait on the condition variable from the publishing...
-  hilbert_mapper_.setMapCenter(odometry_.position_W);
   if (should_replan_.wait_for(replan_dt_)) {
     planningStep();
   }
+}
+
+void MavHilbertPlanner::hilbertmapTimerCallback(const ros::TimerEvent& event) {
+    hilbert_mapper_.setMapCenter(odometry_.position_W);
 }
 
 void MavHilbertPlanner::planningStep() {
