@@ -238,13 +238,11 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     //  Calculate gradient
     //  dk = ( -1/(0.5*radius^2) ) * phi_hat .*delta_x;
     for(int i; i < anchorpoints_.size(); i++){ //Copy Anchorpoints
-        anchorpoints.row(i) = anchorpoints_[i];
+        anchorpoints.col(i) = anchorpoints_[i];
     }
 
-
     delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
-    occupancy_gradient = ((-1/(0.5*pow(sigma_, 2))) * phi_x * delta_x).transpose();
-    return probability;
+    occupancy_gradient = (-1/(0.5*pow(sigma_, 2))) * delta_x * phi_x;
 
     *occprob = occupancy_prob;
     *gradient = occupancy_gradient;
