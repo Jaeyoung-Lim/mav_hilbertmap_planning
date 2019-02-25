@@ -178,7 +178,6 @@ void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
 
 void MavHilbertPlanner::hilbertmapTimerCallback(const ros::TimerEvent& event) {
     hilbert_mapper_.setMapCenter(odometry_.position_W);
-    std::cout << "Map refresh" << std::endl;
 }
 
 void MavHilbertPlanner::planningStep() {
