@@ -64,6 +64,7 @@ class MavHilbertPlanner {
 
   // Control for planning.
   void planningTimerCallback(const ros::TimerEvent& event);
+  void hilbertmapTimerCallback(const ros::TimerEvent& event);
   void planningStep();
   // Returns if the next waypoint is a valid waypoint.
   bool nextWaypoint();
@@ -117,11 +118,13 @@ class MavHilbertPlanner {
   ros::CallbackQueue command_publishing_queue_;
   ros::AsyncSpinner command_publishing_spinner_;
   ros::CallbackQueue planning_queue_;
+  ros::CallbackQueue hilbertmap_queue_;
   ros::AsyncSpinner planning_spinner_;
 
   // Publisher for new messages to the controller.
   ros::Timer command_publishing_timer_;
   ros::Timer planning_timer_;
+  ros::Timer hilbertmapupdate_timer_;
 
   // Settings -- general
   bool verbose_;
@@ -139,6 +142,8 @@ class MavHilbertPlanner {
   double command_publishing_dt_;
   double replan_dt_;
   double replan_lookahead_sec_;
+
+  double maprefresh_dt_;
 
   // Settings -- general planning.
   bool avoid_collisions_;
