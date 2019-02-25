@@ -118,8 +118,9 @@ class MavHilbertPlanner {
   ros::CallbackQueue command_publishing_queue_;
   ros::AsyncSpinner command_publishing_spinner_;
   ros::CallbackQueue planning_queue_;
-  ros::CallbackQueue hilbertmap_queue_;
+  ros::CallbackQueue maprefresh_queue_;
   ros::AsyncSpinner planning_spinner_;
+  ros::AsyncSpinner maprefresh_spinner_;
 
   // Publisher for new messages to the controller.
   ros::Timer command_publishing_timer_;

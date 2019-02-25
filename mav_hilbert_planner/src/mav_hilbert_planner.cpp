@@ -11,6 +11,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       nh_private_(nh_private),
       command_publishing_spinner_(1, &command_publishing_queue_),
       planning_spinner_(1, &planning_queue_),
+      maprefresh_spinner_(1, &maprefresh_queue_),
       verbose_(false),
       global_frame_id_("map"),
       local_frame_id_("odom"),
@@ -18,7 +19,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       command_publishing_dt_(1.0),
       replan_dt_(1.0),
       replan_lookahead_sec_(0.1),
-      maprefresh_dt_(10.0),
+      maprefresh_dt_(3.0),
       avoid_collisions_(true),
       autostart_(true),
       smoother_name_("loco"),
@@ -75,16 +76,16 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
 
   // Start the planning timer. Will no-op most cycles.
   ros::TimerOptions timer_options(
-      ros::Duration(maprefresh_dt_),
+      ros::Duration(replan_dt_),
       boost::bind(&MavHilbertPlanner::planningTimerCallback, this, _1),
       &planning_queue_);
 
   planning_timer_ = nh_.createTimer(timer_options);
 
   ros::TimerOptions map_timer_options(
-    ros::Duration(replan_dt_),
+    ros::Duration(maprefresh_dt_),
     boost::bind(&MavHilbertPlanner::hilbertmapTimerCallback, this, _1),
-    &hilbertmap_queue_);
+    &maprefresh_queue_);
 
 
   hilbertmapupdate_timer_ = nh_.createTimer(map_timer_options);
@@ -92,6 +93,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   // Start the command publishing spinner.
   command_publishing_spinner_.start();
   planning_spinner_.start();
+  maprefresh_spinner_.start();
 
   // Set up yaw policy.
   yaw_policy_.setPhysicalConstraints(constraints_);
