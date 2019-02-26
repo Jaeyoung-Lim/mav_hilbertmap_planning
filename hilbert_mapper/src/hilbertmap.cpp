@@ -76,8 +76,8 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        else bin_.emplace_back(pcl::PointXYZI(1.0f));
+        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(-1.0f));
 
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
