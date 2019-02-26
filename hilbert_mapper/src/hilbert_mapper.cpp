@@ -78,14 +78,14 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     // Crop PointCloud around map center
     pcl::CropBox<pcl::PointXYZI> boxfilter;
     map_center = hilbertMap_->getMapCenter();
-    map_width = float(hilbertMap_->getMapWidth());
+    map_width = 0.5 * float(hilbertMap_->getMapWidth());
     float minX = float(map_center(0) - map_width);
     float minY = float(map_center(1) - map_width);
     float minZ = float(map_center(2) - map_width);
     float maxX = float(map_center(0) + map_width);
     float maxY = float(map_center(1) + map_width);
     float maxZ = float(map_center(2) + map_width);
-    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, -1.0));
+    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
