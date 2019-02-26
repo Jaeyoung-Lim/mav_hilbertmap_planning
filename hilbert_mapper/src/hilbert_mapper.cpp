@@ -45,7 +45,6 @@ hilbertMapper::~hilbertMapper() {
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
     hilbertMap_->updateWeights();
-    // ros::spinOnce();
 }
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {

@@ -6,7 +6,7 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    num_samples_(30),
+    num_samples_(100),
     max_iterations_(30),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
@@ -63,7 +63,7 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
         int j = index[i];
         query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x))); //TODO: Add Regularizor
     }
     return nll;
 }
@@ -206,7 +206,7 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    probability = 1 / ( 1 + exp((-1.0) * weights_.dot(phi_x)));
 
 //    time_query_ = (ros::Time::now() - start_time).toSec();
 //    printf("QueryTime: %6f\n", time_query_);
