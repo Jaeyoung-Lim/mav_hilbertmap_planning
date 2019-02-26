@@ -13,13 +13,15 @@ hilbertmap::hilbertmap(int num_features):
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.3),
     width_(5.0),
+    length_(5.0),
+    height_(5.0),
     resolution_(0.5),
     tsdf_threshold_(0.5),
     sigma_(0.4) {
 
     map_center_ = Eigen::Vector3d::Zero();
 
-    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
+    generateGridPoints(anchorpoints_, map_center_, width_, length_, height_, resolution_);
 
 }
 hilbertmap::~hilbertmap() {
@@ -92,11 +94,13 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     appendbin_timer.Stop();
 }
 
-void hilbertmap::setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold){
+void hilbertmap::setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold){
 
     num_samples_ = num_samples;
-    num_features_ = std::pow(int(width / resolution), 3);
+    num_features_ = int(width / resolution) * int(length / resolution) * int(height / resolution);
     width_ = width;
+    length_ = length;
+    height_ = height;
     resolution_ = resolution;
 
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);

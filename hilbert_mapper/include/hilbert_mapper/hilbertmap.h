@@ -22,7 +22,7 @@ class hilbertmap
         int prelearn_iterations_;
         int num_samples_;
         double eta_; //Learning Rate
-        double width_;
+        double width_, length_, height_;
         double resolution_;
         double time_query_; // Time for querying a single time
         double time_sgd_; // Convergence time for stochastic gradient descent
@@ -47,7 +47,7 @@ public:
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
-        void setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold);
+        void setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
         void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
