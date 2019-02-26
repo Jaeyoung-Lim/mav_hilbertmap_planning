@@ -29,6 +29,9 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     nh_private_.param("loco_epsilon_inflation", loco_epsilon_inflation,
                     loco_epsilon_inflation);
     loco_.setEpsilon(loco_epsilon_inflation);
+    loco_.setSoftGoalConstraint(true); // Set soft goal constraints
+    loco_.setWc(100.0);
+    loco_.setWd(0.1);
 
 }
 
