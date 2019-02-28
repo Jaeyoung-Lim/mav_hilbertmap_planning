@@ -7,7 +7,7 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(100),
-    max_iterations_(30),
+    max_iterations_(200),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
@@ -18,7 +18,6 @@ hilbertmap::hilbertmap(int num_features):
     map_center_ = Eigen::Vector3d::Zero();
 
     generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
-
 
 }
 hilbertmap::~hilbertmap() {
