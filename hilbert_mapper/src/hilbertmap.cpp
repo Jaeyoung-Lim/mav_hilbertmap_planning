@@ -117,14 +117,15 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
 
     // Reinitialize anchor points
     anchorpoints_.clear();
-    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
+    generateGridPoints(prelearned_anchorpoints_, map_center_, width_, width_, width_, resolution_);
 
 }
 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
+    is_prelearnedmapvalid_ = false;
     map_center_ = map_center;
-    weights_ = Eigen::VectorXd::Zero(num_features_);
+    prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
     anchorpoints_.clear();
     generateGridPoints(anchorpoints_, map_center, width_, width_, width_, resolution_);
 
@@ -194,6 +195,10 @@ double hilbertmap::getSgdTime(){
 
 double hilbertmap::getQueryTime(){
     return time_query_;
+}
+
+double hilbertmap::getSgdError(){
+    return sgd_amount_;
 }
 
 Eigen::Vector3d hilbertmap::getMapCenter(){
