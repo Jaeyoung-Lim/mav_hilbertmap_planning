@@ -196,6 +196,10 @@ double hilbertmap::getQueryTime(){
     return time_query_;
 }
 
+double hilbertmap::getUpdateError(){
+    return sgd_amount_;
+}
+
 Eigen::Vector3d hilbertmap::getMapCenter(){
     return map_center_;
 }

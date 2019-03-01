@@ -18,6 +18,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
 #include "hilbert_msgs/MapperInfo.h"
+#include "hilbert_msgs/Debug.h"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
@@ -37,9 +38,10 @@ class hilbertMapper
   private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
-    ros::Timer cmdloop_timer_, statusloop_timer_;
+    ros::Timer cmdloop_timer_, statusloop_timer_, faststatusloop_timer_;
     ros::Publisher mapinfoPub_;
     ros::Publisher hilbertmapPub_;
+    ros::Publisher debuginfoPub_;
     ros::Publisher gridmapPub_;
     ros::Publisher anchorPub_;
     ros::Publisher binPub_;
@@ -56,13 +58,16 @@ class hilbertMapper
     double resolution_;
     double width_;
     float tsdf_threshold_;
-    bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_, publish_binpoints_;
+    bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_, 
+        publish_binpoints_, publish_debuginfo_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
+    void faststatusloopCallback(const ros::TimerEvent& event);
 
     void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void publishMapInfo();
+    void publishDebugInfo();
     void publishMap();
     void publishgridMap();
     void publishAnchorPoints();

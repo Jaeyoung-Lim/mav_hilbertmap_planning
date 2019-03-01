@@ -61,6 +61,7 @@ public:
         double getMapResolution();
         double getSgdTime();
         double getQueryTime();
+        double getUpdateError();
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();

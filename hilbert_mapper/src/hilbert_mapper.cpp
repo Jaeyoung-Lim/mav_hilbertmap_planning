@@ -14,8 +14,11 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
+    faststatusloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::faststatusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
+    debuginfoPub_ = nh_.advertise<hilbert_msgs::Debug>("/hilbert_mapper/debug", 1);
+
     hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
     anchorPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/anchorpoints", 1);
     binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
@@ -57,6 +60,11 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     if(publish_gridmap_) publishgridMap();
     if(publish_anchorpoints_) publishAnchorPoints();
     if(publish_binpoints_) publishBinPoints();
+
+}
+
+void hilbertMapper::faststatusloopCallback(const ros::TimerEvent &event) {
+    if(publish_mapinfo_) publishDebugInfo();
 
 }
 
@@ -102,6 +110,16 @@ void hilbertMapper::publishMapInfo(){
     msg.time_query = float(hilbertMap_->getQueryTime());
 
     mapinfoPub_.publish(msg);
+}
+
+void hilbertMapper::publishDebugInfo(){
+    hilbert_msgs::Debug msg;
+
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = frame_id_;
+    msg.update_error = uint16_t(hilbertMap_->getUpdateError());
+
+    debuginfoPub_.publish(msg);
 }
 
 void hilbertMapper::publishMap(){
