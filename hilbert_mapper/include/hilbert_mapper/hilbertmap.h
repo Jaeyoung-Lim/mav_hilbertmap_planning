@@ -26,15 +26,19 @@ class hilbertmap
         double time_sgd_; // Convergence time for stochastic gradient descent
         double sigma_; // Covariance for RBF Kernel
         float tsdf_threshold_;
+        bool is_prelearnedmapvalid_;
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
-        Eigen::VectorXd weights_;
+        Eigen::VectorXd weights_, prelearned_weights_;
         Eigen::MatrixXd A_;
         std::vector<Eigen::Vector3d> anchorpoints_;
         std::vector<pcl::PointXYZI> bin_;
 
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
+        void stochasticGradientDescent(Eigen::VectorXd &weights);
+        bool checkValidityPrelearnedMap();
+        double sgd_amount_;
 
 public:
         hilbertmap(int num_feature);

@@ -7,13 +7,14 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(100),
-    max_iterations_(200),
+    max_iterations_(30),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
-    eta_(0.7),
+    eta_(0.3),
     width_(1.0),
     resolution_(0.1),
-    sigma_(0.1) {
+    sigma_(0.1),
+    is_prelearnedmapvalid_(false) {
 
     map_center_ = Eigen::Vector3d::Zero();
 
@@ -26,25 +27,41 @@ hilbertmap::~hilbertmap() {
 
 void hilbertmap::updateWeights(){
 
+    ros::Time start_time;
+    if(!is_prelearnedmapvalid_){ //Check validity of prelearned map
+        if(checkValidityPrelearnedMap()) is_prelearnedmapvalid_ = true;
+    }
+
+    start_time = ros::Time::now();
+    if(is_prelearnedmapvalid_) stochasticGradientDescent(weights_);
+    else stochasticGradientDescent(prelearned_weights_);
+    time_sgd_ = (ros::Time::now() - start_time).toSec();
+}
+
+bool hilbertmap::checkValidityPrelearnedMap(){
+    if(sgd_amount_ < 0.1){
+        return true;
+    }
+    return false;
+}
+
+void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
     std::srand(std::time(nullptr));
     std::vector<int> idx;
     int bin_size;
 
     idx.resize(num_samples_);
     bin_size = bin_.size();
-    ros::Time start_time;
-
-    start_time = ros::Time::now();
 
     for(int i = 0; i < max_iterations_; i ++){
         //Draw samples from bin
         if(bin_size <= 0) return;
         for(int j = 0; j < num_samples_; j++)   idx[j] = std::rand() % bin_size;
         //TODO: Study the effect of A_
-        Eigen::VectorXd prev_weights = weights_;
-        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
+        Eigen::VectorXd prev_weights = weights;
+        weights = weights - eta_ * A_ * getNegativeLikelyhood(idx);
+        sgd_amount_ = (weights_ - prev_weights).norm();
     }
-    time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
@@ -94,6 +111,7 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
+    prelearned_weights_ = weights_; //Copy wieght dimensions
 
     tsdf_threshold_ = tsdf_threshold;
 
