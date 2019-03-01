@@ -30,7 +30,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
     nh_.param<double>("/hilbert_mapper/map/width", width_, 1.0);
-    nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.3);
+    nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.5);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
@@ -45,7 +45,6 @@ hilbertMapper::~hilbertMapper() {
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
 
     hilbertMap_->updateWeights();
-    // ros::spinOnce();
 }
 
 void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
@@ -78,14 +77,14 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     // Crop PointCloud around map center
     pcl::CropBox<pcl::PointXYZI> boxfilter;
     map_center = hilbertMap_->getMapCenter();
-    map_width = float(hilbertMap_->getMapWidth());
+    map_width = 0.5 * float(hilbertMap_->getMapWidth());
     float minX = float(map_center(0) - map_width);
     float minY = float(map_center(1) - map_width);
     float minZ = float(map_center(2) - map_width);
     float maxX = float(map_center(0) + map_width);
     float maxY = float(map_center(1) + map_width);
     float maxZ = float(map_center(2) + map_width);
-    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, -1.0));
+    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
     boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);

@@ -6,8 +6,8 @@
 
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
-    num_samples_(30),
-    max_iterations_(30),
+    num_samples_(100),
+    max_iterations_(200),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.7),
@@ -18,7 +18,6 @@ hilbertmap::hilbertmap(int num_features):
     map_center_ = Eigen::Vector3d::Zero();
 
     generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
-
 
 }
 hilbertmap::~hilbertmap() {
@@ -63,7 +62,7 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
         int j = index[i];
         query << double(bin_[j].x), double(bin_[j].y), double(bin_[j].z);
         getkernelVector(query, phi_x);
-        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x)));
+        nll =  nll - phi_x * bin_[j].intensity / ( 1 + exp(bin_[j].intensity * weights_.dot(phi_x))); //TODO: Add Regularizor
     }
     return nll;
 }
@@ -76,8 +75,8 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     for(int i = 0; i < std::min(num_observations, num_samples_); i++){
         int idx = std::rand() % num_observations;
         //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        else bin_.emplace_back(pcl::PointXYZI(1.0f));
+        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(1.0f));
+        else bin_.emplace_back(pcl::PointXYZI(-1.0f));
 
         bin_.back().x = ptcloud[idx].x;
         bin_.back().y = ptcloud[idx].y;
@@ -206,7 +205,7 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    probability = 1 / ( 1 + exp((-1.0) * weights_.dot(phi_x)));
 
 //    time_query_ = (ros::Time::now() - start_time).toSec();
 //    printf("QueryTime: %6f\n", time_query_);
