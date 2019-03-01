@@ -33,6 +33,7 @@ class hilbertmap
         Eigen::VectorXd weights_, prelearned_weights_;
         Eigen::MatrixXd A_;
         std::vector<Eigen::Vector3d> anchorpoints_;
+        std::vector<Eigen::Vector3d> prelearned_anchorpoints_;
         std::vector<pcl::PointXYZI> bin_;
 
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
@@ -61,7 +62,7 @@ public:
         double getMapResolution();
         double getSgdTime();
         double getQueryTime();
-        double getUpdateError();
+        double getSgdError();
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();

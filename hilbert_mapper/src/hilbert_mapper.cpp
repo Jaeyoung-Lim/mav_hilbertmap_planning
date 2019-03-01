@@ -36,6 +36,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.5);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_debuginfo", publish_debuginfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
@@ -64,7 +65,7 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
 }
 
 void hilbertMapper::faststatusloopCallback(const ros::TimerEvent &event) {
-    if(publish_mapinfo_) publishDebugInfo();
+    if(publish_debuginfo_) publishDebugInfo();
 
 }
 
@@ -117,7 +118,7 @@ void hilbertMapper::publishDebugInfo(){
 
     msg.header.stamp = ros::Time::now();
     msg.header.frame_id = frame_id_;
-    msg.update_error = uint16_t(hilbertMap_->getUpdateError());
+    msg.update_error = float(hilbertMap_->getSgdError());
 
     debuginfoPub_.publish(msg);
 }
