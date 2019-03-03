@@ -28,28 +28,11 @@ hilbertmap::~hilbertmap() {
 void hilbertmap::updateWeights(){
 
     ros::Time start_time;
-    //TODO: This Logic here is broken
-    if(!is_prelearnedmapvalid_){ //Check validity of prelearned map
-        if(checkValidityPrelearnedMap()){
-            //The map is finaly valid!
-            anchorpoints_ = prelearned_anchorpoints_;
-            weights_ = prelearned_weights_;
-            is_prelearnedmapvalid_ = true;
-        }
-    }
 
     start_time = ros::Time::now();
-    if(is_prelearnedmapvalid_) stochasticGradientDescent(weights_);
-    else stochasticGradientDescent(prelearned_weights_);
+    stochasticGradientDescent(weights_);
     time_sgd_ = (ros::Time::now() - start_time).toSec();
-}
 
-bool hilbertmap::checkValidityPrelearnedMap(){
-    // if(sgd_amount_ < 0.1){ //Does checking the validity of the map with sgd error make sense?
-    //     return true;
-    // }
-    // return false;
-    return true;
 }
 
 void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
@@ -135,6 +118,14 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
     prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
     prelearned_anchorpoints_.clear();
     generateGridPoints(prelearned_anchorpoints_, map_center, width_, width_, width_, resolution_);
+    ROS_INFO("[hilbertMap] Refresh Prelearned Map");
+    //Learn map before handing over the map
+    for(int i = 0; i < 10; i++){
+        stochasticGradientDescent(prelearned_weights_);
+    }
+    anchorpoints_ = prelearned_anchorpoints_;
+    weights_ = prelearned_weights_;
+    ROS_INFO("[hilbertMap] Copied Map Weights");
 
 }
 
@@ -229,16 +220,11 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
     double probability;
     Eigen::VectorXd phi_x;
-    ros::Time start_time;
 
-//    start_time = ros::Time::now();
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
     probability = 1 / ( 1 + exp((-1.0) * weights_.dot(phi_x)));
-
-//    time_query_ = (ros::Time::now() - start_time).toSec();
-//    printf("QueryTime: %6f\n", time_query_);
 
     return probability;
 }

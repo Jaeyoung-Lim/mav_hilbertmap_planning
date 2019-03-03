@@ -47,7 +47,7 @@ hilbertMapper::~hilbertMapper() {
 }
 
 void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
-
+    //Update HilbertMap weights
     hilbertMap_->updateWeights();
 }
 
@@ -125,9 +125,13 @@ void hilbertMapper::publishDebugInfo(){
 
 void hilbertMapper::publishMap(){
 
+    ros::Time start_time;
     sensor_msgs::PointCloud2 hilbert_map_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
     Eigen::Vector3d x_query;
+    double time_query;
+
+    start_time = ros::Time::now();
 
     //Encode pointcloud data
     for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
@@ -136,10 +140,13 @@ void hilbertMapper::publishMap(){
         point.x = x_query(0);
         point.y = x_query(1);
         point.z = x_query(2);
+
         point.intensity = hilbertMap_->getOccupancyProb(x_query);
+
 
         pointCloud.points.push_back(point);
     }
+    time_query = (ros::Time::now() - start_time).toSec();
 
     pcl::toROSMsg(pointCloud, hilbert_map_msg);
 
