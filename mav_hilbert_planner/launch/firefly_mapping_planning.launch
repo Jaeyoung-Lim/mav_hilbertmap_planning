@@ -64,8 +64,4 @@
       <param name="avoid_collisions" value="true" />
     </node>
   </group>
-
-  <param name="/hilbert_mapper/map/width" value="5.0" />
-  <param name="/hilbert_mapper/map/resolution" value="0.5" />
-
 </launch>

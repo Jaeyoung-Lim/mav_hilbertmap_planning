@@ -19,7 +19,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       command_publishing_dt_(1.0),
       replan_dt_(1.0),
       replan_lookahead_sec_(0.1),
-      maprefresh_dt_(5.0),
+      maprefresh_dt_(1.0),
       avoid_collisions_(true),
       autostart_(true),
       smoother_name_("loco"),
@@ -177,6 +177,7 @@ void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
 }
 
 void MavHilbertPlanner::hilbertmapTimerCallback(const ros::TimerEvent& event) {
+    //Refresh map center to the current position
     hilbert_mapper_.setMapCenter(odometry_.position_W);
 }
 

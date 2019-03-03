@@ -28,8 +28,14 @@ hilbertmap::~hilbertmap() {
 void hilbertmap::updateWeights(){
 
     ros::Time start_time;
+    //TODO: This Logic here is broken
     if(!is_prelearnedmapvalid_){ //Check validity of prelearned map
-        if(checkValidityPrelearnedMap()) is_prelearnedmapvalid_ = true;
+        if(checkValidityPrelearnedMap()){
+            //The map is finaly valid!
+            anchorpoints_ = prelearned_anchorpoints_;
+            weights_ = prelearned_weights_;
+            is_prelearnedmapvalid_ = true;
+        }
     }
 
     start_time = ros::Time::now();
@@ -39,10 +45,11 @@ void hilbertmap::updateWeights(){
 }
 
 bool hilbertmap::checkValidityPrelearnedMap(){
-    if(sgd_amount_ < 0.1){
-        return true;
-    }
-    return false;
+    // if(sgd_amount_ < 0.1){ //Does checking the validity of the map with sgd error make sense?
+    //     return true;
+    // }
+    // return false;
+    return true;
 }
 
 void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
@@ -116,7 +123,7 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
     tsdf_threshold_ = tsdf_threshold;
 
     // Reinitialize anchor points
-    anchorpoints_.clear();
+    prelearned_anchorpoints_.clear();
     generateGridPoints(prelearned_anchorpoints_, map_center_, width_, width_, width_, resolution_);
 
 }
@@ -126,8 +133,8 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
     is_prelearnedmapvalid_ = false;
     map_center_ = map_center;
     prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
-    anchorpoints_.clear();
-    generateGridPoints(anchorpoints_, map_center, width_, width_, width_, resolution_);
+    prelearned_anchorpoints_.clear();
+    generateGridPoints(prelearned_anchorpoints_, map_center, width_, width_, width_, resolution_);
 
 }
 

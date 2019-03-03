@@ -31,8 +31,8 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
-    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.1);
-    nh_.param<double>("/hilbert_mapper/map/width", width_, 1.0);
+    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 1.0);
+    nh_.param<double>("/hilbert_mapper/map/width", width_, 10.0);
     nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.5);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
