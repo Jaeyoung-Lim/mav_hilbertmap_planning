@@ -13,8 +13,7 @@ hilbertmap::hilbertmap(int num_features):
     eta_(0.3),
     width_(1.0),
     resolution_(0.1),
-    sigma_(0.1),
-    is_prelearnedmapvalid_(false) {
+    sigma_(0.1) {
 
     map_center_ = Eigen::Vector3d::Zero();
 
@@ -240,7 +239,6 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     double occupancy_prob;
     Eigen::VectorXd phi_x;
     Eigen::Vector3d occupancy_gradient;
-    ros::Time start_time;
 
     Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
     Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
