@@ -60,6 +60,7 @@ class hilbertMapper
     float tsdf_threshold_;
     bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_, 
         publish_binpoints_, publish_debuginfo_;
+    bool verbose_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);

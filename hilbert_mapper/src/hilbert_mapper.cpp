@@ -8,7 +8,8 @@ using namespace std;
 hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  index_pointcloud(0){
+  index_pointcloud(0),
+  verbose_(true){
 
     hilbertMap_.reset(new hilbertmap(1000));
 
@@ -29,7 +30,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     int num_samples, num_features;
 
-    nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 10);
+    nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 100);
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 1.0);
     nh_.param<double>("/hilbert_mapper/map/width", width_, 10.0);
@@ -37,7 +38,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_debuginfo", publish_debuginfo_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, false);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
     hilbertMap_->setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
@@ -61,7 +62,9 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     if(publish_gridmap_) publishgridMap();
     if(publish_anchorpoints_) publishAnchorPoints();
     if(publish_binpoints_) publishBinPoints();
-
+    if(verbose_){
+        ROS_INFO_STREAM("Timings: " << std::endl << voxblox::timing::Timing::Print());
+    }
 }
 
 void hilbertMapper::faststatusloopCallback(const ros::TimerEvent &event) {
@@ -125,14 +128,10 @@ void hilbertMapper::publishDebugInfo(){
 
 void hilbertMapper::publishMap(){
 
-    ros::Time start_time;
     sensor_msgs::PointCloud2 hilbert_map_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
     Eigen::Vector3d x_query;
-    double time_query;
-
-    start_time = ros::Time::now();
-
+    voxblox::timing::Timer publish_map_timer("hilbert_mapper/publish_map");
     //Encode pointcloud data
     for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
         pcl::PointXYZI point;
@@ -146,7 +145,6 @@ void hilbertMapper::publishMap(){
 
         pointCloud.points.push_back(point);
     }
-    time_query = (ros::Time::now() - start_time).toSec();
 
     pcl::toROSMsg(pointCloud, hilbert_map_msg);
 
@@ -154,6 +152,7 @@ void hilbertMapper::publishMap(){
     hilbert_map_msg.header.frame_id = frame_id_;
 
     hilbertmapPub_.publish(hilbert_map_msg);
+    publish_map_timer.Stop();
 }
 
 void hilbertMapper::publishgridMap(){

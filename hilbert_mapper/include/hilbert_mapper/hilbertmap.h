@@ -9,6 +9,7 @@
 #include <cmath>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
+#include <voxblox/utils/timing.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
@@ -18,6 +19,7 @@ class hilbertmap
 
         int num_features_;
         int max_iterations_;
+        int prelearn_iterations_;
         int num_samples_;
         double eta_; //Learning Rate
         double width_;
