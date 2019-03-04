@@ -8,13 +8,14 @@ hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(100),
     max_iterations_(20),
-    prelearn_iterations_(3),
+    prelearn_iterations_(5),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.3),
-    width_(1.0),
-    resolution_(0.1),
-    sigma_(0.1) {
+    width_(5.0),
+    resolution_(0.5),
+    tsdf_threshold_(0.5),
+    sigma_(0.4) {
 
     map_center_ = Eigen::Vector3d::Zero();
 
