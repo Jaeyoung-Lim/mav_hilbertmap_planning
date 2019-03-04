@@ -49,6 +49,7 @@ class hilbertMapper
     ros::Subscriber mavtransformSub_;
     ros::Subscriber poseSub_;
     ros::Subscriber pointcloudSub_;
+    ros::Time last_received_tsdfmap_;
 
     Eigen::Vector3d mavPos_;
     Eigen::Vector4d mavAtt_;

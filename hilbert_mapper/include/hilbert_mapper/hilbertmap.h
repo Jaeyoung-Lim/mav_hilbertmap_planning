@@ -36,6 +36,7 @@ class hilbertmap
         std::vector<Eigen::Vector3d> anchorpoints_;
         std::vector<Eigen::Vector3d> prelearned_anchorpoints_;
         std::vector<pcl::PointXYZI> bin_;
+        ros::Time last_received_tsdfmap_;
 
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
         void stochasticGradientDescent(Eigen::VectorXd &weights);

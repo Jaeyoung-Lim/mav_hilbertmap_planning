@@ -80,6 +80,10 @@ void hilbertMapper::setMapCenter(Eigen::Vector3d &position){
 
 void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
+    ros::Time current_time = ros::Time::now();
+    if((current_time - last_received_tsdfmap_).toSec() < 0.5) return;
+
+    //Drop Messages if they are comming in too fast
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     Eigen::Vector3d map_center;
@@ -101,6 +105,9 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
     boxfilter.setInputCloud(ptcloud);
     boxfilter.filter(*cropped_ptcloud);
     hilbertMap_->appendBin(*cropped_ptcloud);
+
+    last_received_tsdfmap_ = current_time;
+
 }
 
 void hilbertMapper::publishMapInfo(){
