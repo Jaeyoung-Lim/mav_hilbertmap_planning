@@ -78,19 +78,17 @@ Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
 
 void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 
-    std::srand(std::time(nullptr));
-    int num_observations = ptcloud.points.size();
-
-    for(int i = 0; i < std::min(num_observations, num_samples_); i++){
-        int idx = std::rand() % num_observations;
-        //TODO: Should we handle duplicate points?
-        if(ptcloud[idx].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(1.0f));
+    voxblox::timing::Timer appendbin_timer("hilbertmap/appendbin_time");
+    bin_.clear();
+    for(int i = 0; i < ptcloud.points.size(); i++){
+        if(ptcloud[i].intensity < tsdf_threshold_) bin_.emplace_back(pcl::PointXYZI(1.0f));
         else bin_.emplace_back(pcl::PointXYZI(-1.0f));
 
-        bin_.back().x = ptcloud[idx].x;
-        bin_.back().y = ptcloud[idx].y;
-        bin_.back().z = ptcloud[idx].z;
+        bin_.back().x = ptcloud[i].x;
+        bin_.back().y = ptcloud[i].y;
+        bin_.back().z = ptcloud[i].z;
     }
+    appendbin_timer.Stop();
 }
 
 void hilbertmap::setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold){
