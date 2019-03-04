@@ -7,7 +7,8 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(100),
-    max_iterations_(30),
+    max_iterations_(20),
+    prelearn_iterations_(3),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
     eta_(0.3),
@@ -26,12 +27,10 @@ hilbertmap::~hilbertmap() {
 
 void hilbertmap::updateWeights(){
 
-    ros::Time start_time;
+    voxblox::timing::Timer sgd_timer("hilbertmap/sgdtime");
 
-    start_time = ros::Time::now();
     stochasticGradientDescent(weights_);
-    time_sgd_ = (ros::Time::now() - start_time).toSec();
-
+    sgd_timer.Stop();
 }
 
 void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
@@ -45,11 +44,15 @@ void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
     for(int i = 0; i < max_iterations_; i ++){
         //Draw samples from bin
         if(bin_size <= 0) return;
+        voxblox::timing::Timer sample_timer("hilbertmap/bin_sample_time");
         for(int j = 0; j < num_samples_; j++)   idx[j] = std::rand() % bin_size;
+        sample_timer.Stop();
         //TODO: Study the effect of A_
+        voxblox::timing::Timer nll_timer("hilbertmap/nlltime");
         Eigen::VectorXd prev_weights = weights;
         weights = weights - eta_ * A_ * getNegativeLikelyhood(idx);
         sgd_amount_ = (weights_ - prev_weights).norm();
+        nll_timer.Stop();
     }
 }
 
@@ -111,20 +114,22 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
 }
 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
+    
+    voxblox::timing::Timer maprefresh_timer("hilbertmap/maprefresh");
 
-    is_prelearnedmapvalid_ = false;
     map_center_ = map_center;
     prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
     prelearned_anchorpoints_.clear();
     generateGridPoints(prelearned_anchorpoints_, map_center, width_, width_, width_, resolution_);
-    ROS_INFO("[hilbertMap] Refresh Prelearned Map");
+
+
     //Learn map before handing over the map
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < prelearn_iterations_; i++){
         stochasticGradientDescent(prelearned_weights_);
     }
     anchorpoints_ = prelearned_anchorpoints_;
     weights_ = prelearned_weights_;
-    ROS_INFO("[hilbertMap] Copied Map Weights");
+    maprefresh_timer.Stop();
 
 }
 
@@ -138,7 +143,6 @@ void hilbertmap::getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd
 //    }
 //    r = (anchorpoints.colwise()-=x_query).colwise().squaredNorm();
 //    kernel_vector = (-0.5 * ( (1/sigma_) *r.array() ).pow(2)).exp().matrix();
-    double kernel, r;
 
     for(int i = 0; i < kernel_vector.size(); i++)
         kernel_vector(i) = exp(-0.5 * pow((x_query - anchorpoints_[i]).norm()/sigma_, 2));
