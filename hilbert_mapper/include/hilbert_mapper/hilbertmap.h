@@ -29,12 +29,15 @@ class hilbertmap
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
-        Eigen::VectorXd weights_;
+        Eigen::VectorXd weights_, prelearned_weights_;
         Eigen::MatrixXd A_;
         std::vector<Eigen::Vector3d> anchorpoints_;
+        std::vector<Eigen::Vector3d> prelearned_anchorpoints_;
         std::vector<pcl::PointXYZI> bin_;
 
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
+        void stochasticGradientDescent(Eigen::VectorXd &weights);
+        double sgd_amount_;
 
 public:
         hilbertmap(int num_feature);
@@ -57,6 +60,7 @@ public:
         double getMapResolution();
         double getSgdTime();
         double getQueryTime();
+        double getSgdError();
         Eigen::Vector3d getMapCenter();
         Eigen::Vector3d getFeature(int idx);
         Eigen::VectorXd getWeights();

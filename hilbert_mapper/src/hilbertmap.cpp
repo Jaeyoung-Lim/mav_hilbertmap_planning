@@ -7,10 +7,10 @@
 hilbertmap::hilbertmap(int num_features):
     num_features_(num_features),
     num_samples_(100),
-    max_iterations_(200),
+    max_iterations_(30),
     weights_(Eigen::VectorXd::Zero(num_features)),
     A_(Eigen::MatrixXd::Identity(num_features, num_features)),
-    eta_(0.7),
+    eta_(0.3),
     width_(1.0),
     resolution_(0.1),
     sigma_(0.1) {
@@ -26,25 +26,31 @@ hilbertmap::~hilbertmap() {
 
 void hilbertmap::updateWeights(){
 
+    ros::Time start_time;
+
+    start_time = ros::Time::now();
+    stochasticGradientDescent(weights_);
+    time_sgd_ = (ros::Time::now() - start_time).toSec();
+
+}
+
+void hilbertmap::stochasticGradientDescent(Eigen::VectorXd &weights){
     std::srand(std::time(nullptr));
     std::vector<int> idx;
     int bin_size;
 
     idx.resize(num_samples_);
     bin_size = bin_.size();
-    ros::Time start_time;
-
-    start_time = ros::Time::now();
 
     for(int i = 0; i < max_iterations_; i ++){
         //Draw samples from bin
         if(bin_size <= 0) return;
         for(int j = 0; j < num_samples_; j++)   idx[j] = std::rand() % bin_size;
         //TODO: Study the effect of A_
-        Eigen::VectorXd prev_weights = weights_;
-        weights_ = weights_ - eta_ * A_ * getNegativeLikelyhood(idx);
+        Eigen::VectorXd prev_weights = weights;
+        weights = weights - eta_ * A_ * getNegativeLikelyhood(idx);
+        sgd_amount_ = (weights_ - prev_weights).norm();
     }
-    time_sgd_ = (ros::Time::now() - start_time).toSec();
 }
 
 Eigen::VectorXd hilbertmap::getNegativeLikelyhood(std::vector<int> &index){
@@ -94,21 +100,31 @@ void hilbertmap::setMapProperties(int num_samples, double width, double resoluti
     A_ = Eigen::MatrixXd::Identity(num_features_, num_features_);
     // Reinitialize weights
     weights_ = Eigen::VectorXd::Zero(num_features_);
+    prelearned_weights_ = weights_; //Copy wieght dimensions
 
     tsdf_threshold_ = tsdf_threshold;
 
     // Reinitialize anchor points
-    anchorpoints_.clear();
-    generateGridPoints(anchorpoints_, map_center_, width_, width_, width_, resolution_);
+    prelearned_anchorpoints_.clear();
+    generateGridPoints(prelearned_anchorpoints_, map_center_, width_, width_, width_, resolution_);
 
 }
 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
 
+    is_prelearnedmapvalid_ = false;
     map_center_ = map_center;
-    weights_ = Eigen::VectorXd::Zero(num_features_);
-    anchorpoints_.clear();
-    generateGridPoints(anchorpoints_, map_center, width_, width_, width_, resolution_);
+    prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
+    prelearned_anchorpoints_.clear();
+    generateGridPoints(prelearned_anchorpoints_, map_center, width_, width_, width_, resolution_);
+    ROS_INFO("[hilbertMap] Refresh Prelearned Map");
+    //Learn map before handing over the map
+    for(int i = 0; i < 10; i++){
+        stochasticGradientDescent(prelearned_weights_);
+    }
+    anchorpoints_ = prelearned_anchorpoints_;
+    weights_ = prelearned_weights_;
+    ROS_INFO("[hilbertMap] Copied Map Weights");
 
 }
 
@@ -178,6 +194,10 @@ double hilbertmap::getQueryTime(){
     return time_query_;
 }
 
+double hilbertmap::getSgdError(){
+    return sgd_amount_;
+}
+
 Eigen::Vector3d hilbertmap::getMapCenter(){
     return map_center_;
 }
@@ -199,16 +219,11 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
     double probability;
     Eigen::VectorXd phi_x;
-    ros::Time start_time;
 
-//    start_time = ros::Time::now();
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
     probability = 1 / ( 1 + exp((-1.0) * weights_.dot(phi_x)));
-
-//    time_query_ = (ros::Time::now() - start_time).toSec();
-//    printf("QueryTime: %6f\n", time_query_);
 
     return probability;
 }
@@ -224,7 +239,6 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     double occupancy_prob;
     Eigen::VectorXd phi_x;
     Eigen::Vector3d occupancy_gradient;
-    ros::Time start_time;
 
     Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
     Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());

@@ -9,6 +9,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   MapperInfo.msg
+  Debug.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs)
