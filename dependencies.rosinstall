@@ -1,0 +1,2 @@
+- git: {local-name: mav_voxblox_planning, uri: 'https://github.com/ethz-asl/mav_voxblox_planning.git'}
+- git: {local-name: protobuf_catkin, uri: 'https://github.com/ethz-asl/protobuf_catkin.git'}

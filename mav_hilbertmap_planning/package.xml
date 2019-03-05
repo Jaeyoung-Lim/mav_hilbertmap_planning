@@ -17,7 +17,6 @@
   <build_depend>hilbert_mapper</build_depend>
   <build_depend>hilbert_msgs</build_depend>
   <build_depend>hilbert_loco_planner</build_depend>
-  <build_depend>mav_hilbert_navigator</build_depend>
 
   <export>
     <metapackage/>
