@@ -226,7 +226,7 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    probability = 1 / ( 1 + exp((-1.0) * weights_.dot(phi_x)));
+    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
 
     return probability;
 }
@@ -241,30 +241,32 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     bool success = false;
     double occupancy_prob;
     Eigen::VectorXd phi_x;
+    Eigen::MatrixXd dphi_x;
     Eigen::Vector3d occupancy_gradient;
-
-    Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
-    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(3, anchorpoints_.size());
+    Eigen::MatrixXd delta_x = Eigen::MatrixXd::Zero(anchorpoints_.size(), 3);
+    Eigen::MatrixXd anchorpoints = Eigen::MatrixXd::Zero(anchorpoints_.size(), 3);
     
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    occupancy_prob = 1 / ( 1 + exp(weights_.dot(phi_x)));
-
     //  Calculate gradient
-    //  dk = ( -1/(0.5*radius^2) ) * phi_hat .*delta_x;
+    // From Matlab: dk = ( -1/(0.5*radius^2) ) * phi_hat .*delta_x;
     for(int i; i < anchorpoints_.size(); i++){ //Copy Anchorpoints
-        anchorpoints.col(i) = anchorpoints_[i];
+        anchorpoints.row(i) = anchorpoints_[i];
     }
 
-    delta_x = anchorpoints.colwise() - x_query; //TODO: confirm sign
-    occupancy_gradient = (-1/(0.5*pow(sigma_, 2))) * delta_x * phi_x;
+    delta_x = (-1.0)*( anchorpoints.rowwise() + x_query.transpose() );
+    dphi_x = (-1/(0.5*pow(sigma_, 2)))* phi_x.asDiagonal() * delta_x ;
 
+    // From Matlab: occ_prob = 1-1/(1+exp(dot(hilbertmap.wt, phi)));
+    occupancy_prob = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    // From Matlab: docc_prob = occ_prob*(1-occ_prob)*(hilbertmap.wt)'*dphi;
+    occupancy_gradient = occupancy_prob * (1 - occupancy_prob) * weights_.transpose() * dphi_x;
+    Eigen::VectorXd debug_vec = occupancy_prob * (1 - occupancy_prob) * weights_.transpose() * dphi_x;
     *occprob = occupancy_prob;
     *gradient = occupancy_gradient;
 
-    if(occupancy_prob > 1.0 || occupancy_prob < 0.0) return success; //Sanity Check
-    success = true;
+    if(occupancy_prob > 1.0 || occupancy_prob < 0.0) success = true; //Sanity Check    
 
     return success;
 }
