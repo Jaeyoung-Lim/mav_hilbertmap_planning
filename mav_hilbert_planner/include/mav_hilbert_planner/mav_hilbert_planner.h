@@ -75,8 +75,8 @@ class MavHilbertPlanner {
   void avoidCollisionsTowardWaypoint();
 
   // Map access.
-  double getMapDistance(const Eigen::Vector3d& position) const;
-  double getMapDistanceAndGradient(const Eigen::Vector3d& position,
+  double getOccupancyProb(const Eigen::Vector3d& position) const;
+  double getOccupancyProbAndGradient(const Eigen::Vector3d& position,
                                    Eigen::Vector3d* gradient) const;
 
   // Double-check that everything is safe w.r.t. current map.

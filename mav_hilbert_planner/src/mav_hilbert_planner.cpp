@@ -109,7 +109,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   poly_smoother_.setParametersFromRos(nh_private_);
   poly_smoother_.setMinCollisionCheckResolution(voxel_size);
   poly_smoother_.setMapDistanceCallback(
-      std::bind(&MavHilbertPlanner::getMapDistance, this, std::placeholders::_1));
+      std::bind(&MavHilbertPlanner::getOccupancyProb, this, std::placeholders::_1));
   poly_smoother_.setOptimizeTime(true);
   poly_smoother_.setSplitAtCollisions(avoid_collisions_);
 
@@ -117,7 +117,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   loco_smoother_.setParametersFromRos(nh_private_);
   loco_smoother_.setMinCollisionCheckResolution(voxel_size);
   loco_smoother_.setDistanceAndGradientFunction(
-      std::bind(&MavHilbertPlanner::getMapDistanceAndGradient, this,
+      std::bind(&MavHilbertPlanner::getOccupancyProbAndGradient, this,
                 std::placeholders::_1, std::placeholders::_2));
   loco_smoother_.setOptimizeTime(true);
   loco_smoother_.setResampleTrajectory(true);
@@ -501,7 +501,7 @@ void MavHilbertPlanner::visualizePath() {
   path_marker_pub_.publish(marker_array);
 }
 
-double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const {
+double MavHilbertPlanner::getOccupancyProb(const Eigen::Vector3d& position) const {
   double occprob = 0.0;
   if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, &occprob)) {
     return 0.0;
@@ -509,7 +509,7 @@ double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const 
   return occprob;
 }
 
-double MavHilbertPlanner::getMapDistanceAndGradient(
+double MavHilbertPlanner::getOccupancyProbAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
   double occprob = 0.0;
   if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAndGradientAtPosition(position, &occprob, gradient)) {
@@ -521,7 +521,8 @@ double MavHilbertPlanner::getMapDistanceAndGradient(
 bool MavHilbertPlanner::isPathCollisionFree(
     const mav_msgs::EigenTrajectoryPointVector& path) const {
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
-    if (getMapDistance(point.position_W) < constraints_.robot_radius - 0.1) {
+    //TODO: This is straight up just wrong
+    if (getOccupancyProb(point.position_W) < constraints_.robot_radius) {
       return false;
     }
   }
