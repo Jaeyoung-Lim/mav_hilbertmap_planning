@@ -14,7 +14,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     hilbertMap_.reset(new hilbertmap(1000));
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
-    statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
+    statusloop_timer_ = nh_.createTimer(ros::Duration(0.5), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
     faststatusloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::faststatusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
