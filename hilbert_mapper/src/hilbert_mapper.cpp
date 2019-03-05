@@ -9,7 +9,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
   nh_(nh),
   nh_private_(nh_private),
   index_pointcloud(0),
-  verbose_(true){
+  verbose_(false){
 
     hilbertMap_.reset(new hilbertmap(1000));
 

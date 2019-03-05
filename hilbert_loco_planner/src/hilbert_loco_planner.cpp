@@ -29,10 +29,11 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     nh_private_.param("loco_epsilon_inflation", loco_epsilon_inflation,
                     loco_epsilon_inflation);
     loco_.setEpsilon(loco_epsilon_inflation);
-    loco_.setSoftGoalConstraint(true); // Set soft goal constraints
-    loco_.setWc(100.0);
-    loco_.setWd(0.1);
-
+    loco_.setSoftGoalConstraint(false); // Set soft goal constraints
+    loco_.setWg(15.0); // Default 2.5
+    loco_.setWc(100000.0); // Default 10.0
+    loco_.setWd(0.0001); // Default 0.1
+    loco_.setWw(15.0); // Default 1.0
 }
 
 void HilbertLocoPlanner::setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map) {

@@ -232,9 +232,11 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 }
 
 bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double* occprob) const {
+    bool success = false;
     *occprob = getOccupancyProb(x_query);
-    if(*occprob > 1.0 || *occprob < 0.0) return false; //Sanity Check
-    return true;
+    if(*occprob <= 1.0 && *occprob >=0.0) success = true; //Sanity Check
+
+    return success;
 }
 
 bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query, double* occprob ,Eigen::Vector3d* gradient) const {
@@ -265,8 +267,7 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     Eigen::VectorXd debug_vec = occupancy_prob * (1 - occupancy_prob) * weights_.transpose() * dphi_x;
     *occprob = occupancy_prob;
     *gradient = occupancy_gradient;
-
-    if(occupancy_prob > 1.0 || occupancy_prob < 0.0) success = true; //Sanity Check    
-
+    //TODO: Wierd that success = false makes it work
+    if(occupancy_prob <= 1.0 && occupancy_prob >= 0.0) success = false; //Sanity Check
     return success;
 }
