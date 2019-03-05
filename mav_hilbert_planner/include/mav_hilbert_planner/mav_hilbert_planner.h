@@ -181,10 +181,6 @@ class MavHilbertPlanner {
   // Planners -- local planners.
   HilbertLocoPlanner loco_planner_;
 
-  // Planners -- path smoothers.
-  VelocityRampSmoother ramp_smoother_;
-  PolynomialSmoother poly_smoother_;
-  LocoSmoother loco_smoother_;
 };
 
 }  // namespace mav_planning

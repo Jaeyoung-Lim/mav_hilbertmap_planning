@@ -102,27 +102,6 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   // Set up smoothers.
   const double voxel_size = hilbert_mapper_.voxel_size();
 
-  // Straight-line smoother.
-  ramp_smoother_.setParametersFromRos(nh_private_);
-
-  // Poly smoother.
-  poly_smoother_.setParametersFromRos(nh_private_);
-  poly_smoother_.setMinCollisionCheckResolution(voxel_size);
-  poly_smoother_.setMapDistanceCallback(
-      std::bind(&MavHilbertPlanner::getOccupancyProb, this, std::placeholders::_1));
-  poly_smoother_.setOptimizeTime(true);
-  poly_smoother_.setSplitAtCollisions(avoid_collisions_);
-
-  // Loco smoother!
-  loco_smoother_.setParametersFromRos(nh_private_);
-  loco_smoother_.setMinCollisionCheckResolution(voxel_size);
-  loco_smoother_.setDistanceAndGradientFunction(
-      std::bind(&MavHilbertPlanner::getOccupancyProbAndGradient, this,
-                std::placeholders::_1, std::placeholders::_2));
-  loco_smoother_.setOptimizeTime(true);
-  loco_smoother_.setResampleTrajectory(true);
-  loco_smoother_.setResampleVisibility(true);
-  loco_smoother_.setNumSegments(5);
 }
 
 void MavHilbertPlanner::odometryCallback(const nav_msgs::Odometry& msg) {
