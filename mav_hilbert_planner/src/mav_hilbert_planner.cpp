@@ -19,7 +19,7 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
       command_publishing_dt_(1.0),
       replan_dt_(1.0),
       replan_lookahead_sec_(0.1),
-      maprefresh_dt_(5.0),
+      maprefresh_dt_(0.5),
       avoid_collisions_(true),
       autostart_(true),
       smoother_name_("loco"),
@@ -102,27 +102,6 @@ MavHilbertPlanner::MavHilbertPlanner(const ros::NodeHandle& nh,
   // Set up smoothers.
   const double voxel_size = hilbert_mapper_.voxel_size();
 
-  // Straight-line smoother.
-  ramp_smoother_.setParametersFromRos(nh_private_);
-
-  // Poly smoother.
-  poly_smoother_.setParametersFromRos(nh_private_);
-  poly_smoother_.setMinCollisionCheckResolution(voxel_size);
-  poly_smoother_.setMapDistanceCallback(
-      std::bind(&MavHilbertPlanner::getMapDistance, this, std::placeholders::_1));
-  poly_smoother_.setOptimizeTime(true);
-  poly_smoother_.setSplitAtCollisions(avoid_collisions_);
-
-  // Loco smoother!
-  loco_smoother_.setParametersFromRos(nh_private_);
-  loco_smoother_.setMinCollisionCheckResolution(voxel_size);
-  loco_smoother_.setDistanceAndGradientFunction(
-      std::bind(&MavHilbertPlanner::getMapDistanceAndGradient, this,
-                std::placeholders::_1, std::placeholders::_2));
-  loco_smoother_.setOptimizeTime(true);
-  loco_smoother_.setResampleTrajectory(true);
-  loco_smoother_.setResampleVisibility(true);
-  loco_smoother_.setNumSegments(5);
 }
 
 void MavHilbertPlanner::odometryCallback(const nav_msgs::Odometry& msg) {
@@ -501,7 +480,7 @@ void MavHilbertPlanner::visualizePath() {
   path_marker_pub_.publish(marker_array);
 }
 
-double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const {
+double MavHilbertPlanner::getOccupancyProb(const Eigen::Vector3d& position) const {
   double occprob = 0.0;
   if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, &occprob)) {
     return 0.0;
@@ -509,7 +488,7 @@ double MavHilbertPlanner::getMapDistance(const Eigen::Vector3d& position) const 
   return occprob;
 }
 
-double MavHilbertPlanner::getMapDistanceAndGradient(
+double MavHilbertPlanner::getOccupancyProbAndGradient(
     const Eigen::Vector3d& position, Eigen::Vector3d* gradient) const {
   double occprob = 0.0;
   if (!hilbert_mapper_.getHilbertMapPtr()->getOccProbAndGradientAtPosition(position, &occprob, gradient)) {
@@ -521,7 +500,8 @@ double MavHilbertPlanner::getMapDistanceAndGradient(
 bool MavHilbertPlanner::isPathCollisionFree(
     const mav_msgs::EigenTrajectoryPointVector& path) const {
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
-    if (getMapDistance(point.position_W) < constraints_.robot_radius - 0.1) {
+    //TODO: This is straight up just wrong
+    if (getOccupancyProb(point.position_W) < constraints_.robot_radius) {
       return false;
     }
   }

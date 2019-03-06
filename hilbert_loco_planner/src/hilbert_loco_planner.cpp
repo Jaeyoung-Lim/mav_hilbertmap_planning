@@ -29,7 +29,11 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     nh_private_.param("loco_epsilon_inflation", loco_epsilon_inflation,
                     loco_epsilon_inflation);
     loco_.setEpsilon(loco_epsilon_inflation);
-
+    loco_.setSoftGoalConstraint(false); // Set soft goal constraints
+    loco_.setWg(15.0); // Default 2.5
+    loco_.setWc(100000.0); // Default 10.0
+    loco_.setWd(0.0001); // Default 0.1
+    loco_.setWw(15.0); // Default 1.0
 }
 
 void HilbertLocoPlanner::setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map) {
@@ -170,22 +174,33 @@ double HilbertLocoPlanner::getOccProbAndGradient(const Eigen::Vector3d& position
 
 double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& position, Eigen::VectorXd* gradient) const {
     CHECK_EQ(position.size(), 3);
-
-    Eigen::Vector3d gradient_3d;
-
     if (gradient == nullptr) {
         return getOccProbAndGradient(position, nullptr);
     }
-
+    Eigen::Vector3d gradient_3d;
     double occprob = getOccProbAndGradient(position, &gradient_3d);
-
     *gradient = gradient_3d;
     return occprob;
 }
 
 bool HilbertLocoPlanner::isPathCollisionFree(const mav_msgs::EigenTrajectoryPointVector& path) const {
+    for (const mav_msgs::EigenTrajectoryPoint& point : path) {
+        if (getOccProb(point.position_W) < 0.2) {
+            return false;
+        }
+    }
     return true;
 }
 bool HilbertLocoPlanner::isPathFeasible(const mav_msgs::EigenTrajectoryPointVector& path) const {
+    // This is easier to check in the trajectory but then we are limited in how
+    // we do the smoothing.
+    for (const mav_msgs::EigenTrajectoryPoint& point : path) {
+        if (point.acceleration_W.norm() > constraints_.a_max + 1e-2) {
+            return false;
+        }
+        if (point.velocity_W.norm() > constraints_.v_max + 1e-2) {
+            return false;
+        }
+    }
     return true;
 }

@@ -9,12 +9,12 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
   nh_(nh),
   nh_private_(nh_private),
   index_pointcloud(0),
-  verbose_(true){
+  verbose_(false){
 
     hilbertMap_.reset(new hilbertmap(1000));
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
-    statusloop_timer_ = nh_.createTimer(ros::Duration(2), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
+    statusloop_timer_ = nh_.createTimer(ros::Duration(0.5), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
     faststatusloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::faststatusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
@@ -32,8 +32,8 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 100);
     nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
-    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 1.0);
-    nh_.param<double>("/hilbert_mapper/map/width", width_, 10.0);
+    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.5);
+    nh_.param<double>("/hilbert_mapper/map/width", width_, 5.0);
     nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.5);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
