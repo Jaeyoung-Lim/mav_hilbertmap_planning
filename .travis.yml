@@ -99,7 +99,9 @@ install:
 before_script:
   # source dependencies: install using wstool.
   - cd ~/catkin_ws/src
-  - git clone https://github.com/ethz-asl/mav_voxblox_planning.git
+  - git clone https://github.com/Jaeyoung-Lim/mav_voxblox_planning.git
+  - cd mav_voxblox_planning
+  - git checkout hilbert/master
   - cd ~/catkin_ws
   - wstool init src
   # - rosinstall_generator --rosdistro kinetic mavlink | tee /tmp/mavros.rosinstall
