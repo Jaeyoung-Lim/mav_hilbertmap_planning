@@ -268,6 +268,6 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
     *occprob = occupancy_prob;
     *gradient = occupancy_gradient;
     //TODO: Wierd that success = false makes it work
-    if(occupancy_prob <= 1.0 && occupancy_prob >= 0.0) success = false; //Sanity Check
+    if(occupancy_prob <= 1.0 && occupancy_prob >= 0.0) success = true; //Sanity Check
     return success;
 }
