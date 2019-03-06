@@ -25,15 +25,15 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
 
     loco_.setRobotRadius(constraints_.robot_radius);
 
-    double loco_epsilon_inflation = 0.01; //Small epsilon for probability costs
+    double loco_epsilon_inflation = 0.1; //Small epsilon for probability costs
     nh_private_.param("loco_epsilon_inflation", loco_epsilon_inflation,
                     loco_epsilon_inflation);
     loco_.setEpsilon(loco_epsilon_inflation);
-    loco_.setSoftGoalConstraint(false); // Set soft goal constraints
-    loco_.setWg(15.0); // Default 2.5
-    loco_.setWc(100000.0); // Default 10.0
+    loco_.setSoftGoalConstraint(true); // Set soft goal constraints
+    loco_.setWg(0.025); // Default 2.5
+    loco_.setWc(10.0); // Default 10.0
     loco_.setWd(0.0001); // Default 0.1
-    loco_.setWw(15.0); // Default 1.0
+    loco_.setWw(2.5); // Default 1.0
 }
 
 void HilbertLocoPlanner::setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map) {
