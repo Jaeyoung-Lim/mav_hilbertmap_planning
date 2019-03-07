@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh("");
   ros::NodeHandle nh_private("~");
 
-  hilbertMapper hilbertmapper(nh, nh_private);
+  HilbertMapper Hilbertmapper(nh, nh_private);
   ros::spin();
   return 0;
 }

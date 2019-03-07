@@ -172,7 +172,7 @@ class MavHilbertPlanner {
   int num_failures_;
 
   // Map!
-  hilbertMapper hilbert_mapper_;
+  HilbertMapper hilbert_mapper_;
   voxblox::TsdfServer tsdf_server_;
 
   // Planners -- yaw policy

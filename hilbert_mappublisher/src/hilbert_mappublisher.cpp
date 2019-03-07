@@ -3,12 +3,12 @@
 #include "hilbert_mappublisher/hilbert_mappublisher.h"
 
 //Constructor
-hilbertMapPublisher::hilbertMapPublisher(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
+HilbertMapPublisher::HilbertMapPublisher(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
   mapcenter_(Eigen::Vector3d::Zero()){
 
-    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapPublisher::cmdloopCallback, this); // Define timer for constant loop rate
+    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &HilbertMapPublisher::cmdloopCallback, this); // Define timer for constant loop rate
 
     mapcenterPub_ = nh_.advertise<geometry_msgs::PoseStamped>("/mappublisher/pose", 1);
     pointcloudPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/mappublisher/pointcloud", 2);
@@ -17,11 +17,11 @@ hilbertMapPublisher::hilbertMapPublisher(const ros::NodeHandle& nh, const ros::N
     nh_.param<double>("/hilbert_mappublisher/resolution", map_resolution_, 0.1); //[m/cells]
 }
 
-hilbertMapPublisher::~hilbertMapPublisher() {
+HilbertMapPublisher::~HilbertMapPublisher() {
   //Destructor
 }
 
-void hilbertMapPublisher::cmdloopCallback(const ros::TimerEvent& event) {
+void HilbertMapPublisher::cmdloopCallback(const ros::TimerEvent& event) {
 
     pubMapCenter();
     pubPointCloud();
@@ -29,7 +29,7 @@ void hilbertMapPublisher::cmdloopCallback(const ros::TimerEvent& event) {
     ros::spinOnce();
 }
 
-void hilbertMapPublisher::pubMapCenter() {
+void HilbertMapPublisher::pubMapCenter() {
 
     geometry_msgs::PoseStamped mapcenterpose_msg;
 
@@ -46,7 +46,7 @@ void hilbertMapPublisher::pubMapCenter() {
     mapcenterPub_.publish(mapcenterpose_msg);
 }
 
-void hilbertMapPublisher::pubPointCloud(){
+void HilbertMapPublisher::pubPointCloud(){
 
     sensor_msgs::PointCloud2 pointcloud_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
