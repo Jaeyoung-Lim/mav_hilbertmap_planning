@@ -5,7 +5,7 @@
 using namespace Eigen;
 using namespace std;
 //Constructor
-hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
+HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
   index_pointcloud(0),
@@ -13,9 +13,9 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
 
     hilbertMap_.reset(new hilbertmap(1000));
 
-    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &hilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
-    statusloop_timer_ = nh_.createTimer(ros::Duration(0.5), &hilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
-    faststatusloop_timer_ = nh_.createTimer(ros::Duration(0.01), &hilbertMapper::faststatusloopCallback, this); // Define timer for constant loop rate
+    cmdloop_timer_ = nh_.createTimer(ros::Duration(0.1), &HilbertMapper::cmdloopCallback, this); // Define timer for constant loop rate
+    statusloop_timer_ = nh_.createTimer(ros::Duration(0.5), &HilbertMapper::statusloopCallback, this); // Define timer for constant loop rate
+    faststatusloop_timer_ = nh_.createTimer(ros::Duration(0.01), &HilbertMapper::faststatusloopCallback, this); // Define timer for constant loop rate
 
     mapinfoPub_ = nh_.advertise<hilbert_msgs::MapperInfo>("/hilbert_mapper/info", 1);
     debuginfoPub_ = nh_.advertise<hilbert_msgs::Debug>("/hilbert_mapper/debug", 1);
@@ -26,7 +26,7 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
 
 
-    pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &hilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
 
@@ -43,16 +43,16 @@ hilbertMapper::hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
     hilbertMap_->setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
 }
-hilbertMapper::~hilbertMapper() {
+HilbertMapper::~HilbertMapper() {
   //Destructor
 }
 
-void hilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
+void HilbertMapper::cmdloopCallback(const ros::TimerEvent& event) {
     //Update HilbertMap weights
     hilbertMap_->updateWeights();
 }
 
-void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
+void HilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     //Slower loop to publish status / info related topics
 
     //Reset Map center
@@ -67,18 +67,18 @@ void hilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     }
 }
 
-void hilbertMapper::faststatusloopCallback(const ros::TimerEvent &event) {
+void HilbertMapper::faststatusloopCallback(const ros::TimerEvent &event) {
     if(publish_debuginfo_) publishDebugInfo();
 
 }
 
-void hilbertMapper::setMapCenter(Eigen::Vector3d &position){
+void HilbertMapper::setMapCenter(Eigen::Vector3d &position){
     mavPos_ = position;
     hilbertMap_->setMapCenter(mavPos_);
 
 }
 
-void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+void HilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
     ros::Time current_time = ros::Time::now();
     if((current_time - last_received_tsdfmap_).toSec() < 0.5) return;
@@ -110,7 +110,7 @@ void hilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
 
 }
 
-void hilbertMapper::publishMapInfo(){
+void HilbertMapper::publishMapInfo(){
     hilbert_msgs::MapperInfo msg;
 
     msg.header.stamp = ros::Time::now();
@@ -123,7 +123,7 @@ void hilbertMapper::publishMapInfo(){
     mapinfoPub_.publish(msg);
 }
 
-void hilbertMapper::publishDebugInfo(){
+void HilbertMapper::publishDebugInfo(){
     hilbert_msgs::Debug msg;
 
     msg.header.stamp = ros::Time::now();
@@ -133,7 +133,7 @@ void hilbertMapper::publishDebugInfo(){
     debuginfoPub_.publish(msg);
 }
 
-void hilbertMapper::publishMap(){
+void HilbertMapper::publishMap(){
 
     sensor_msgs::PointCloud2 hilbert_map_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
@@ -162,7 +162,7 @@ void hilbertMapper::publishMap(){
     publish_map_timer.Stop();
 }
 
-void hilbertMapper::publishgridMap(){
+void HilbertMapper::publishgridMap(){
 
     nav_msgs::OccupancyGrid grid_map;
     int num_features;
@@ -201,7 +201,7 @@ void hilbertMapper::publishgridMap(){
     gridmapPub_.publish(grid_map);
 }
 
-void hilbertMapper::publishAnchorPoints() {
+void HilbertMapper::publishAnchorPoints() {
 
     sensor_msgs::PointCloud2 anchorpoint_msg;
     pcl::PointCloud<pcl::PointXYZ> pointCloud;
@@ -225,7 +225,7 @@ void hilbertMapper::publishAnchorPoints() {
     anchorPub_.publish(anchorpoint_msg);
 }
 
-void hilbertMapper::publishBinPoints() {
+void HilbertMapper::publishBinPoints() {
 
     sensor_msgs::PointCloud2 binpoint_msg;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;

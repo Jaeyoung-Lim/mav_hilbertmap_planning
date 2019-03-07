@@ -14,7 +14,7 @@
 #include <pcl/PCLPointCloud2.h>
 
 
-class hilbertMapPublisher
+class HilbertMapPublisher
 {
   private:
     ros::NodeHandle nh_;
@@ -34,8 +34,8 @@ class hilbertMapPublisher
     void pubPointCloud();
 
 public:
-    hilbertMapPublisher(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
-    virtual ~ hilbertMapPublisher();
+    HilbertMapPublisher(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    virtual ~ HilbertMapPublisher();
 };
 
 #endif

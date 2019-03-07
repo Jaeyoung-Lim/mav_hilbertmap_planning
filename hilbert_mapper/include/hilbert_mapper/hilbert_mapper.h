@@ -33,7 +33,7 @@ using namespace Eigen;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
-class hilbertMapper
+class HilbertMapper
 {
   private:
     ros::NodeHandle nh_;
@@ -76,8 +76,8 @@ class hilbertMapper
     void publishBinPoints();
 
 public:
-    hilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
-    virtual ~ hilbertMapper();
+    HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    virtual ~ HilbertMapper();
     double voxel_size(){ return 0.5 * resolution_; };
     void setMapCenter(Eigen::Vector3d &position);
     
