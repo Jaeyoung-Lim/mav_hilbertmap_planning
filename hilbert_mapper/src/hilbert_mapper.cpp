@@ -245,7 +245,7 @@ void HilbertMapper::publishBinPoints() {
     binPub_.publish(binpoint_msg);
 }
 
-void hilbertMapper::publishCollisionSurface(){
+void HilbertMapper::publishCollisionSurface(){
 
     sensor_msgs::PointCloud2 collisionmap_surface;
     pcl::PointCloud<pcl::PointXYZI> pointCloud;
