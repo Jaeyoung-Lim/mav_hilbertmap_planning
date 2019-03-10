@@ -10,7 +10,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
   verbose_(false),
   visualize_(true),
   frame_id_("odom"),
-  num_segments_(3),
+  num_segments_(1),
   num_random_restarts_(5),
   random_restart_magnitude_(0.5),
   planning_horizon_m_(4.0),
@@ -34,6 +34,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     loco_.setWc(10.0); // Default 10.0
     loco_.setWd(0.0001); // Default 0.1
     loco_.setWw(2.5); // Default 1.0
+    loco_.setWh(0.0); // Default 1.0
 }
 
 void HilbertLocoPlanner::setHilbertMap(const std::shared_ptr<hilbertmap>& hilbert_map) {
