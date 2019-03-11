@@ -24,7 +24,7 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     anchorPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/anchorpoints", 1);
     binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
-
+    collisionsurfacePub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/collisionsurface", 1);
 
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
@@ -44,6 +44,7 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, false);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_collisionsurface", publish_collisionsurface_, false);
     hilbertMap_->setMapProperties(num_samples, width, length, height, resolution_, tsdf_threshold_);
 }
 HilbertMapper::~HilbertMapper() {
@@ -65,6 +66,7 @@ void HilbertMapper::statusloopCallback(const ros::TimerEvent &event) {
     if(publish_gridmap_) publishgridMap();
     if(publish_anchorpoints_) publishAnchorPoints();
     if(publish_binpoints_) publishBinPoints();
+    if(publish_collisionsurface_) publishCollisionSurface();
     if(verbose_){
         ROS_INFO_STREAM("Timings: " << std::endl << voxblox::timing::Timing::Print());
     }
@@ -246,4 +248,36 @@ void HilbertMapper::publishBinPoints() {
     binpoint_msg.header.frame_id = frame_id_;
 
     binPub_.publish(binpoint_msg);
+}
+
+void HilbertMapper::publishCollisionSurface(){
+
+    sensor_msgs::PointCloud2 collisionmap_surface;
+    pcl::PointCloud<pcl::PointXYZI> pointCloud;
+    Eigen::Vector3d x_query;
+    voxblox::timing::Timer publish_map_timer("hilbert_mapper/publish_surface");
+    //Encode pointcloud data
+    for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
+        pcl::PointXYZI point;
+        double occprob;
+        x_query = hilbertMap_->getFeature(i);
+        occprob = hilbertMap_->getOccupancyProb(x_query);
+        
+        if(occprob > 0.5) continue;
+
+        point.intensity = occprob;
+        point.x = x_query(0);
+        point.y = x_query(1);
+        point.z = x_query(2);
+
+        pointCloud.points.push_back(point);
+    }
+
+    pcl::toROSMsg(pointCloud, collisionmap_surface);
+
+    collisionmap_surface.header.stamp = ros::Time::now();
+    collisionmap_surface.header.frame_id = frame_id_;
+
+    collisionsurfacePub_.publish(collisionmap_surface);
+    publish_map_timer.Stop();
 }
