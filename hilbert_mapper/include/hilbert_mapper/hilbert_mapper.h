@@ -58,7 +58,6 @@ class HilbertMapper
     int index_pointcloud;
     string frame_id_;
     double resolution_;
-    double width_;
     float tsdf_threshold_;
     bool publish_hilbertmap_, publish_mapinfo_, publish_gridmap_, publish_anchorpoints_, 
         publish_binpoints_, publish_debuginfo_, publish_collisionsurface_;

@@ -21,13 +21,15 @@ class hilbertmap
         int max_iterations_;
         int prelearn_iterations_;
         int num_samples_;
+        int num_cells_[3]; //Anchorpoint size
         double eta_; //Learning Rate
-        double width_;
+        double width_, length_, height_;
         double resolution_;
         double time_query_; // Time for querying a single time
         double time_sgd_; // Convergence time for stochastic gradient descent
         double sigma_; // Covariance for RBF Kernel
         float tsdf_threshold_;
+        double sgd_amount_;
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
@@ -40,17 +42,18 @@ class hilbertmap
 
         Eigen::VectorXd getNegativeLikelyhood(std::vector<int> &index);
         void stochasticGradientDescent(Eigen::VectorXd &weights);
-        double sgd_amount_;
+        void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
+        void resizeGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height);
 
 public:
         hilbertmap(int num_feature);
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
-        void setMapProperties(int num_samples, double width, double resolution, float tsdf_threshold);
+        void setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
+        void setMapCenter(Eigen::Vector3d map_center, double width, double length, double height);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
-        void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
         
         int getBinSize();
         int getNumFeatures();
@@ -60,6 +63,8 @@ public:
         bool getOccProbAndGradientAtPosition(const Eigen::Vector3d& x_query, double* occprob, Eigen::Vector3d* gradient) const;
 
         double getMapWidth();
+        double getMapLength();
+        double getMapHeight();
         double getMapResolution();
         double getSgdTime();
         double getQueryTime();
