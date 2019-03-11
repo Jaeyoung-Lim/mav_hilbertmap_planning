@@ -35,13 +35,13 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.5);
     nh_.param<double>("/hilbert_mapper/map/width", width_, 5.0);
     nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.5);
-    nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, false);
+    nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_debuginfo", publish_debuginfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, false);
     nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_collisionsurface", publish_collisionsurface_, true);
+    nh_.param<bool>("/hilbert_mapper/publsih_collisionsurface", publish_collisionsurface_, false);
     hilbertMap_->setMapProperties(num_samples, width_, resolution_, tsdf_threshold_);
 }
 HilbertMapper::~HilbertMapper() {
