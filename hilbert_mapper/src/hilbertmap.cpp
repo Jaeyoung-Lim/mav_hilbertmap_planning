@@ -119,11 +119,31 @@ void hilbertmap::setMapProperties(int num_samples, double width, double length, 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
     
     voxblox::timing::Timer maprefresh_timer("hilbertmap/maprefresh");
-
     map_center_ = map_center;
     prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
     prelearned_anchorpoints_.clear();
-    generateGridPoints(prelearned_anchorpoints_, map_center, width_, width_, width_, resolution_);
+    resizeGridPoints(prelearned_anchorpoints_, map_center, width_, length_, height_);
+
+    //Learn map before handing over the map
+    for(int i = 0; i < prelearn_iterations_; i++){
+        stochasticGradientDescent(prelearned_weights_);
+    }
+    anchorpoints_ = prelearned_anchorpoints_;
+    weights_ = prelearned_weights_;
+    maprefresh_timer.Stop();
+
+}
+
+void hilbertmap::setMapCenter(Eigen::Vector3d map_center, double width, double length, double height){
+    
+    voxblox::timing::Timer maprefresh_timer("hilbertmap/maprefresh");
+    width_ = width;
+    length_ = length;
+    height_ = height;
+    map_center_ = map_center;
+    prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
+    prelearned_anchorpoints_.clear();
+    resizeGridPoints(prelearned_anchorpoints_, map_center, width_, length_, height_);
 
 
     //Learn map before handing over the map
@@ -154,24 +174,38 @@ void hilbertmap::getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd
 
 void hilbertmap::generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution){
 
-    int num_cells[3];
-
-    num_cells[0]= int(width/resolution);
-    num_cells[1] = int(length/resolution);
-    num_cells[2] = int(height/resolution);
+    num_cells_[0]= int(width/resolution);
+    num_cells_[1] = int(length/resolution);
+    num_cells_[2] = int(height/resolution);
 
     Eigen::Vector3d mesh_obs;
     //TODO: This is dirty
-    for(int i = 0; i < num_cells[0]; i++){
-        for(int j = 0; j < num_cells[1]; j++){
-            for(int k = 0; k < num_cells[2]; k++){
-                mesh_obs << i * width/double(num_cells[0]) - 0.5 * width + center(0), j * length/double(num_cells[1])- 0.5 * length  + center(1), k * height/double(num_cells[2])- 0.5 * height  + center(2);
+    for(int i = 0; i < num_cells_[0]; i++){
+        for(int j = 0; j < num_cells_[1]; j++){
+            for(int k = 0; k < num_cells_[2]; k++){
+                mesh_obs << i * width/double(num_cells_[0]) - 0.5 * width + center(0), j * length/double(num_cells_[1])- 0.5 * length  + center(1), k * height/double(num_cells_[2])- 0.5 * height  + center(2);
                 gridpoints.emplace_back(Eigen::Vector3d(mesh_obs(0), mesh_obs(1), mesh_obs(2)));
             }
         }
     }
 
 }
+
+void hilbertmap::resizeGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height){
+
+    Eigen::Vector3d mesh_obs;
+    //TODO: This is dirty
+    for(int i = 0; i < num_cells_[0]; i++){
+        for(int j = 0; j < num_cells_[1]; j++){
+            for(int k = 0; k < num_cells_[2]; k++){
+                mesh_obs << i * width/double(num_cells_[0]) - 0.5 * width + center(0), j * length/double(num_cells_[1])- 0.5 * length  + center(1), k * height/double(num_cells_[2])- 0.5 * height  + center(2);
+                gridpoints.emplace_back(Eigen::Vector3d(mesh_obs(0), mesh_obs(1), mesh_obs(2)));
+            }
+        }
+    }
+
+}
+
 
 Eigen::VectorXd hilbertmap::getWeights(){
     return weights_;
@@ -187,6 +221,14 @@ int hilbertmap::getNumFeatures(){
 
 double hilbertmap::getMapWidth(){
     return width_;
+}
+
+double hilbertmap::getMapLength(){
+    return length_;
+}
+
+double hilbertmap::getMapHeight(){
+    return height_;
 }
 
 double hilbertmap::getMapResolution(){
