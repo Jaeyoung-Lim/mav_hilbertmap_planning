@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hilbert_evaluation)
+project(hilbert_evaluator)
 
 include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
@@ -12,16 +12,16 @@ add_definitions(-std=c++11)
 # LIBRARIES #
 ############
 cs_add_library(${PROJECT_NAME}
-        src/hilbert_evaluation.cpp
+        src/hilbert_evaluator.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############
 # BINARIES #
 ############
-cs_add_executable(hilbert_evaluation_node
-        src/hilbert_evaluation_node.cpp
+cs_add_executable(hilbert_evaluator_node
+        src/hilbert_evaluator_node.cpp
         )
-target_link_libraries(hilbert_evaluation_node ${PROJECT_NAME})
+target_link_libraries(hilbert_evaluator_node ${PROJECT_NAME})
 ##########
 cs_install()
 cs_export()

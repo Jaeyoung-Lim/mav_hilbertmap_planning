@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>hilbert_evaluation</name>
+  <name>hilbert_evaluator</name>
   <version>0.0.0</version>
-  <description>Hilbert map evaluation</description>
+  <description>Hilbert map evaluator</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
