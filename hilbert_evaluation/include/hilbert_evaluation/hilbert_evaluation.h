@@ -6,6 +6,9 @@
 #include <ros/ros.h>
 #include <ros/subscribe_options.h>
 #include "hilbert_evaluation/hilbert_evaluation.h"
+#include "hilbert_mapper/hilbert_mapper.h"
+#include <voxblox/utils/timing.h>
+#include <voxblox_ros/esdf_server.h>
 
 class HilbertEvaluation
 {
@@ -20,6 +23,9 @@ class HilbertEvaluation
 public:
     HilbertEvaluation(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ HilbertEvaluation();
+
+    HilbertMapper hilbert_mapper_;
+
 };
 
 #endif //HILBERT_EVALUATION_H

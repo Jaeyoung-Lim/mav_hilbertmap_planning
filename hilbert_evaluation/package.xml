@@ -61,8 +61,8 @@
   <build_depend>pcl_ros</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>voxblox</build_depend>
+  <build_depend>voxblox_ros</build_depend>
   <build_depend>hilbert_mapper</build_depend>
-
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -76,6 +76,7 @@
   <run_depend>tf</run_depend>
   <run_depend>mavros</run_depend>
   <run_depend>voxblox</run_depend>
+  <run_depend>voxblox_ros</run_depend>
   <run_depend>hilbert_mapper</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
