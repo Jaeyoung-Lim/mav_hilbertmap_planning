@@ -94,6 +94,35 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     appendbin_timer.Stop();
 }
 
+void hilbertmap::appendBinFromRaw(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d &position) {
+
+    double resolution = 1.0;
+
+    //Append bin from Raw pointcloud
+    bin_.clear();
+    for(int i = 0; i < ptcloud.points.size(); i++){
+        //Occupied Point at observed points
+        Eigen::Vector3d point;
+        int depth;
+
+        point << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
+        depth = (point - position).norm();
+
+        bin_.emplace_back(pcl::PointXYZI(1.0f));
+        bin_.back().x = point(0);
+        bin_.back().y = point(1);
+        bin_.back().z = point(3);
+
+        //Unoccupied Point at observed points
+        for(int j = 0; j < int(depth/resolution); j++){
+            bin_.emplace_back(pcl::PointXYZI(-1.0f));
+            bin_.back().x = j * resolution * (ptcloud[i].x - position(0)) + position(0);
+            bin_.back().y = j * resolution * (ptcloud[i].y - position(1)) + position(1);
+            bin_.back().z = j * resolution * (ptcloud[i].z - position(2)) + position(2);
+        }
+    }
+}
+
 void hilbertmap::setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold){
 
     num_samples_ = num_samples;

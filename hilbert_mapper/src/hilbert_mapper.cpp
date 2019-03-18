@@ -26,7 +26,8 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
     collisionsurfacePub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/collisionsurface", 1);
 
-    pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::tsdfpointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    sensorpointcloudSub_ = nh_.subscribe("/hilbert_mapper/sensor_pointcloud", 1, &HilbertMapper::sensorpointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
     double width, length, height;
@@ -83,7 +84,7 @@ void HilbertMapper::setMapCenter(Eigen::Vector3d &position){
 
 }
 
-void HilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+void HilbertMapper::tsdfpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
     ros::Time current_time = ros::Time::now();
     if((current_time - last_received_tsdfmap_).toSec() < 0.5) return;
@@ -115,6 +116,39 @@ void HilbertMapper::pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr&
 
     last_received_tsdfmap_ = current_time;
 
+}
+
+void HilbertMapper::sensorpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+ 
+    ros::Time current_time = ros::Time::now();
+    if((current_time - last_received_tsdfmap_).toSec() < 0.5) return; //Stop updating the pointcloud too often
+
+    //Drop Messages if they are comming in too fast
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+    Eigen::Vector3d map_center;
+    float map_width, map_length, map_height;
+    pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
+
+    // Crop PointCloud around map center
+    pcl::CropBox<pcl::PointXYZI> boxfilter;
+    map_center = hilbertMap_->getMapCenter();
+    map_width = 0.5 * float(hilbertMap_->getMapWidth());
+    map_length = 0.5 * float(hilbertMap_->getMapLength());
+    map_height = 0.5 * float(hilbertMap_->getMapHeight());
+    float minX = float(map_center(0) - map_width);
+    float minY = float(map_center(1) - map_length);
+    float minZ = float(map_center(2) - map_height);
+    float maxX = float(map_center(0) + map_width);
+    float maxY = float(map_center(1) + map_length);
+    float maxZ = float(map_center(2) + map_height);
+    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
+    boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+    boxfilter.setInputCloud(ptcloud);
+    boxfilter.filter(*cropped_ptcloud);
+
+    hilbertMap_->appendBinFromRaw(*cropped_ptcloud, mavPos_);
+    last_received_tsdfmap_ = current_time;
 }
 
 void HilbertMapper::publishMapInfo(){

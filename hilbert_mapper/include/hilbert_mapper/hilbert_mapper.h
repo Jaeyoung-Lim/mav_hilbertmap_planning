@@ -50,6 +50,7 @@ class HilbertMapper
     ros::Subscriber mavtransformSub_;
     ros::Subscriber poseSub_;
     ros::Subscriber pointcloudSub_;
+    ros::Subscriber sensorpointcloudSub_;
     ros::Time last_received_tsdfmap_;
 
     Eigen::Vector3d mavPos_;
@@ -66,8 +67,8 @@ class HilbertMapper
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
     void faststatusloopCallback(const ros::TimerEvent& event);
-
-    void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
+    void tsdfpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
+    void sensorpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void publishMapInfo();
     void publishDebugInfo();
     void publishMap();
