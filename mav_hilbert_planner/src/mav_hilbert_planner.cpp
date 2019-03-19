@@ -507,7 +507,7 @@ bool MavHilbertPlanner::isPathCollisionFree(
       max_occprob = occprob;
     }
   }
-  if(max_occprob > 0.5){
+  if(max_occprob > 0.7){
     return false;
   }
   return true;

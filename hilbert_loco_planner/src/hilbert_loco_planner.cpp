@@ -185,12 +185,18 @@ double HilbertLocoPlanner::getOccProbAndGradientVector(const Eigen::VectorXd& po
 }
 
 bool HilbertLocoPlanner::isPathCollisionFree(const mav_msgs::EigenTrajectoryPointVector& path) const {
-    for (const mav_msgs::EigenTrajectoryPoint& point : path) {
-        if (getOccProb(point.position_W) < 0.2) {
-            return false;
-        }
+  double max_occprob = 0.0;
+  double occprob;
+  for (const mav_msgs::EigenTrajectoryPoint& point : path) {
+    occprob = getOccProb(point.position_W);
+    if (occprob > max_occprob) {
+      max_occprob = occprob;
     }
-    return true;
+  }
+  if(max_occprob > 0.7){
+    return false;
+  }
+  return true;
 }
 bool HilbertLocoPlanner::isPathFeasible(const mav_msgs::EigenTrajectoryPointVector& path) const {
     // This is easier to check in the trajectory but then we are limited in how
