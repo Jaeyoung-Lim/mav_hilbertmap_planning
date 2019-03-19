@@ -499,11 +499,16 @@ double MavHilbertPlanner::getOccupancyProbAndGradient(
 
 bool MavHilbertPlanner::isPathCollisionFree(
     const mav_msgs::EigenTrajectoryPointVector& path) const {
+  double max_occprob = 0.0;
+  double occprob;
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
-    //TODO: This is straight up just wrong
-    if (getOccupancyProb(point.position_W) < constraints_.robot_radius) {
-      return false;
+    occprob = getOccupancyProb(point.position_W);
+    if (occprob > max_occprob) {
+      max_occprob = occprob;
     }
+  }
+  if(max_occprob > 0.7){
+    return false;
   }
   return true;
 }

@@ -272,7 +272,7 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
     phi_x = Eigen::VectorXd::Zero(num_features_);
     getkernelVector(x_query, phi_x);
 
-    probability = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    probability = 1 / ( 1 + exp(-1.0 * weights_.dot(phi_x)));
 
     return probability;
 }
@@ -303,11 +303,11 @@ bool hilbertmap::getOccProbAndGradientAtPosition(const Eigen::Vector3d &x_query,
         anchorpoints.row(i) = anchorpoints_[i];
     }
 
-    delta_x = (-1.0)*( anchorpoints.rowwise() + x_query.transpose() );
+    delta_x = (-1.0)*( anchorpoints.rowwise() - x_query.transpose() );
     dphi_x = (-1/(0.5*pow(sigma_, 2)))* phi_x.asDiagonal() * delta_x ;
 
     // From Matlab: occ_prob = 1-1/(1+exp(dot(hilbertmap.wt, phi)));
-    occupancy_prob = 1 / ( 1 + exp(weights_.dot(phi_x)));
+    occupancy_prob = 1 / ( 1 + exp(-1.0 * weights_.dot(phi_x)));
     // From Matlab: docc_prob = occ_prob*(1-occ_prob)*(hilbertmap.wt)'*dphi;
     occupancy_gradient = occupancy_prob * (1 - occupancy_prob) * weights_.transpose() * dphi_x;
     Eigen::VectorXd debug_vec = occupancy_prob * (1 - occupancy_prob) * weights_.transpose() * dphi_x;
