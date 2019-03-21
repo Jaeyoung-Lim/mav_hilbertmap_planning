@@ -52,7 +52,8 @@
     <param name="use_const_weight" value="false" />
     <param name="publish_slices" value="true" />
     <param name="publish_pointclouds" value="true" />
-    <param name="publish_tsdf_info" value="true"/>
+    <param name="publish_tsdf_info" value="false"/>
+    <param name="verbose" value="false"/>
     <param name="world_frame" value="$(arg frame_id)" />
     <rosparam file="$(find voxblox_ros)/cfg/euroc_dataset.yaml"/>
     <param name="mesh_filename" value="$(find voxblox_ros)/mesh_results/$(anon euroc).ply" />
