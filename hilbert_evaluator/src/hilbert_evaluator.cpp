@@ -48,7 +48,7 @@ void HilbertEvaluator::cmdloopCallback(const ros::TimerEvent& event) {
 
     if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp++;
     else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn++;
-    else if(!(label_esdfmap) > 0.0 && label_hilbertmap > 0.0) fp++;
+    else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp++;
     else tn++;
     // if(!(label_esdfmap) > 0.0 && !(label_hilbertmap > 0.0)) tn++;
   }
