@@ -39,6 +39,7 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     nh_.param<double>("/hilbert_mapper/map/length", length, 5.0);
     nh_.param<double>("/hilbert_mapper/map/height", height, 5.0);
     nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.0);
+    nh_.param<bool>("/hilbert_mapper/binsrc_tsdf", isptcloudsrc_tsdf_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
     nh_.param<bool>("/hilbert_mapper/publsih_debuginfo", publish_debuginfo_, true);
@@ -85,70 +86,72 @@ void HilbertMapper::setMapCenter(Eigen::Vector3d &position){
 }
 
 void HilbertMapper::tsdfpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+    if(isptcloudsrc_tsdf_){
+        ros::Time current_time = ros::Time::now();
+        if((current_time - last_received_tsdfmap_).toSec() < 0.5) return;
 
-    ros::Time current_time = ros::Time::now();
-    if((current_time - last_received_tsdfmap_).toSec() < 0.5) return;
+        //Drop Messages if they are comming in too fast
+        pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+        Eigen::Vector3d map_center;
+        float map_width, map_length, map_height;
+        pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
-    //Drop Messages if they are comming in too fast
-    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
-    Eigen::Vector3d map_center;
-    float map_width, map_length, map_height;
-    pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
+        // Crop PointCloud around map center
+        pcl::CropBox<pcl::PointXYZI> boxfilter;
+        map_center = hilbertMap_->getMapCenter();
+        map_width = 0.5 * float(hilbertMap_->getMapWidth());
+        map_length = 0.5 * float(hilbertMap_->getMapLength());
+        map_height = 0.5 * float(hilbertMap_->getMapHeight());
+        float minX = float(map_center(0) - map_width);
+        float minY = float(map_center(1) - map_length);
+        float minZ = float(map_center(2) - map_height);
+        float maxX = float(map_center(0) + map_width);
+        float maxY = float(map_center(1) + map_length);
+        float maxZ = float(map_center(2) + map_height);
+        boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
+        boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+        boxfilter.setInputCloud(ptcloud);
+        boxfilter.filter(*cropped_ptcloud);
+        hilbertMap_->appendBin(*cropped_ptcloud);
 
-    // Crop PointCloud around map center
-    pcl::CropBox<pcl::PointXYZI> boxfilter;
-    map_center = hilbertMap_->getMapCenter();
-    map_width = 0.5 * float(hilbertMap_->getMapWidth());
-    map_length = 0.5 * float(hilbertMap_->getMapLength());
-    map_height = 0.5 * float(hilbertMap_->getMapHeight());
-    float minX = float(map_center(0) - map_width);
-    float minY = float(map_center(1) - map_length);
-    float minZ = float(map_center(2) - map_height);
-    float maxX = float(map_center(0) + map_width);
-    float maxY = float(map_center(1) + map_length);
-    float maxZ = float(map_center(2) + map_height);
-    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
-    boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
-    boxfilter.setInputCloud(ptcloud);
-    boxfilter.filter(*cropped_ptcloud);
-    hilbertMap_->appendBin(*cropped_ptcloud);
-
-    last_received_tsdfmap_ = current_time;
-
+        last_received_tsdfmap_ = current_time;
+    }
 }
 
 void HilbertMapper::sensorpointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
  
-    ros::Time current_time = ros::Time::now();
-    if((current_time - last_received_tsdfmap_).toSec() < 0.5) return; //Stop updating the pointcloud too often
+    if(!isptcloudsrc_tsdf_){
+        ros::Time current_time = ros::Time::now();
+        if((current_time - last_received_tsdfmap_).toSec() < 0.5) return; //Stop updating the pointcloud too often
 
-    //Drop Messages if they are comming in too fast
-    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
-    Eigen::Vector3d map_center;
-    float map_width, map_length, map_height;
-    pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
+        //Drop Messages if they are comming in too fast
+        pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+        Eigen::Vector3d map_center;
+        float map_width, map_length, map_height;
+        pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
-    // Crop PointCloud around map center
-    pcl::CropBox<pcl::PointXYZI> boxfilter;
-    map_center = hilbertMap_->getMapCenter();
-    map_width = 0.5 * float(hilbertMap_->getMapWidth());
-    map_length = 0.5 * float(hilbertMap_->getMapLength());
-    map_height = 0.5 * float(hilbertMap_->getMapHeight());
-    float minX = float(map_center(0) - map_width);
-    float minY = float(map_center(1) - map_length);
-    float minZ = float(map_center(2) - map_height);
-    float maxX = float(map_center(0) + map_width);
-    float maxY = float(map_center(1) + map_length);
-    float maxZ = float(map_center(2) + map_height);
-    boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
-    boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
-    boxfilter.setInputCloud(ptcloud);
-    boxfilter.filter(*cropped_ptcloud);
+        // Crop PointCloud around map center
+        pcl::CropBox<pcl::PointXYZI> boxfilter;
+        map_center = hilbertMap_->getMapCenter();
+        map_width = 0.5 * float(hilbertMap_->getMapWidth());
+        map_length = 0.5 * float(hilbertMap_->getMapLength());
+        map_height = 0.5 * float(hilbertMap_->getMapHeight());
+        float minX = float(map_center(0) - map_width);
+        float minY = float(map_center(1) - map_length);
+        float minZ = float(map_center(2) - map_height);
+        float maxX = float(map_center(0) + map_width);
+        float maxY = float(map_center(1) + map_length);
+        float maxZ = float(map_center(2) + map_height);
+        boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
+        boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+        boxfilter.setInputCloud(ptcloud);
+        boxfilter.filter(*cropped_ptcloud);
 
-    hilbertMap_->appendBinFromRaw(*cropped_ptcloud, mavPos_);
-    last_received_tsdfmap_ = current_time;
+        hilbertMap_->appendBinFromRaw(*cropped_ptcloud, mavPos_);
+        last_received_tsdfmap_ = current_time;
+    }
 }
 
 void HilbertMapper::publishMapInfo(){
