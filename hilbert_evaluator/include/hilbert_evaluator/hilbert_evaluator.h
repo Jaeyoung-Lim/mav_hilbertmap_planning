@@ -24,9 +24,11 @@ class HilbertEvaluator
     Eigen::Vector3d mav_pos_;
     Eigen::Vector4d mav_att_;
 
+    std::vector<double> test_thresholds_;
+
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
-    double getHilbertLabel(Eigen::Vector3d &position);
+    double getHilbertLabel(Eigen::Vector3d &position, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
 

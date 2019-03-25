@@ -16,7 +16,11 @@ HilbertEvaluator::HilbertEvaluator(const ros::NodeHandle& nh, const ros::NodeHan
     posestampedPub_ = nh_.advertise<geometry_msgs::PoseStamped>("/hilbert_evaluator/pose", 1);
     tfstampedSub_ = nh_.subscribe("/vicon/firefly_sbx/firefly_sbx", 1, &HilbertEvaluator::tfStampedCallback, this,ros::TransportHints().tcpNoDelay());
 
-
+    double num_tests = 10;
+    test_thresholds_.resize(num_tests);
+    for(size_t i = 0; i < num_tests ; i++){
+      test_thresholds_[i] = i * 1 / double(num_tests);
+    }
 }
 HilbertEvaluator::~HilbertEvaluator() {
   //Destructor
@@ -44,13 +48,16 @@ void HilbertEvaluator::cmdloopCallback(const ros::TimerEvent& event) {
     // Get Label from hilbert maps
     label_esdfmap = point.intensity;
 
-    label_hilbertmap = getHilbertLabel(x_query);
+    
+    //Count Precision and Recall depending on thresholds
+    for(size_t i = 0; i < test_thresholds_.size() ; i ++){
+      label_hilbertmap = getHilbertLabel(x_query, 0.5);
 
-    if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp++;
-    else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn++;
-    else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp++;
-    else tn++;
-    // if(!(label_esdfmap) > 0.0 && !(label_hilbertmap > 0.0)) tn++;
+      if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp++;
+      else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn++;
+      else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp++;
+      else tn++;
+    }
   }
   
   if(binsize > 0){
@@ -68,13 +75,13 @@ void HilbertEvaluator::statusloopCallback(const ros::TimerEvent &event) {
 
 }
 
-double HilbertEvaluator::getHilbertLabel(Eigen::Vector3d &position){
+double HilbertEvaluator::getHilbertLabel(Eigen::Vector3d &position, double threshold){
 
   double occprob;
 
   hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(position, &occprob);
 
-  if(occprob > 0.5)    return 1.0;
+  if(occprob > threshold)    return 1.0;
   else return -1.0;   
 }
 
