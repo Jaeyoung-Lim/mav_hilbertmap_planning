@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <ros/subscribe_options.h>
 #include "hilbert_mapper/hilbert_mapper.h"
+#include "hilbert_evaluator/roc_accumulator.h"
 #include <voxblox/utils/timing.h>
 #include <voxblox_ros/esdf_server.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -24,9 +25,18 @@ class HilbertEvaluator
     Eigen::Vector3d mav_pos_;
     Eigen::Vector4d mav_att_;
 
+    std::vector<double> test_thresholds_;
+
+    std::vector<RocAccumulator> roc_accumulator_;
+    std::vector<RocAccumulator> f1_accumulator_;
+    std::vector<int> tp;
+    std::vector<int> fn;
+    std::vector<int> fp;
+    std::vector<int> tn;
+
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
-    double getHilbertLabel(Eigen::Vector3d &position);
+    double getHilbertLabel(double occprob, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
 

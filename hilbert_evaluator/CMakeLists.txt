@@ -13,6 +13,7 @@ add_definitions(-std=c++11)
 ############
 cs_add_library(${PROJECT_NAME}
         src/hilbert_evaluator.cpp
+        src/roc_accumulator.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############
