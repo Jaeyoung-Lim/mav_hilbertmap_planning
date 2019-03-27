@@ -27,7 +27,7 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     collisionsurfacePub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/collisionsurface", 1);
 
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::tsdfpointcloudCallback, this,ros::TransportHints().tcpNoDelay());
-    sensorpointcloudSub_ = nh_.subscribe("/hilbert_mapper/sensor_pointcloud", 1, &HilbertMapper::sensorpointcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    sensorpointcloudSub_ = nh_.subscribe("/dense_stereo/pointcloud", 1, &HilbertMapper::sensorpointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
     double width, length, height;
