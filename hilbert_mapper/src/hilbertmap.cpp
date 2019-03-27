@@ -106,19 +106,21 @@ void hilbertmap::appendBinFromRaw(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eige
         double depth;
 
         point << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
-        depth = (point - position).norm();
+        // depth = (point - position).norm();
+        depth = point.norm();
 
+        //TODO: This "point" is not in the correct frame
         bin_.emplace_back(pcl::PointXYZI(1.0f));
-        bin_.back().x = point(0);
-        bin_.back().y = point(1);
-        bin_.back().z = point(3);
+        bin_.back().x = point(0) + position(0);
+        bin_.back().y = point(1) + position(1);
+        bin_.back().z = point(2) + position(2);
 
-        //Unoccupied Point at observed points
-        for(int j = 0; j < int(depth/resolution); j++){
+        // Unoccupied Point at observed points
+        for(int j = 1; j < int(std::floor(depth/resolution)); j++){
             bin_.emplace_back(pcl::PointXYZI(-1.0f));
-            bin_.back().x = j * resolution * (ptcloud[i].x - position(0)) + position(0);
-            bin_.back().y = j * resolution * (ptcloud[i].y - position(1)) + position(1);
-            bin_.back().z = j * resolution * (ptcloud[i].z - position(2)) + position(2);
+            bin_.back().x = j * resolution + position(0);
+            bin_.back().y = j * resolution + position(1);
+            bin_.back().z = j * resolution + position(2);
         }
     }
 }
