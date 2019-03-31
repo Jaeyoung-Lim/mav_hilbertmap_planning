@@ -159,7 +159,17 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
     map_center_ = map_center;
     prelearned_weights_ = Eigen::VectorXd::Zero(num_features_);
     prelearned_anchorpoints_.clear();
-    resizeGridPoints(prelearned_anchorpoints_, map_center, width_, length_, height_);
+
+
+    // max_mapsize;
+    // min_mapsize;
+    if( fix_mapsize_ ) resizeGridPoints(prelearned_anchorpoints_, map_center, width_, length_, height_);
+    else{
+        width_ = updateMapSize();
+        length_ = width_;
+        height_ = width_;
+        resizeGridPoints(prelearned_anchorpoints_, map_center, width_, length_, height_);
+    }
 
     //Learn map before handing over the map
     for(int i = 0; i < prelearn_iterations_; i++){
@@ -169,6 +179,21 @@ void hilbertmap::setMapCenter(Eigen::Vector3d map_center){
     weights_ = prelearned_weights_;
     maprefresh_timer.Stop();
 
+}
+
+double hilbertmap::updateMapSize(){
+    double min_mapsize;
+    double max_mapsize;
+    double mapsize = 0.0;
+
+    //TODO: Capture map distribution for mapsize
+    mapsize = 10.0;
+    max_mapsize = 10.0;
+    min_mapsize = 10.0;
+    
+    mapsize = std::max(min_mapsize, std::min(mapsize, min_mapsize));
+    
+    return mapsize;
 }
 
 void hilbertmap::setMapCenter(Eigen::Vector3d map_center, double width, double length, double height){
@@ -241,6 +266,10 @@ void hilbertmap::resizeGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eige
         }
     }
 
+}
+
+void hilbertmap::FixMapSize(bool mode){
+    fix_mapsize_ = mode;
 }
 
 

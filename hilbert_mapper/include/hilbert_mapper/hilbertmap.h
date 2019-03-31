@@ -30,6 +30,7 @@ class hilbertmap
         double sigma_; // Covariance for RBF Kernel
         float tsdf_threshold_;
         double sgd_amount_;
+        bool fix_mapsize_;
 
         Eigen::Vector3d pointcloud;
         Eigen::Vector3d map_center_;
@@ -44,6 +45,7 @@ class hilbertmap
         void stochasticGradientDescent(Eigen::VectorXd &weights);
         void generateGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height, double resolution);
         void resizeGridPoints(std::vector<Eigen::Vector3d> &gridpoints, Eigen::Vector3d center, double width, double length, double height);
+        double updateMapSize();
 
 public:
         hilbertmap(int num_feature);
@@ -56,6 +58,7 @@ public:
         void setMapCenter(Eigen::Vector3d map_center, double width, double length, double height);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
         void clearBin();
+        void FixMapSize(bool mode);
         
         int getBinSize();
         int getNumFeatures();
