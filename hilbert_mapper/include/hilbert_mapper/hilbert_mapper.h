@@ -27,6 +27,7 @@
 #include <boost/foreach.hpp>
 
 #include "hilbert_mapper/hilbertmap.h"
+#include "voxblox_ros/transformer.h"
 
 using namespace std;
 using namespace Eigen;
@@ -64,6 +65,8 @@ class HilbertMapper
         publish_binpoints_, publish_debuginfo_, publish_collisionsurface_;
     bool isptcloudsrc_tsdf_;
     bool verbose_;
+
+    voxblox::Transformer transformer_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);

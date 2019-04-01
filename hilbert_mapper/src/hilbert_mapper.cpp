@@ -8,6 +8,7 @@ using namespace std;
 HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
+  transformer_(nh, nh_private),
   index_pointcloud(0),
   verbose_(false){
 
@@ -130,6 +131,8 @@ void HilbertMapper::sensorpointcloudCallback(const sensor_msgs::PointCloud2::Con
         pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
         Eigen::Vector3d map_center;
         float map_width, map_length, map_height;
+        voxblox::Transformation T_G_C;
+        transformer_.lookupTransform(msg->header.frame_id, frame_id_, msg->header.stamp, &T_G_C);
         pcl::fromROSMsg(*msg, *ptcloud); //Convert PointCloud2 to PCL vectors
 
         // Crop PointCloud around map center
