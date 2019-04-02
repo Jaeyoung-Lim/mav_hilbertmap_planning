@@ -105,7 +105,7 @@ void hilbertmap::appendBinFromRaw(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eige
         Eigen::Vector3d point;
         double depth;
 
-        point << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
+        point << ptcloud[i].z, -ptcloud[i].x,- ptcloud[i].y;
         // depth = (point - position).norm();
         depth = point.norm();
 
