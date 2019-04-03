@@ -21,6 +21,8 @@ HilbertSimEvaluator::HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::N
     fp.resize(num_tests);
     tn.resize(num_tests);
 
+    cmdloop_timer_ = nh_.createTimer(ros::Duration(10.0), &HilbertSimEvaluator::cmdloopCallback, this); // Define timer for constant loop rate
+
     gt_esdfSub_ = nh_.subscribe("/simulation_eval/esdf_gt", 1, &HilbertSimEvaluator::EsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
     gt_tsdfSub_ = nh_.subscribe("/simulation_eval/tsdf_gt", 1, &HilbertSimEvaluator::TsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
@@ -32,8 +34,7 @@ HilbertSimEvaluator::~HilbertSimEvaluator() {
   //Destructor
 }
 
-void HilbertSimEvaluator::run() {
-  //Decide where to query
+void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Decide where to query
   Eigen::Vector3d x_query;
   for(size_t j = 0; j < test_thresholds_.size() ; j++){
     tp[j] = 0;
@@ -41,17 +42,16 @@ void HilbertSimEvaluator::run() {
     tn[j] = 0;
     fn[j] = 0;
   }
-  while(true){
-    ROS_INFO_STREAM_THROTTLE(1.0, "[HilbertSimEvaluator] Waiting for pointscloud to be received");
-    if(received_gt_esdf_ && received_gt_tsdf_){
-      ROS_INFO("[HilbertSimEvaluator] Groundtruth pointcloud received");
-      
-      break;
-    }
+
+  while(!gt_tsdfmap_ || !gt_esdfmap_){
+    ROS_INFO_THROTTLE(1.0, "In while loop");
+    ros::Duration(1.0).sleep();
   }
+  int binsize = getMapSize(*gt_tsdfmap_);
 
+  std::cout << "Pointcloud size: " << binsize << std::endl;
 
-  int binsize = hilbert_mapper_.getHilbertMapPtr()->getBinSize();
+  // int binsize = hilbert_mapper_.getHilbertMapPtr()->getBinSize();
       
   for(int i = 0; i < binsize; i++) {
     double label_hilbertmap, label_esdfmap;
@@ -109,6 +109,11 @@ double HilbertSimEvaluator::getEsdfLabel(Eigen::Vector3d &position){
   return 1.0;   //Occupied
 }
 
+int HilbertSimEvaluator::getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud){
+  return ptcloud.points.size();
+}
+ 
+
 void HilbertSimEvaluator::TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
   gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::fromROSMsg(*msg, *gt_tsdfmap_); //Convert PointCloud2 to PCL vectors
@@ -117,7 +122,7 @@ void HilbertSimEvaluator::TsdfPtcloudCallback(const sensor_msgs::PointCloud2::Co
 }
 
 void HilbertSimEvaluator::EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-  gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+  gt_esdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::fromROSMsg(*msg, *gt_esdfmap_); //Convert PointCloud2 to PCL vectors
   std::cout << "point cloud ESDF received" << std::endl;
   received_gt_esdf_ = true;

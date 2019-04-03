@@ -10,8 +10,6 @@ int main(int argc, char** argv) {
 
   HilbertSimEvaluator sim_evaluator(nh, nh_private);
 
-  sim_evaluator.run();
-
   ROS_INFO("Done.");
   ros::spin();
   return 0;

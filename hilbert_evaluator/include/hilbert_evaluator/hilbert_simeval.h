@@ -22,6 +22,8 @@ class HilbertSimEvaluator
     ros::Subscriber gt_esdfSub_;
     ros::Subscriber gt_tsdfSub_;
 
+    ros::Timer cmdloop_timer_;
+
     Eigen::Vector3d mav_pos_;
     Eigen::Vector4d mav_att_;
 
@@ -41,6 +43,8 @@ class HilbertSimEvaluator
 
     double getHilbertLabel(double occprob, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
+    int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+    void cmdloopCallback(const ros::TimerEvent& event);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
     void TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
