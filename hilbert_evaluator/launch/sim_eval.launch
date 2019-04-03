@@ -1,0 +1,23 @@
+<launch>
+   <node name="simulation_eval" pkg="voxblox_ros" type="simulation_eval" output="screen" args="-alsologtostderr -v=3" clear_params="true">
+    <param name="tsdf_voxel_size" value="0.1" />
+    <param name="tsdf_voxels_per_side" value="16" />
+    <param name="incremental" value="false" />
+    <param name="add_robot_pose" value="false" />
+    <param name="generate_mesh" value="true" />
+    <param name="num_viewpoints" value="50" />
+    <param name="truncation_distance" value="0.4" />
+    <param name="esdf_min_distance_m" value="0.2" />
+    <param name="verbose" value="true" />
+    <param name="max_attempts_to_generate_viewpoint" value="50" />
+    <param name="world_frame" value="world" />
+  </node>
+
+  <remap from="/voxblox_node/tsdf_pointcloud" to="/hilbert_mapper/tsdf_pointcloud"/>
+
+  <node name="hilbert_evaluator" pkg="hilbert_evaluator" type="hilbert_evaluator_node" output="screen">
+    <remap from="mav_hilbert_planner/esdf_map_in" to="esdf_map" />
+    <remap from="mav_hilbert_planner/tsdf_map_in" to="tsdf_map" />
+  </node>
+
+</launch>
