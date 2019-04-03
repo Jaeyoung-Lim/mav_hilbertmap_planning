@@ -19,6 +19,9 @@ class HilbertSimEvaluator
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
 
+    ros::Subscriber gt_esdfSub_;
+    ros::Subscriber gt_tsdfSub_;
+
     Eigen::Vector3d mav_pos_;
     Eigen::Vector4d mav_att_;
 
@@ -31,11 +34,16 @@ class HilbertSimEvaluator
     std::vector<int> fp;
     std::vector<int> tn;
 
+    pcl::PointCloud<pcl::PointXYZI>::Ptr gt_tsdfmap_;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr gt_esdfmap_;
+
     bool received_gt_esdf_, received_gt_tsdf_;
 
     double getHilbertLabel(double occprob, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
+    void TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
+    void EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 
 public:
     HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);

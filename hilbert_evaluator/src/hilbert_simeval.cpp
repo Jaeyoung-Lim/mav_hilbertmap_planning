@@ -21,6 +21,9 @@ HilbertSimEvaluator::HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::N
     fp.resize(num_tests);
     tn.resize(num_tests);
 
+    gt_esdfSub_ = nh_.subscribe("/simulation_eval/esdf_gt", 1, &HilbertSimEvaluator::EsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
+    gt_tsdfSub_ = nh_.subscribe("/simulation_eval/tsdf_gt", 1, &HilbertSimEvaluator::TsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
+
     for(size_t i = 0; i < num_tests ; i++){
       test_thresholds_[i] = i * 1 / double(num_tests);
     }
@@ -30,7 +33,6 @@ HilbertSimEvaluator::~HilbertSimEvaluator() {
 }
 
 void HilbertSimEvaluator::run() {
-  
   //Decide where to query
   Eigen::Vector3d x_query;
   for(size_t j = 0; j < test_thresholds_.size() ; j++){
@@ -105,4 +107,18 @@ double HilbertSimEvaluator::getEsdfLabel(Eigen::Vector3d &position){
     return -1.0; //Unoccupied
   }
   return 1.0;   //Occupied
+}
+
+void HilbertSimEvaluator::TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+  gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::fromROSMsg(*msg, *gt_tsdfmap_); //Convert PointCloud2 to PCL vectors
+  std::cout << "point cloud TSDF received" << std::endl;
+  received_gt_tsdf_ = true;
+}
+
+void HilbertSimEvaluator::EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+  gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::fromROSMsg(*msg, *gt_esdfmap_); //Convert PointCloud2 to PCL vectors
+  std::cout << "point cloud ESDF received" << std::endl;
+  received_gt_esdf_ = true;
 }
