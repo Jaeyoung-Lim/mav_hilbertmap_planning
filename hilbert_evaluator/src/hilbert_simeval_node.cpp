@@ -8,7 +8,11 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh("");
   ros::NodeHandle nh_private("~");
 
-  HilbertSimEvaluator Hilbertsimevaluator(nh, nh_private);
+  HilbertSimEvaluator sim_evaluator(nh, nh_private);
+
+  sim_evaluator.run();
+
+  ROS_INFO("Done.");
   ros::spin();
   return 0;
 }

@@ -15,7 +15,7 @@
 
   <remap from="/voxblox_node/tsdf_pointcloud" to="/hilbert_mapper/tsdf_pointcloud"/>
 
-  <node name="hilbert_evaluator" pkg="hilbert_evaluator" type="hilbert_evaluator_node" output="screen">
+  <node name="hilbert_evaluator" pkg="hilbert_evaluator" type="hilbert_simeval_node" output="screen">
     <remap from="mav_hilbert_planner/esdf_map_in" to="esdf_map" />
     <remap from="mav_hilbert_planner/tsdf_map_in" to="tsdf_map" />
   </node>
