@@ -31,6 +31,8 @@ class HilbertSimEvaluator
     std::vector<int> fp;
     std::vector<int> tn;
 
+    bool received_gt_esdf_, received_gt_tsdf_;
+
     double getHilbertLabel(double occprob, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);

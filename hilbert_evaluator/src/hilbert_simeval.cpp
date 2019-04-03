@@ -11,6 +11,9 @@ HilbertSimEvaluator::HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::N
   hilbert_mapper_(nh, nh_private) {
 
     double num_tests = 10;
+    received_gt_esdf_ = false;
+    received_gt_tsdf_ =  false;
+
     roc_accumulator_.resize(num_tests);
     test_thresholds_.resize(num_tests);
     tp.resize(num_tests);
@@ -35,6 +38,14 @@ void HilbertSimEvaluator::run() {
     fp[j] = 0;
     tn[j] = 0;
     fn[j] = 0;
+  }
+  while(true){
+    ROS_INFO_STREAM_THROTTLE(1.0, "[HilbertSimEvaluator] Waiting for pointscloud to be received");
+    if(received_gt_esdf_ && received_gt_tsdf_){
+      ROS_INFO("[HilbertSimEvaluator] Groundtruth pointcloud received");
+      
+      break;
+    }
   }
 
 
