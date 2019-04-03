@@ -44,6 +44,8 @@ class HilbertSimEvaluator
     double getHilbertLabel(double occprob, double threshold);
     double getEsdfLabel(Eigen::Vector3d &position);
     int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+    double getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
+    Eigen::Vector3d getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
     void cmdloopCallback(const ros::TimerEvent& event);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
     void TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);

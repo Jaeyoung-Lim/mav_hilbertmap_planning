@@ -50,21 +50,18 @@ void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Dec
   int binsize = getMapSize(*gt_tsdfmap_);
 
   std::cout << "Pointcloud size: " << binsize << std::endl;
-
-  // int binsize = hilbert_mapper_.getHilbertMapPtr()->getBinSize();
       
   for(int i = 0; i < binsize; i++) {
     double label_hilbertmap, label_esdfmap;
     double occprob;
 
-    pcl::PointXYZI point;
-    // Lets use bin as the ground truth map  (which makes no sense!)
-
-    point = hilbert_mapper_.getHilbertMapPtr()->getbinPoint(i);
-    x_query << point.x, point.y, point.z;
+    // point = hilbert_mapper_.getHilbertMapPtr()->getbinPoint(i);
+    // x_query << point.x, point.y, point.z;
+    x_query = getQueryPoint(*gt_tsdfmap_, i);
 
     // Get Label from hilbert maps
-    label_esdfmap = point.intensity;
+    // label_esdfmap = point.intensity;
+    label_esdfmap = getGroundTruthLabel(*gt_tsdfmap_, i);
     
     hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(x_query, &occprob);
 
@@ -76,18 +73,17 @@ void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Dec
       else tn[j]++;
     }
   }
-  if(binsize > 0){
-    //Count Precision and Recall depending on thresholds
-    for(size_t j = 0; j < test_thresholds_.size() ; j++){
-        double tpr = double(tp[j]) / double(tp[j] + fn[j]);
-        double fpr = double(fp[j]) / double(fp[j] + tn[j]);
-        double precision = double(tp[j]) / double(tp[j] + fp[j]);
-        double recall = tpr;
-        roc_accumulator_[j].Add(tpr, fpr);
+  //Count Precision and Recall depending on thresholds
+  for(size_t j = 0; j < test_thresholds_.size() ; j++){
+      double tpr = double(tp[j]) / double(tp[j] + fn[j]);
+      double fpr = double(fp[j]) / double(fp[j] + tn[j]);
+      double precision = double(tp[j]) / double(tp[j] + fp[j]);
+      double recall = tpr;
+      roc_accumulator_[j].Add(tpr, fpr);
 
-        double f1_score = 2 * recall * precision / (recall + precision);
-        //TODO: Accumulate f1 score
-    }
+      double f1_score = 2 * recall * precision / (recall + precision);
+      //TODO: Accumulate f1 score
+      std::cout << test_thresholds_[j] << ", " << tpr << ", " << fpr << ";"<< std::endl;
   }
 }
 
@@ -112,7 +108,16 @@ double HilbertSimEvaluator::getEsdfLabel(Eigen::Vector3d &position){
 int HilbertSimEvaluator::getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud){
   return ptcloud.points.size();
 }
- 
+
+Eigen::Vector3d HilbertSimEvaluator::getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+  Eigen::Vector3d pos;
+  pos << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
+  return pos;
+}
+
+double HilbertSimEvaluator::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+  return ptcloud[i].intensity;
+}
 
 void HilbertSimEvaluator::TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
   gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
