@@ -1,8 +1,5 @@
 <launch>
-
-   <remap from="/simulation_eval/tsdf_test" to="/hilbert_mapper/tsdf_pointcloud"/>
-
-   <node name="simulation_eval" pkg="voxblox_ros" type="simulation_eval" output="screen" args="-alsologtostderr -v=3" clear_params="true">
+   <node name="hilbert_evaluator" pkg="hilbert_evaluator" type="hilbert_simeval_node" output="screen" args="-alsologtostderr -v=3" clear_params="true">
     <param name="tsdf_voxel_size" value="0.1" />
     <param name="tsdf_voxels_per_side" value="16" />
     <param name="incremental" value="false" />
@@ -16,7 +13,4 @@
     <param name="world_frame" value="world" />
   </node>
 
-  <node name="hilbert_evaluator" pkg="hilbert_evaluator" type="hilbert_simeval_node" output="screen">
-    <remap from="mav_hilbert_planner/tsdf_map_in" to="tsdf_map" />
-  </node>
 </launch>
