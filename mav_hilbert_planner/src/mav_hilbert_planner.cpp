@@ -236,20 +236,14 @@ void MavHilbertPlanner::avoidCollisionsTowardWaypoint() {
     success = loco_planner_.getTrajectoryTowardGoal(path_chunk.front(),
                                                     waypoint, &trajectory);
     if (!success) {
-      if (path_chunk_collision_free) {
-        ROS_INFO(
-            "[Mav Local Planner][Plan Step] Couldn't find a solution :( "
-            "Continuing existing solution.");
-      } else {
-        ROS_INFO(
-            "[Mav Local Planner][Plan Step] ABORTING! No local solution "
-            "found.");
-        abort();
-        num_failures_++;
-        if (num_failures_ > max_failures_) {
-          current_waypoint_ = -1;
-        }
-      }
+      ROS_INFO(
+          "[Mav Local Planner][Plan Step] ABORTING! No local solution "
+          "found.");
+      abort();
+      num_failures_++;
+      if (num_failures_ > max_failures_) {
+        current_waypoint_ = -1;
+      }      
       return;
     } else {
       ROS_INFO("[Mav Local Planner][Plan Step] Appending new path chunk.");
