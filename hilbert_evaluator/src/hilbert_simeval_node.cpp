@@ -7,15 +7,32 @@ namespace voxblox {
 class SimulationServerImpl : public voxblox::SimulationServer {
   private:
     std::shared_ptr<hilbertmap> hilbertMap_;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
+    std::vector<double> test_thresholds_;
+    std::vector<int> tp;
+    std::vector<int> fn;
+    std::vector<int> fp;
+    std::vector<int> tn;
+    int binsize_;
 
  public:
   SimulationServerImpl(const ros::NodeHandle& nh,
                        const ros::NodeHandle& nh_private)
       : SimulationServer(nh, nh_private) {
       
-      hilbertMap_.reset(new hilbertmap(1000));
+    hilbertMap_.reset(new hilbertmap(1000));
 
-      }
+    double num_tests = 10;
+    test_thresholds_.resize(num_tests);
+    tp.resize(num_tests);
+    fn.resize(num_tests);
+    fp.resize(num_tests);
+    tn.resize(num_tests);
+
+    for(size_t i = 0; i < num_tests ; i++){
+      test_thresholds_[i] = i * 1 / double(num_tests);
+    }
+  }
 
   void prepareWorld() {
     world_.addObject(std::unique_ptr<Object>(
@@ -46,6 +63,7 @@ class SimulationServerImpl : public voxblox::SimulationServer {
     initializeHilbertMap();
     appendBinfromTSDF();
     learnHilbertMap();
+    evaluateHilbertMap();
     // verify();
     // publish();
   }
@@ -67,13 +85,14 @@ class SimulationServerImpl : public voxblox::SimulationServer {
   void appendBinfromTSDF(){
     //Drop Messages if they are comming in too  fast
     pcl::PointCloud<pcl::PointXYZI> ptcloud;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2(new pcl::PointCloud<pcl::PointXYZI>);
+    ptcloud2.reset(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
     ptcloud.header.frame_id = "world";
 
-    createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud);
+    createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud); //TODO: This should not be the groundtruth tsdf map
 
     *ptcloud2 = ptcloud;
+    binsize_ = getMapSize(*ptcloud2);
 
     Eigen::Vector3d map_center;
     // Eigen::Vector3d map_center;
@@ -100,6 +119,73 @@ class SimulationServerImpl : public voxblox::SimulationServer {
 
   void learnHilbertMap(){
     hilbertMap_->updateWeights();
+  }
+
+  int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud){
+    return ptcloud.points.size();
+  }
+
+  void evaluateHilbertMap(){
+    //Decide where to query
+    ROS_INFO("Start HilbertMap evaluation");
+    Eigen::Vector3d x_query;
+    for(size_t j = 0; j < test_thresholds_.size() ; j++){
+      tp[j] = 0;
+      fp[j] = 0;
+      tn[j] = 0;
+      fn[j] = 0;
+    }
+
+        
+    for(int i = 0; i < binsize_; i++) {
+      double label_hilbertmap, label_esdfmap;
+      double occprob;
+
+      pcl::PointXYZI point;
+      // Lets use bin as the ground truth map  (which makes no sense!)
+
+      x_query = getQueryPoint(*ptcloud2, i);
+
+      
+      hilbertMap_->getOccProbAtPosition(x_query, &occprob);
+  
+      label_esdfmap = getGroundTruthLabel(*ptcloud2, i);
+
+      for(size_t j = 0; j < test_thresholds_.size() ; j++){
+        label_hilbertmap = getHilbertLabel(occprob, test_thresholds_[j]);
+        if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp[j]++;
+        else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn[j]++;
+        else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp[j]++;
+        else tn[j]++;
+      }
+    }
+    if(binsize_ > 0){
+      //Count Precision and Recall depending on thresholds
+      for(size_t j = 0; j < test_thresholds_.size() ; j++){
+          double tpr = double(tp[j]) / double(tp[j] + fn[j]);
+          double fpr = double(fp[j]) / double(fp[j] + tn[j]);
+          double precision = double(tp[j]) / double(tp[j] + fp[j]);
+          double recall = tpr;
+
+          double f1_score = 2 * recall * precision / (recall + precision);
+          //TODO: Accumulate f1 score
+      }
+    }
+  }
+  
+  Eigen::Vector3d getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+    Eigen::Vector3d pos;
+    pos << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
+    return pos;
+  }
+
+  double getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+    return ptcloud[i].intensity;
+  }
+
+  double getHilbertLabel(double occprob, double threshold){
+    if(occprob >= threshold) return 1.0;
+    else return -1.0;   
   }
 };
 
