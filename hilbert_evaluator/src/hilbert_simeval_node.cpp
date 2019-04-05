@@ -37,8 +37,21 @@ class SimulationServerImpl : public voxblox::SimulationServer {
   }
 
   void hilbertBenchmark(){
+    prepareWorld();
+    generateSDF();
+    evaluate();
+    visualize();
+    initializeHilbertMap();
     appendBinfromTSDF();
-    // learnHilbertMap
+    learnHilbertMap();
+    // verify();
+    // publish();
+  }
+
+  void initializeHilbertMap(){
+
+    // hilbertMap_->setMapProperties(num_samples, width, length, height, resolution_, tsdf_threshold_);
+    // hilbertMap_->setMapCenter(pos);
   }
 
   void appendBinfromTSDF(){
@@ -71,6 +84,10 @@ class SimulationServerImpl : public voxblox::SimulationServer {
     boxfilter.filter(*cropped_ptcloud);
     hilbertMap_->appendBin(*cropped_ptcloud);    
   }
+
+  void learnHilbertMap(){
+    hilbertMap_->updateWeights();
+  }
 };
 
 }  // namespace voxblox
@@ -85,7 +102,7 @@ int main(int argc, char** argv) {
 
   voxblox::SimulationServerImpl sim_eval(nh, nh_private);
 
-  sim_eval.run();
+  sim_eval.hilbertBenchmark();
 
   ROS_INFO("Done.");
   ros::spin();
