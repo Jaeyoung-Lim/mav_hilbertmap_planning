@@ -3,64 +3,38 @@
 #ifndef HILBERT_SIMEVAL_H
 #define HILBERT_SIMEVAL_H
 
-#include <ros/ros.h>
-#include <ros/subscribe_options.h>
-#include "hilbert_mapper/hilbert_mapper.h"
-#include "hilbert_evaluator/roc_accumulator.h"
-#include <voxblox/utils/timing.h>
-#include <voxblox_ros/esdf_server.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <Eigen/Dense>
+#include "voxblox_ros/simulation_server.h"
+#include "hilbert_mapper/hilbertmap.h"
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/crop_box.h>
 
-class HilbertSimEvaluator
-{
+namespace voxblox {
+class HSimulationServerImpl : public voxblox::SimulationServer {
   private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
-
-    ros::Subscriber gt_esdfSub_;
-    ros::Subscriber gt_tsdfSub_;
-
-    ros::Timer cmdloop_timer_;
-
-    Eigen::Vector3d mav_pos_;
-    Eigen::Vector4d mav_att_;
-
+    std::shared_ptr<hilbertmap> hilbertMap_;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
     std::vector<double> test_thresholds_;
-
-    std::vector<RocAccumulator> roc_accumulator_;
-    std::vector<RocAccumulator> f1_accumulator_;
     std::vector<int> tp;
     std::vector<int> fn;
     std::vector<int> fp;
     std::vector<int> tn;
+    int binsize_;
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr gt_tsdfmap_;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr gt_esdfmap_;
+ public:
+    HSimulationServerImpl(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
 
-    bool received_gt_esdf_, received_gt_tsdf_;
+    void prepareWorld();
+    void hilbertBenchmark();
+    void initializeHilbertMap();
+    void appendBinfromTSDF();
+    void learnHilbertMap();
+    void evaluateHilbertMap();
 
-    double getHilbertLabel(double occprob, double threshold);
-    double getEsdfLabel(Eigen::Vector3d &position);
-    int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
     double getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
+    double getHilbertLabel(double occprob, double threshold);
+    int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
     Eigen::Vector3d getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
-    void cmdloopCallback(const ros::TimerEvent& event);
-    void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
-    void TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
-    void EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
-
-public:
-    HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
-    virtual ~ HilbertSimEvaluator();
-
-    void run();
-
-    voxblox::EsdfServer esdf_server_;
-    
-    HilbertMapper hilbert_mapper_;
-
 };
-
-#endif //HILBERT_EVALUATOR_H
+}  // namespace voxblox
+#endif

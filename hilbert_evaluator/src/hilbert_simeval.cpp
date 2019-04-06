@@ -2,39 +2,119 @@
 
 #include "hilbert_evaluator/hilbert_simeval.h"
 
-using namespace std;
-//Constructor
-HilbertSimEvaluator::HilbertSimEvaluator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
-  nh_(nh),
-  nh_private_(nh_private),
-  esdf_server_(nh, nh_private),
-  hilbert_mapper_(nh, nh_private) {
+namespace voxblox {
+HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
+                      const ros::NodeHandle& nh_private)
+    : SimulationServer(nh, nh_private) {
+    
+  hilbertMap_.reset(new hilbertmap(1000));
 
-    double num_tests = 10;
-    received_gt_esdf_ = false;
-    received_gt_tsdf_ =  false;
+  double num_tests = 10;
+  test_thresholds_.resize(num_tests);
+  tp.resize(num_tests);
+  fn.resize(num_tests);
+  fp.resize(num_tests);
+  tn.resize(num_tests);
 
-    roc_accumulator_.resize(num_tests);
-    test_thresholds_.resize(num_tests);
-    tp.resize(num_tests);
-    fn.resize(num_tests);
-    fp.resize(num_tests);
-    tn.resize(num_tests);
-
-    cmdloop_timer_ = nh_.createTimer(ros::Duration(10.0), &HilbertSimEvaluator::cmdloopCallback, this); // Define timer for constant loop rate
-
-    gt_esdfSub_ = nh_.subscribe("/simulation_eval/esdf_gt", 1, &HilbertSimEvaluator::EsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
-    gt_tsdfSub_ = nh_.subscribe("/simulation_eval/tsdf_gt", 1, &HilbertSimEvaluator::TsdfPtcloudCallback, this,ros::TransportHints().tcpNoDelay());
-
-    for(size_t i = 0; i < num_tests ; i++){
-      test_thresholds_[i] = i * 1 / double(num_tests);
-    }
-}
-HilbertSimEvaluator::~HilbertSimEvaluator() {
-  //Destructor
+  for(size_t i = 0; i < num_tests ; i++){
+    test_thresholds_[i] = i * 1 / double(num_tests);
+  }
 }
 
-void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Decide where to query
+void HSimulationServerImpl::prepareWorld() {
+  world_.addObject(std::unique_ptr<Object>(
+      new Sphere(Point(0.0, 0.0, 2.0), 2.0, Color::Red())));
+
+  world_.addObject(std::unique_ptr<Object>(new PlaneObject(
+      Point(-2.0, -4.0, 2.0), Point(0, 1, 0), Color::White())));
+
+  world_.addObject(std::unique_ptr<Object>(
+      new PlaneObject(Point(4.0, 0.0, 0.0), Point(-1, 0, 0), Color::Pink())));
+
+  world_.addObject(std::unique_ptr<Object>(
+      new Cube(Point(-4.0, 4.0, 2.0), Point(4, 4, 4), Color::Green())));
+
+  world_.addGroundLevel(0.03);
+
+  world_.generateSdfFromWorld(truncation_distance_, tsdf_gt_.get());
+  world_.generateSdfFromWorld(esdf_max_distance_, esdf_gt_.get());
+}
+
+void HSimulationServerImpl::hilbertBenchmark(){
+  //ESDF evaluation
+  prepareWorld();
+  generateSDF();
+  evaluate();
+  visualize();
+  //Hilbert map evaluation
+  initializeHilbertMap();
+  appendBinfromTSDF();
+  learnHilbertMap();
+  evaluateHilbertMap();
+  // verify();
+  // publish();
+}
+
+void HSimulationServerImpl::initializeHilbertMap(){
+  int num_samples = 100;
+  double width = 5.0;
+  double height = 5.0;
+  double length = 5.0;
+  double resolution = 0.5;
+  double tsdf_threshold = 0.0;
+  Eigen::Vector3d center_pos;
+  center_pos << 0.0, 0.0, 0.0;
+
+  hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
+  hilbertMap_->setMapCenter(center_pos);
+}
+
+void HSimulationServerImpl::appendBinfromTSDF(){
+  //Drop Messages if they are comming in too  fast
+  pcl::PointCloud<pcl::PointXYZI> ptcloud;
+  ptcloud2.reset(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+  ptcloud.header.frame_id = "world";
+
+  createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud); //TODO: This should not be the groundtruth tsdf map
+
+  *ptcloud2 = ptcloud;
+  binsize_ = getMapSize(*ptcloud2);
+
+  Eigen::Vector3d map_center;
+  // Eigen::Vector3d map_center;
+  float map_width, map_length, map_height;
+
+  // Crop PointCloud around map center
+  pcl::CropBox<pcl::PointXYZI> boxfilter;
+  map_center = hilbertMap_->getMapCenter();
+  map_width = 0.5 * float(hilbertMap_->getMapWidth());
+  map_length = 0.5 * float(hilbertMap_->getMapLength());
+  map_height = 0.5 * float(hilbertMap_->getMapHeight());
+  float minX = float(map_center(0) - map_width);
+  float minY = float(map_center(1) - map_length);
+  float minZ = float(map_center(2) - map_height);
+  float maxX = float(map_center(0) + map_width);
+  float maxY = float(map_center(1) + map_length);
+  float maxZ = float(map_center(2) + map_height);
+  boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
+  boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+  boxfilter.setInputCloud(ptcloud2);
+  boxfilter.filter(*cropped_ptcloud);
+  hilbertMap_->appendBin(*cropped_ptcloud);    
+}
+
+void HSimulationServerImpl::learnHilbertMap(){
+  hilbertMap_->updateWeights();
+}
+
+int HSimulationServerImpl::getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud){
+  return ptcloud.points.size();
+}
+
+void HSimulationServerImpl::evaluateHilbertMap(){
+  //Decide where to query
+  ROS_INFO("Start HilbertMap evaluation");
   Eigen::Vector3d x_query;
   for(size_t j = 0; j < test_thresholds_.size() ; j++){
     tp[j] = 0;
@@ -43,27 +123,20 @@ void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Dec
     fn[j] = 0;
   }
 
-  while(!gt_tsdfmap_ || !gt_esdfmap_){
-    ROS_INFO_THROTTLE(1.0, "In while loop");
-    ros::Duration(1.0).sleep();
-  }
-  int binsize = getMapSize(*gt_tsdfmap_);
-
-  std::cout << "Pointcloud size: " << binsize << std::endl;
       
-  for(int i = 0; i < binsize; i++) {
+  for(int i = 0; i < binsize_; i++) {
     double label_hilbertmap, label_esdfmap;
     double occprob;
 
-    // point = hilbert_mapper_.getHilbertMapPtr()->getbinPoint(i);
-    // x_query << point.x, point.y, point.z;
-    x_query = getQueryPoint(*gt_tsdfmap_, i);
+    pcl::PointXYZI point;
+    // Lets use bin as the ground truth map  (which makes no sense!)
 
-    // Get Label from hilbert maps
-    // label_esdfmap = point.intensity;
-    label_esdfmap = getGroundTruthLabel(*gt_tsdfmap_, i);
+    x_query = getQueryPoint(*ptcloud2, i);
+
     
-    hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(x_query, &occprob);
+    hilbertMap_->getOccProbAtPosition(x_query, &occprob);
+
+    label_esdfmap = getGroundTruthLabel(*ptcloud2, i);
 
     for(size_t j = 0; j < test_thresholds_.size() ; j++){
       label_hilbertmap = getHilbertLabel(occprob, test_thresholds_[j]);
@@ -73,62 +146,33 @@ void HilbertSimEvaluator::cmdloopCallback(const ros::TimerEvent& event) {  //Dec
       else tn[j]++;
     }
   }
-  //Count Precision and Recall depending on thresholds
-  for(size_t j = 0; j < test_thresholds_.size() ; j++){
-      double tpr = double(tp[j]) / double(tp[j] + fn[j]);
-      double fpr = double(fp[j]) / double(fp[j] + tn[j]);
-      double precision = double(tp[j]) / double(tp[j] + fp[j]);
-      double recall = tpr;
-      roc_accumulator_[j].Add(tpr, fpr);
+  if(binsize_ > 0){
+    //Count Precision and Recall depending on thresholds
+    for(size_t j = 0; j < test_thresholds_.size() ; j++){
+        double tpr = double(tp[j]) / double(tp[j] + fn[j]);
+        double fpr = double(fp[j]) / double(fp[j] + tn[j]);
+        double precision = double(tp[j]) / double(tp[j] + fp[j]);
+        double recall = tpr;
 
-      double f1_score = 2 * recall * precision / (recall + precision);
-      //TODO: Accumulate f1 score
-      std::cout << test_thresholds_[j] << ", " << tpr << ", " << fpr << ";"<< std::endl;
+        double f1_score = 2 * recall * precision / (recall + precision);
+        //TODO: Accumulate f1 score
+    }
   }
 }
 
-double HilbertSimEvaluator::getHilbertLabel(double occprob, double threshold){
-
-  if(occprob >= threshold) return 1.0;
-  else return -1.0;   
-}
-
-double HilbertSimEvaluator::getEsdfLabel(Eigen::Vector3d &position){
-
-  // Get label from esdf maps
-  double mapdistance;
-  esdf_server_.getEsdfMapPtr()->getDistanceAtPosition(position, &mapdistance);  
-
-  if(mapdistance > 0.0){
-    return -1.0; //Unoccupied
-  }
-  return 1.0;   //Occupied
-}
-
-int HilbertSimEvaluator::getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud){
-  return ptcloud.points.size();
-}
-
-Eigen::Vector3d HilbertSimEvaluator::getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+Eigen::Vector3d HSimulationServerImpl::getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
   Eigen::Vector3d pos;
   pos << ptcloud[i].x, ptcloud[i].y, ptcloud[i].z;
   return pos;
 }
 
-double HilbertSimEvaluator::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
   return ptcloud[i].intensity;
 }
 
-void HilbertSimEvaluator::TsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-  gt_tsdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::fromROSMsg(*msg, *gt_tsdfmap_); //Convert PointCloud2 to PCL vectors
-  std::cout << "point cloud TSDF received" << std::endl;
-  received_gt_tsdf_ = true;
+double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
+  if(occprob >= threshold) return 1.0;
+  else return -1.0;   
 }
 
-void HilbertSimEvaluator::EsdfPtcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-  gt_esdfmap_.reset(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::fromROSMsg(*msg, *gt_esdfmap_); //Convert PointCloud2 to PCL vectors
-  std::cout << "point cloud ESDF received" << std::endl;
-  received_gt_esdf_ = true;
-}
+}  // namespace voxblox
