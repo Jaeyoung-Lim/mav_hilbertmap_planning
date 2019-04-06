@@ -167,6 +167,8 @@ class MavHilbertPlanner {
   std::recursive_mutex map_mutex_;
   RosSemaphore should_replan_;
 
+  Eigen::Vector3d future_mapcenter_;
+
   // State -- planning.
   int max_failures_;
   int num_failures_;

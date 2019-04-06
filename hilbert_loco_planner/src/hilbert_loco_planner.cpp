@@ -12,7 +12,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
   frame_id_("odom"),
   num_segments_(2),
   num_random_restarts_(5),
-  random_restart_magnitude_(0.5),
+  random_restart_magnitude_(5.0),
   planning_horizon_m_(4.0),
   loco_(3){
     constraints_.setParametersFromRos(nh_private_);
