@@ -13,6 +13,7 @@ add_definitions(-std=c++11)
 ############
 cs_add_library(${PROJECT_NAME}
         src/hilbert_evaluator.cpp
+        src/hilbert_simeval.cpp
         src/roc_accumulator.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -23,6 +24,11 @@ cs_add_executable(hilbert_evaluator_node
         src/hilbert_evaluator_node.cpp
         )
 target_link_libraries(hilbert_evaluator_node ${PROJECT_NAME})
+cs_add_executable(hilbert_simeval_node
+        src/hilbert_simeval_node.cpp
+        )
+target_link_libraries(hilbert_simeval_node ${PROJECT_NAME})
+
 ##########
 cs_install()
 cs_export()
