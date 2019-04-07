@@ -175,10 +175,8 @@ void HSimulationServerImpl::generateSDF() {
 void HSimulationServerImpl::appendBinfromRaw(){
   ROS_INFO("Append Bin from Raw");
   for(int i = 0; i < num_viewpoints_; i ++){
-    Point viewpoint;
-    Pointcloud ptcloud;
-
-    hilbertMap_->appendBinfromRaw(ptcloud, viewpoint); 
+    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i]); 
+    
   }
 }
 
@@ -338,7 +336,7 @@ void HSimulationServerImpl::PublishBin(){
 
   binpoint_msg.header.stamp = ros::Time::now();
   binpoint_msg.header.frame_id = world_frame_;
-
+  binPub_.publish(binpoint_msg);
 }
 
 }  // namespace voxblox

@@ -110,7 +110,7 @@ void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &
         bin_.emplace_back(pcl::PointXYZI(1.0f));
         bin_.back().x = point(0);
         bin_.back().y = point(1);
-        bin_.back().z = point(3);
+        bin_.back().z = point(2);
 
         // //Unoccupied Point at observed points
         // for(int j = 0; j < int(depth/resolution); j++){
