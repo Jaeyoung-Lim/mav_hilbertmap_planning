@@ -6,7 +6,10 @@ namespace voxblox {
 HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
                       const ros::NodeHandle& nh_private)
     : SimulationServer(nh, nh_private) {
-    
+  
+  hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
+  binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
+
   hilbertMap_.reset(new hilbertmap(1000));
 
   double num_tests = 10;
@@ -20,6 +23,9 @@ HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
     test_thresholds_[i] = i * 1 / double(num_tests);
   }
 }
+
+HSimulationServerImpl::~HSimulationServerImpl(){};
+
 
 void HSimulationServerImpl::prepareWorld() {
   world_.addObject(std::unique_ptr<Object>(
@@ -46,13 +52,25 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
-  //Hilbert map evaluation
+
+  //Hilbert map evaluation from TSDF as a source
   initializeHilbertMap();
   appendBinfromTSDF();
   learnHilbertMap();
   evaluateHilbertMap();
-  // verify();
-  // publish();
+
+  //Hilbert map evaluation from Raw pointcloud as a source
+  initializeHilbertMap();
+  appendBinfromRaw();
+  learnHilbertMap();
+  evaluateHilbertMap();
+
+  while(true){
+    visualizeHilbertMap();
+    ros::Duration(2.0).sleep();
+  }
+
+  return;
 }
 
 void HSimulationServerImpl::initializeHilbertMap(){
@@ -69,7 +87,102 @@ void HSimulationServerImpl::initializeHilbertMap(){
   hilbertMap_->setMapCenter(center_pos);
 }
 
+void HSimulationServerImpl::generateSDF() {
+  Pointcloud ptcloud;
+  Colors colors;
+
+  Point view_origin(0.0, 0.0, 2.0);
+  Point view_direction(0.0, 1.0, 0.0);
+  view_direction.normalize();
+
+  // Save raw pointclouds for evaluation
+  view_ptcloud_.resize(num_viewpoints_);
+  view_origin_.resize(num_viewpoints_);
+
+  pcl::PointCloud<pcl::PointXYZRGB> ptcloud_pcl;
+
+  for (int i = 0; i < num_viewpoints_; ++i) {
+    //TODO: Get raw bin from view points
+    if (!generatePlausibleViewpoint(min_dist_, &view_origin, &view_direction)) {
+      ROS_WARN(
+          "Could not generate enough viewpoints. Generated: %d, Needed: %d", i,
+          num_viewpoints_);
+      break;
+    }
+
+    ptcloud.clear();
+    colors.clear();
+
+    world_.getPointcloudFromViewpoint(view_origin, view_direction,
+                                      depth_camera_resolution_, fov_h_rad_,
+                                      max_dist_, &ptcloud, &colors);
+    view_origin_[i] = view_origin;
+    view_ptcloud_[i] = ptcloud;
+
+    // Get T_G_C from ray origin and ray direction.
+    Transformation T_G_C(view_origin,
+                         Eigen::Quaternion<FloatingPoint>::FromTwoVectors(
+                             Point(0.0, 0.0, 1.0), view_direction));
+
+    // Transform back into camera frame.
+    Pointcloud ptcloud_C;
+    transformPointcloud(T_G_C.inverse(), ptcloud, &ptcloud_C);
+
+    // Put into the real map.
+    tsdf_integrator_->integratePointCloud(T_G_C, ptcloud_C, colors);
+
+    if (generate_occupancy_) {
+      occ_integrator_->integratePointCloud(T_G_C, ptcloud_C);
+    }
+
+    if (add_robot_pose_) {
+      esdf_integrator_->addNewRobotPosition(view_origin);
+    }
+
+    const bool clear_updated_flag = true;
+    if (incremental_) {
+      esdf_integrator_->updateFromTsdfLayer(clear_updated_flag);
+    }
+
+    // Convert to a XYZRGB pointcloud.
+    if (visualize_) {
+      ptcloud_pcl.header.frame_id = world_frame_;
+      pcl::PointXYZRGB point;
+      point.x = view_origin.x();
+      point.y = view_origin.y();
+      point.z = view_origin.z();
+      ptcloud_pcl.push_back(point);
+
+      view_ptcloud_pub_.publish(ptcloud_pcl);
+      ros::spinOnce();
+    }
+  }
+
+  // Generate ESDF in batch.
+  if (!incremental_) {
+    if (generate_occupancy_) {
+      esdf_occ_integrator_->updateFromOccLayerBatch();
+    }
+
+    esdf_integrator_->updateFromTsdfLayerBatch();
+
+    // Other batch options for reference:
+    // esdf_integrator_->updateFromTsdfLayerBatchFullEuclidean();
+    // esdf_integrator_->updateFromTsdfLayerBatchOccupancy();
+  }
+}
+
+void HSimulationServerImpl::appendBinfromRaw(){
+  ROS_INFO("Append Bin from Raw");
+  hilbertMap_->clearBin();
+  for(int i = 0; i < num_viewpoints_; i ++){
+    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i]); 
+
+  }
+}
+
 void HSimulationServerImpl::appendBinfromTSDF(){
+  ROS_INFO("Append Bin from TSDF Map");
   //Drop Messages if they are comming in too  fast
   pcl::PointCloud<pcl::PointXYZI> ptcloud;
   ptcloud2.reset(new pcl::PointCloud<pcl::PointXYZI>);
@@ -156,6 +269,7 @@ void HSimulationServerImpl::evaluateHilbertMap(){
 
         double f1_score = 2 * recall * precision / (recall + precision);
         //TODO: Accumulate f1 score
+        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ";"<< std::endl;
     }
   }
 }
@@ -173,6 +287,57 @@ double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI
 double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
   if(occprob >= threshold) return 1.0;
   else return -1.0;   
+}
+
+void HSimulationServerImpl::visualizeHilbertMap(){
+  PublishHilbertMap();
+  PublishBin();
+
+}
+
+void HSimulationServerImpl::PublishHilbertMap(){
+  //Publish Hilbert Map
+  sensor_msgs::PointCloud2 hilbert_map_msg;
+
+  pcl::PointCloud<pcl::PointXYZI> pointCloud;
+  Eigen::Vector3d x_query;
+  //Encode pointcloud data
+  for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
+      pcl::PointXYZI point;
+      x_query = hilbertMap_->getFeature(i);
+      point.x = x_query(0);
+      point.y = x_query(1);
+      point.z = x_query(2);
+
+      point.intensity = hilbertMap_->getOccupancyProb(x_query);
+
+
+      pointCloud.points.push_back(point);
+  }
+
+  pcl::toROSMsg(pointCloud, hilbert_map_msg);
+
+  hilbert_map_msg.header.stamp = ros::Time::now();
+  hilbert_map_msg.header.frame_id = world_frame_;
+
+  hilbertmapPub_.publish(hilbert_map_msg);
+}
+
+void HSimulationServerImpl::PublishBin(){
+  //Publish Bin of Hilbert Map
+  sensor_msgs::PointCloud2 binpoint_msg;
+  pcl::PointCloud<pcl::PointXYZI> pointCloud;
+
+  for(int i = 0; i < hilbertMap_->getBinSize(); i ++) {
+      pcl::PointXYZI point;
+      point = hilbertMap_->getbinPoint(i);
+      pointCloud.points.push_back(point);
+  }
+  pcl::toROSMsg(pointCloud, binpoint_msg);
+
+  binpoint_msg.header.stamp = ros::Time::now();
+  binpoint_msg.header.frame_id = world_frame_;
+  binPub_.publish(binpoint_msg);
 }
 
 }  // namespace voxblox

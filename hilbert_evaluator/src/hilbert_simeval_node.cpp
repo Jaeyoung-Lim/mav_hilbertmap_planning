@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
-  voxblox::SimulationServerImpl sim_eval(nh, nh_private);
+  voxblox::HSimulationServerImpl sim_eval(nh, nh_private);
 
   sim_eval.hilbertBenchmark();
 

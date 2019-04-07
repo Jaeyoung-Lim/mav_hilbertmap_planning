@@ -12,24 +12,39 @@
 namespace voxblox {
 class HSimulationServerImpl : public voxblox::SimulationServer {
   private:
+
+    ros::Publisher hilbertmapPub_;
+    ros::Publisher binPub_;
+
     std::shared_ptr<hilbertmap> hilbertMap_;
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
+    std::vector<Pointcloud> view_ptcloud_;
+
+    std::vector<Point> view_origin_;
     std::vector<double> test_thresholds_;
     std::vector<int> tp;
     std::vector<int> fn;
     std::vector<int> fp;
     std::vector<int> tn;
+
     int binsize_;
 
  public:
     HSimulationServerImpl(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    ~HSimulationServerImpl();
 
     void prepareWorld();
+    void generateSDF();
     void hilbertBenchmark();
     void initializeHilbertMap();
     void appendBinfromTSDF();
+    void appendBinfromRaw();
     void learnHilbertMap();
     void evaluateHilbertMap();
+    void visualizeHilbertMap();
+    void PublishHilbertMap();
+    void PublishBin();
 
     double getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
     double getHilbertLabel(double occprob, double threshold);

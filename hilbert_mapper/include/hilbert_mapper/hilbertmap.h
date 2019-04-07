@@ -50,10 +50,12 @@ public:
         virtual ~hilbertmap();
         void updateWeights();
         void appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
+        void appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position);
         void setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold);
         void setMapCenter(Eigen::Vector3d map_center);
         void setMapCenter(Eigen::Vector3d map_center, double width, double length, double height);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
+        void clearBin();
         
         int getBinSize();
         int getNumFeatures();
