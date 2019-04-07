@@ -97,18 +97,20 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
 void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position) {
 
     double raw_resolution = 1.0;
+    int downsample = 10;
     Eigen::Vector3f view_point;
     view_point << position(0), position(1), position(2);
 
     //Append bin from Raw pointcloud
-    bin_.clear();
-    for(int i = 0; i < ptcloud.size(); i++){
+    for(int i = 0; i < ptcloud.size(); i+=downsample){ //TODO: Downsample rate
         // //Occupied Point at observed points
         Eigen::Vector3f point, pt_direction;
+        double depth;
         
         point << ptcloud[i](0), ptcloud[i](1), ptcloud[i](2);
 
-        pt_direction = point - view_point;
+        pt_direction = (point - view_point).normalized();
+        depth = (point - view_point).norm();
 
         bin_.emplace_back(pcl::PointXYZI(1.0f));
         bin_.back().x = point(0);
@@ -116,14 +118,17 @@ void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &
         bin_.back().z = point(2);
 
         //Unoccupied Point at observed points
-        for(int j = 0; j < int(std::floor(pt_direction.norm()/raw_resolution)); j++){
-            // std::cout << "depth: " << pt_direction.norm() << " j: " << j << std::endl;
+        for(int j = 0; j < int(std::floor(depth/raw_resolution)); j++){
             bin_.emplace_back(pcl::PointXYZI(-1.0f));
-            bin_.back().x = j * raw_resolution * (point(0) - view_point(0)) + view_point(0);
-            bin_.back().y = j * raw_resolution * (point(1) - view_point(1)) + view_point(1);
-            bin_.back().z = j * raw_resolution * (point(2) - view_point(2)) + view_point(2);
+            bin_.back().x = j * raw_resolution * pt_direction(0) + view_point(0);
+            bin_.back().y = j * raw_resolution * pt_direction(1) + view_point(1);
+            bin_.back().z = j * raw_resolution * pt_direction(2) + view_point(2);
         }
     }
+}
+
+void hilbertmap::clearBin(){
+    bin_.clear();
 }
 
 void hilbertmap::setMapProperties(int num_samples, double width, double length, double height, double resolution, float tsdf_threshold){

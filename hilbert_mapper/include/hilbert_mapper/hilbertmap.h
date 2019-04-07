@@ -55,6 +55,7 @@ public:
         void setMapCenter(Eigen::Vector3d map_center);
         void setMapCenter(Eigen::Vector3d map_center, double width, double length, double height);
         void getkernelVector(const Eigen::Vector3d& x_query, Eigen::VectorXd &kernel_vector) const;
+        void clearBin();
         
         int getBinSize();
         int getNumFeatures();

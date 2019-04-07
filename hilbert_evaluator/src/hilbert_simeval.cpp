@@ -174,9 +174,10 @@ void HSimulationServerImpl::generateSDF() {
 
 void HSimulationServerImpl::appendBinfromRaw(){
   ROS_INFO("Append Bin from Raw");
+  hilbertMap_->clearBin();
   for(int i = 0; i < num_viewpoints_; i ++){
     hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i]); 
-    
+
   }
 }
 
