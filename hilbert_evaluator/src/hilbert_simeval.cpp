@@ -265,6 +265,7 @@ void HSimulationServerImpl::evaluateHilbertMap(){
 
         double f1_score = 2 * recall * precision / (recall + precision);
         //TODO: Accumulate f1 score
+        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ";"<< std::endl;
     }
   }
 }
