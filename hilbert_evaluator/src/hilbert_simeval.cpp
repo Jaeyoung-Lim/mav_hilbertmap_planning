@@ -21,6 +21,9 @@ HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
   }
 }
 
+HSimulationServerImpl::~HSimulationServerImpl(){};
+
+
 void HSimulationServerImpl::prepareWorld() {
   world_.addObject(std::unique_ptr<Object>(
       new Sphere(Point(0.0, 0.0, 2.0), 2.0, Color::Red())));
@@ -53,6 +56,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
   evaluateHilbertMap();
   // verify();
   // publish();
+  return;
 }
 
 void HSimulationServerImpl::initializeHilbertMap(){

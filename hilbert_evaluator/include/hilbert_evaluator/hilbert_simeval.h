@@ -23,6 +23,7 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
 
  public:
     HSimulationServerImpl(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    ~HSimulationServerImpl();
 
     void prepareWorld();
     void hilbertBenchmark();
