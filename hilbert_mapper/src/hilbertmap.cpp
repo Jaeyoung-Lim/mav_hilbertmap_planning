@@ -104,21 +104,25 @@ void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &
     bin_.clear();
     for(int i = 0; i < ptcloud.size(); i++){
         // //Occupied Point at observed points
-        Eigen::Vector3f point;
+        Eigen::Vector3f point, pt_direction;
+        
         point << ptcloud[i](0), ptcloud[i](1), ptcloud[i](2);
+
+        pt_direction = point - view_point;
 
         bin_.emplace_back(pcl::PointXYZI(1.0f));
         bin_.back().x = point(0);
         bin_.back().y = point(1);
         bin_.back().z = point(2);
 
-        // //Unoccupied Point at observed points
-        // for(int j = 0; j < int(depth/resolution); j++){
-        //     bin_.emplace_back(pcl::PointXYZI(-1.0f));
-        //     bin_.back().x = j * resolution * (ptcloud[i].x - position(0)) + position(0);
-        //     bin_.back().y = j * resolution * (ptcloud[i].y - position(1)) + position(1);
-        //     bin_.back().z = j * resolution * (ptcloud[i].z - position(2)) + position(2);
-        // }
+        //Unoccupied Point at observed points
+        for(int j = 0; j < int(std::floor(pt_direction.norm()/raw_resolution)); j++){
+            // std::cout << "depth: " << pt_direction.norm() << " j: " << j << std::endl;
+            bin_.emplace_back(pcl::PointXYZI(-1.0f));
+            bin_.back().x = j * raw_resolution * (point(0) - view_point(0)) + view_point(0);
+            bin_.back().y = j * raw_resolution * (point(1) - view_point(1)) + view_point(1);
+            bin_.back().z = j * raw_resolution * (point(2) - view_point(2)) + view_point(2);
+        }
     }
 }
 
