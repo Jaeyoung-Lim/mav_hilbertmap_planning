@@ -57,9 +57,10 @@ void HSimulationServerImpl::hilbertBenchmark(){
   evaluateHilbertMap();
 
   //Hilbert map evaluation from Raw pointcloud as a source
+  initializeHilbertMap();
   appendBinfromRaw();
-  // learnHilbertMap();
-  // evaluateHilbertMap();
+  learnHilbertMap();
+  evaluateHilbertMap();
 
 
   // verify();
@@ -167,15 +168,17 @@ void HSimulationServerImpl::generateSDF() {
 }
 
 void HSimulationServerImpl::appendBinfromRaw(){
-  // for(int i = 0; i < num_viewpoints_; i ++){
-  //   Point viewpoint;
-  //   PointCloud ptcloud;
+  ROS_INFO("Append Bin from Raw");
+  for(int i = 0; i < num_viewpoints_; i ++){
+    Point viewpoint;
+    Pointcloud ptcloud;
 
-  //   // hilbertMap_->appendBin(*cropped_ptcloud); 
-  // }
+    hilbertMap_->appendBinfromRaw(ptcloud, viewpoint); 
+  }
 }
 
 void HSimulationServerImpl::appendBinfromTSDF(){
+  ROS_INFO("Append Bin from TSDF Map");
   //Drop Messages if they are comming in too  fast
   pcl::PointCloud<pcl::PointXYZI> ptcloud;
   ptcloud2.reset(new pcl::PointCloud<pcl::PointXYZI>);
