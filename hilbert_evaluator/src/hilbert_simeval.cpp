@@ -6,7 +6,10 @@ namespace voxblox {
 HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
                       const ros::NodeHandle& nh_private)
     : SimulationServer(nh, nh_private) {
-    
+  
+  hilbertmapPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/hilbertmap", 1);
+  binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
+
   hilbertMap_.reset(new hilbertmap(1000));
 
   double num_tests = 10;
@@ -62,9 +65,11 @@ void HSimulationServerImpl::hilbertBenchmark(){
   learnHilbertMap();
   evaluateHilbertMap();
 
+  while(true){
+    visualizeHilbertMap();
+    ros::Duration(2.0).sleep();
+  }
 
-  // verify();
-  // publish();
   return;
 }
 
@@ -283,6 +288,57 @@ double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI
 double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
   if(occprob >= threshold) return 1.0;
   else return -1.0;   
+}
+
+void HSimulationServerImpl::visualizeHilbertMap(){
+  PublishHilbertMap();
+  PublishBin();
+
+}
+
+void HSimulationServerImpl::PublishHilbertMap(){
+  //Publish Hilbert Map
+  sensor_msgs::PointCloud2 hilbert_map_msg;
+
+  pcl::PointCloud<pcl::PointXYZI> pointCloud;
+  Eigen::Vector3d x_query;
+  //Encode pointcloud data
+  for(int i = 0; i < hilbertMap_->getNumFeatures(); i ++) {
+      pcl::PointXYZI point;
+      x_query = hilbertMap_->getFeature(i);
+      point.x = x_query(0);
+      point.y = x_query(1);
+      point.z = x_query(2);
+
+      point.intensity = hilbertMap_->getOccupancyProb(x_query);
+
+
+      pointCloud.points.push_back(point);
+  }
+
+  pcl::toROSMsg(pointCloud, hilbert_map_msg);
+
+  hilbert_map_msg.header.stamp = ros::Time::now();
+  hilbert_map_msg.header.frame_id = world_frame_;
+
+  hilbertmapPub_.publish(hilbert_map_msg);
+}
+
+void HSimulationServerImpl::PublishBin(){
+  //Publish Bin of Hilbert Map
+  sensor_msgs::PointCloud2 binpoint_msg;
+  pcl::PointCloud<pcl::PointXYZI> pointCloud;
+
+  for(int i = 0; i < hilbertMap_->getBinSize(); i ++) {
+      pcl::PointXYZI point;
+      point = hilbertMap_->getbinPoint(i);
+      pointCloud.points.push_back(point);
+  }
+  pcl::toROSMsg(pointCloud, binpoint_msg);
+
+  binpoint_msg.header.stamp = ros::Time::now();
+  binpoint_msg.header.frame_id = world_frame_;
+
 }
 
 }  // namespace voxblox
