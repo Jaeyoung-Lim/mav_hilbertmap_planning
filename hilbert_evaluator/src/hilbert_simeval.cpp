@@ -49,11 +49,19 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
-  //Hilbert map evaluation
+
+  //Hilbert map evaluation from TSDF as a source
   initializeHilbertMap();
   appendBinfromTSDF();
   learnHilbertMap();
   evaluateHilbertMap();
+
+  //Hilbert map evaluation from Raw pointcloud as a source
+  appendBinfromRaw();
+  // learnHilbertMap();
+  // evaluateHilbertMap();
+
+
   // verify();
   // publish();
   return;
@@ -71,6 +79,100 @@ void HSimulationServerImpl::initializeHilbertMap(){
 
   hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
   hilbertMap_->setMapCenter(center_pos);
+}
+
+void HSimulationServerImpl::generateSDF() {
+  Pointcloud ptcloud;
+  Colors colors;
+
+  Point view_origin(0.0, 0.0, 2.0);
+  Point view_direction(0.0, 1.0, 0.0);
+  view_direction.normalize();
+
+  // Save raw pointclouds for evaluation
+  view_ptcloud_.resize(num_viewpoints_);
+  view_origin_.resize(num_viewpoints_);
+
+  pcl::PointCloud<pcl::PointXYZRGB> ptcloud_pcl;
+
+  for (int i = 0; i < num_viewpoints_; ++i) {
+    //TODO: Get raw bin from view points
+    if (!generatePlausibleViewpoint(min_dist_, &view_origin, &view_direction)) {
+      ROS_WARN(
+          "Could not generate enough viewpoints. Generated: %d, Needed: %d", i,
+          num_viewpoints_);
+      break;
+    }
+
+    ptcloud.clear();
+    colors.clear();
+
+    world_.getPointcloudFromViewpoint(view_origin, view_direction,
+                                      depth_camera_resolution_, fov_h_rad_,
+                                      max_dist_, &ptcloud, &colors);
+    view_origin_[i] = view_origin;
+    view_ptcloud_[i] = ptcloud;
+
+    // Get T_G_C from ray origin and ray direction.
+    Transformation T_G_C(view_origin,
+                         Eigen::Quaternion<FloatingPoint>::FromTwoVectors(
+                             Point(0.0, 0.0, 1.0), view_direction));
+
+    // Transform back into camera frame.
+    Pointcloud ptcloud_C;
+    transformPointcloud(T_G_C.inverse(), ptcloud, &ptcloud_C);
+
+    // Put into the real map.
+    tsdf_integrator_->integratePointCloud(T_G_C, ptcloud_C, colors);
+
+    if (generate_occupancy_) {
+      occ_integrator_->integratePointCloud(T_G_C, ptcloud_C);
+    }
+
+    if (add_robot_pose_) {
+      esdf_integrator_->addNewRobotPosition(view_origin);
+    }
+
+    const bool clear_updated_flag = true;
+    if (incremental_) {
+      esdf_integrator_->updateFromTsdfLayer(clear_updated_flag);
+    }
+
+    // Convert to a XYZRGB pointcloud.
+    if (visualize_) {
+      ptcloud_pcl.header.frame_id = world_frame_;
+      pcl::PointXYZRGB point;
+      point.x = view_origin.x();
+      point.y = view_origin.y();
+      point.z = view_origin.z();
+      ptcloud_pcl.push_back(point);
+
+      view_ptcloud_pub_.publish(ptcloud_pcl);
+      ros::spinOnce();
+    }
+  }
+
+  // Generate ESDF in batch.
+  if (!incremental_) {
+    if (generate_occupancy_) {
+      esdf_occ_integrator_->updateFromOccLayerBatch();
+    }
+
+    esdf_integrator_->updateFromTsdfLayerBatch();
+
+    // Other batch options for reference:
+    // esdf_integrator_->updateFromTsdfLayerBatchFullEuclidean();
+    // esdf_integrator_->updateFromTsdfLayerBatchOccupancy();
+  }
+}
+
+void HSimulationServerImpl::appendBinfromRaw(){
+  // for(int i = 0; i < num_viewpoints_; i ++){
+  //   Point viewpoint;
+  //   PointCloud ptcloud;
+
+  //   // hilbertMap_->appendBin(*cropped_ptcloud); 
+  // }
 }
 
 void HSimulationServerImpl::appendBinfromTSDF(){

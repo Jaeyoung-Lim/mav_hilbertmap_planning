@@ -14,6 +14,8 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
   private:
     std::shared_ptr<hilbertmap> hilbertMap_;
     pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
+    std::vector<Pointcloud> view_ptcloud_;
+    std::vector<Point> view_origin_;
     std::vector<double> test_thresholds_;
     std::vector<int> tp;
     std::vector<int> fn;
@@ -26,9 +28,11 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
     ~HSimulationServerImpl();
 
     void prepareWorld();
+    void generateSDF();
     void hilbertBenchmark();
     void initializeHilbertMap();
     void appendBinfromTSDF();
+    void appendBinfromRaw();
     void learnHilbertMap();
     void evaluateHilbertMap();
 
