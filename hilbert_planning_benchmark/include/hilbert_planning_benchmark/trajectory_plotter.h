@@ -8,6 +8,9 @@
 #include <ros/package.h>
 #include <Eigen/Dense>
 #include "visualization_msgs/MarkerArray.h"
+#include <mav_msgs/conversions.h>
+#include <mav_msgs/default_topics.h>
+#include <eigen_conversions/eigen_msg.h>
 
 class TrajectoryPlotter
 {

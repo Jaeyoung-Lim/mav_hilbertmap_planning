@@ -1,6 +1,6 @@
 //  April/2019, ETHZ, Jaeyoung Lim, jalim@student.ethz.ch
 
-#include "planner_benchmark/trajectory_plotter.h"
+#include "hilbert_planning_benchmark/trajectory_plotter.h"
 
 int main(int argc, char** argv) {
   ros::init(argc,argv,"trajectory_plotter");
