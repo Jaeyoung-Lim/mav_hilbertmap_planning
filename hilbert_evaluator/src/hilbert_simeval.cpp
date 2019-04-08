@@ -75,13 +75,13 @@ void HSimulationServerImpl::hilbertBenchmark(){
 
 void HSimulationServerImpl::initializeHilbertMap(){
   int num_samples = 100;
-  double width = 5.0;
-  double height = 5.0;
-  double length = 5.0;
-  double resolution = 0.5;
+  double width = 11.0;
+  double height = 11.0;
+  double length = 11.0;
+  double resolution = 1.1;
   double tsdf_threshold = 0.0;
   Eigen::Vector3d center_pos;
-  center_pos << 0.0, 0.0, 0.0;
+  center_pos << 0.5, 0.5, 4.5;
 
   hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
   hilbertMap_->setMapCenter(center_pos);
