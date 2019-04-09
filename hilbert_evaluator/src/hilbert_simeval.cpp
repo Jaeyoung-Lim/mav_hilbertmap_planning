@@ -65,6 +65,10 @@ void HSimulationServerImpl::hilbertBenchmark(){
   learnHilbertMap();
   evaluateHilbertMap();
 
+  ROS_INFO_STREAM("All timings: "
+                << std::endl
+                << voxblox::timing::Timing::Print() << std::endl);
+
   while(true){
     visualizeHilbertMap();
     ros::Duration(2.0).sleep();
