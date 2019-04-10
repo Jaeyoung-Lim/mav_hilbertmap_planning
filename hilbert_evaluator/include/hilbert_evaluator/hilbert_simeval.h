@@ -38,6 +38,7 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
     void generateSDF();
     void hilbertBenchmark();
     void initializeHilbertMap();
+    void initializeHilbertMap(double resolution);
     void appendBinfromTSDF();
     void appendBinfromRaw(double sample_rate);
     void learnHilbertMap();

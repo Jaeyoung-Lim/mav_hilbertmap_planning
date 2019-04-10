@@ -52,7 +52,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
-  int benchmark = 1;
+  int benchmark = 2;
   switch(benchmark){
     case 1 : //Benchmark tsdf and raw bin source
       ROS_INFO("[Hilbert Benchmark] Starting benchmark for Bin source");
@@ -115,7 +115,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
     case 2 : //Bench mark resoultion
       ROS_INFO("[Hilbert Benchmark] Starting benchmark for Map Resoultion");
       //Hilbert map evaluation from TSDF as a source
-      initializeHilbertMap();
+      initializeHilbertMap(1.1);
       appendBinfromTSDF();
       learnHilbertMap();
       learnHilbertMap();
@@ -123,6 +123,26 @@ void HSimulationServerImpl::hilbertBenchmark(){
       learnHilbertMap();
       learnHilbertMap();
       evaluateHilbertMap();
+
+      initializeHilbertMap(0.55);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+
+      initializeHilbertMap(2.22);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
       break;
 
   }
@@ -146,6 +166,20 @@ void HSimulationServerImpl::initializeHilbertMap(){
   double height = 11.0;
   double length = 11.0;
   double resolution = 1.1;
+  double tsdf_threshold = 0.0;
+  Eigen::Vector3d center_pos;
+  center_pos << 0.5, 0.5, 4.5;
+
+  hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
+  hilbertMap_->setMapCenter(center_pos);
+}
+
+void HSimulationServerImpl::initializeHilbertMap(double resolution){
+  ROS_INFO("Create map with resolution %f", resolution);
+  int num_samples = 100;
+  double width = 11.0;
+  double height = 11.0;
+  double length = 11.0;
   double tsdf_threshold = 0.0;
   Eigen::Vector3d center_pos;
   center_pos << 0.5, 0.5, 4.5;
