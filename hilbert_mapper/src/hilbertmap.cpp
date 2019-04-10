@@ -94,11 +94,11 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     appendbin_timer.Stop();
 }
 
-void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position) {
+void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position, double sample_rate) {
 
-    double raw_resolution = 1.0;
-    int downsample = 10;
+    double raw_resolution = 2.0;
     Eigen::Vector3f view_point;
+    int downsample = int(std::ceil(1/sample_rate));
     view_point << position(0), position(1), position(2);
 
     //Append bin from Raw pointcloud
@@ -316,9 +316,11 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
 bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double* occprob) const {
     bool success = false;
+
+    voxblox::timing::Timer query_timer("hilbertmap/query_time");
     *occprob = getOccupancyProb(x_query);
     if(*occprob <= 1.0 && *occprob >=0.0) success = true; //Sanity Check
-
+    query_timer.Stop();
     return success;
 }
 

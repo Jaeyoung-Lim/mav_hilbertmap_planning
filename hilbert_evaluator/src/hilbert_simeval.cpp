@@ -12,7 +12,7 @@ HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
 
   hilbertMap_.reset(new hilbertmap(1000));
 
-  double num_tests = 10;
+  double num_tests = 20;
   test_thresholds_.resize(num_tests);
   tp.resize(num_tests);
   fn.resize(num_tests);
@@ -52,18 +52,105 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
+  int benchmark = 2;
+  switch(benchmark){
+    case 1 : //Benchmark tsdf and raw bin source
+      ROS_INFO("[Hilbert Benchmark] Starting benchmark for Bin source");
 
-  //Hilbert map evaluation from TSDF as a source
-  initializeHilbertMap();
-  appendBinfromTSDF();
-  learnHilbertMap();
-  evaluateHilbertMap();
+      //Hilbert map evaluation from TSDF as a source
+      initializeHilbertMap();
+      appendBinfromTSDF();
+        /**
+      * @todo Check how much loops are valid
+      * @body Running `learnHilbertMap()` once is not enough
+      */
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
 
-  //Hilbert map evaluation from Raw pointcloud as a source
-  initializeHilbertMap();
-  appendBinfromRaw();
-  learnHilbertMap();
-  evaluateHilbertMap();
+      //Hilbert map evaluation from Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(1.0);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.25);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.1);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.05);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      break;
+    case 2 : //Bench mark resoultion
+      ROS_INFO("[Hilbert Benchmark] Starting benchmark for Map Resoultion");
+      //Hilbert map evaluation from TSDF as a source
+      initializeHilbertMap(1.1);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      initializeHilbertMap(0.55);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+
+      initializeHilbertMap(2.22);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      break;
+
+  }
+
+
+  ROS_INFO_STREAM("Timings for Raw pointcloud Source: "
+                << std::endl
+                << voxblox::timing::Timing::Print() << std::endl);
 
   while(true){
     visualizeHilbertMap();
@@ -75,13 +162,27 @@ void HSimulationServerImpl::hilbertBenchmark(){
 
 void HSimulationServerImpl::initializeHilbertMap(){
   int num_samples = 100;
-  double width = 5.0;
-  double height = 5.0;
-  double length = 5.0;
-  double resolution = 0.5;
+  double width = 11.0;
+  double height = 11.0;
+  double length = 11.0;
+  double resolution = 1.1;
   double tsdf_threshold = 0.0;
   Eigen::Vector3d center_pos;
-  center_pos << 0.0, 0.0, 0.0;
+  center_pos << 0.5, 0.5, 4.5;
+
+  hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
+  hilbertMap_->setMapCenter(center_pos);
+}
+
+void HSimulationServerImpl::initializeHilbertMap(double resolution){
+  ROS_INFO("Create map with resolution %f", resolution);
+  int num_samples = 100;
+  double width = 11.0;
+  double height = 11.0;
+  double length = 11.0;
+  double tsdf_threshold = 0.0;
+  Eigen::Vector3d center_pos;
+  center_pos << 0.5, 0.5, 4.5;
 
   hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
   hilbertMap_->setMapCenter(center_pos);
@@ -172,11 +273,11 @@ void HSimulationServerImpl::generateSDF() {
   }
 }
 
-void HSimulationServerImpl::appendBinfromRaw(){
-  ROS_INFO("Append Bin from Raw");
+void HSimulationServerImpl::appendBinfromRaw(double sample_rate){
+  ROS_INFO("Append Bin from Raw with sample rate %f", sample_rate);
   hilbertMap_->clearBin();
   for(int i = 0; i < num_viewpoints_; i ++){
-    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i]); 
+    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i], sample_rate); 
 
   }
 }
@@ -229,7 +330,7 @@ void HSimulationServerImpl::evaluateHilbertMap(){
   //Decide where to query
   ROS_INFO("Start HilbertMap evaluation");
   Eigen::Vector3d x_query;
-  for(size_t j = 0; j < test_thresholds_.size() ; j++){
+  for(size_t j = 0; j < test_thresholds_.size() ; j++){ //Initialized Counters
     tp[j] = 0;
     fp[j] = 0;
     tn[j] = 0;
@@ -259,17 +360,19 @@ void HSimulationServerImpl::evaluateHilbertMap(){
       else tn[j]++;
     }
   }
+  //Get Statistics
   if(binsize_ > 0){
+    double tpr, fpr, precision, recall, f1_score;
     //Count Precision and Recall depending on thresholds
     for(size_t j = 0; j < test_thresholds_.size() ; j++){
-        double tpr = double(tp[j]) / double(tp[j] + fn[j]);
-        double fpr = double(fp[j]) / double(fp[j] + tn[j]);
-        double precision = double(tp[j]) / double(tp[j] + fp[j]);
-        double recall = tpr;
+        tpr = double(tp[j]) / double(tp[j] + fn[j]);
+        fpr = double(fp[j]) / double(fp[j] + tn[j]);
+        precision = double(tp[j]) / double(tp[j] + fp[j]);
+        recall = tpr;
 
-        double f1_score = 2 * recall * precision / (recall + precision);
+        f1_score = 2 * recall * precision / (recall + precision);
         //TODO: Accumulate f1 score
-        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ";"<< std::endl;
+        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ", " << f1_score << ";"<< std::endl;
     }
   }
 }
@@ -281,7 +384,9 @@ Eigen::Vector3d HSimulationServerImpl::getQueryPoint(pcl::PointCloud<pcl::PointX
 }
 
 double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
-  return ptcloud[i].intensity;
+  double distance = ptcloud[i].intensity;
+  if(distance > 0.0) return -1.0; //Unoccupied
+  else return 1.0; //Occupied
 }
 
 double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
