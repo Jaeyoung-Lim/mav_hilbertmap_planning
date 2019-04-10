@@ -56,16 +56,32 @@ void HSimulationServerImpl::hilbertBenchmark(){
   //Hilbert map evaluation from TSDF as a source
   initializeHilbertMap();
   appendBinfromTSDF();
+    /**
+  * @todo Check how much loops are valid
+  * @body Running `learnHilbertMap()` once is not enough
+  */
+  learnHilbertMap();
+  learnHilbertMap();
+  learnHilbertMap();
+  learnHilbertMap();
   learnHilbertMap();
   evaluateHilbertMap();
+
+  ROS_INFO_STREAM("Timings for TSDF Source: "
+                << std::endl
+                << voxblox::timing::Timing::Print() << std::endl);
 
   //Hilbert map evaluation from Raw pointcloud as a source
   initializeHilbertMap();
   appendBinfromRaw();
   learnHilbertMap();
+  learnHilbertMap();
+  learnHilbertMap();
+  learnHilbertMap();
+  learnHilbertMap();
   evaluateHilbertMap();
 
-  ROS_INFO_STREAM("All timings: "
+  ROS_INFO_STREAM("Timings for Raw pointcloud Source: "
                 << std::endl
                 << voxblox::timing::Timing::Print() << std::endl);
 
@@ -233,7 +249,7 @@ void HSimulationServerImpl::evaluateHilbertMap(){
   //Decide where to query
   ROS_INFO("Start HilbertMap evaluation");
   Eigen::Vector3d x_query;
-  for(size_t j = 0; j < test_thresholds_.size() ; j++){
+  for(size_t j = 0; j < test_thresholds_.size() ; j++){ //Initialized Counters
     tp[j] = 0;
     fp[j] = 0;
     tn[j] = 0;
@@ -263,18 +279,21 @@ void HSimulationServerImpl::evaluateHilbertMap(){
       else tn[j]++;
     }
   }
+  //Get Statistics
   if(binsize_ > 0){
+    double tpr, fpr, precision, recall, f1_score;
     //Count Precision and Recall depending on thresholds
     for(size_t j = 0; j < test_thresholds_.size() ; j++){
-        double tpr = double(tp[j]) / double(tp[j] + fn[j]);
-        double fpr = double(fp[j]) / double(fp[j] + tn[j]);
-        double precision = double(tp[j]) / double(tp[j] + fp[j]);
-        double recall = tpr;
+        tpr = double(tp[j]) / double(tp[j] + fn[j]);
+        fpr = double(fp[j]) / double(fp[j] + tn[j]);
+        precision = double(tp[j]) / double(tp[j] + fp[j]);
+        recall = tpr;
 
-        double f1_score = 2 * recall * precision / (recall + precision);
+        f1_score = 2 * recall * precision / (recall + precision);
         //TODO: Accumulate f1 score
-        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ";"<< std::endl;
+        std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ", " << f1_score << ";"<< std::endl;
     }
+    std::cout << "TPR: " << tpr << " FPR: " << fpr << " Precision: " << precision << " Recall: "<< recall << std::endl;
   }
 }
 
@@ -285,7 +304,9 @@ Eigen::Vector3d HSimulationServerImpl::getQueryPoint(pcl::PointCloud<pcl::PointX
 }
 
 double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
-  return ptcloud[i].intensity;
+  double distance = ptcloud[i].intensity;
+  if(distance > 0.0) return -1.0; //Unoccupied
+  else return 1.0; //Occupied
 }
 
 double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
