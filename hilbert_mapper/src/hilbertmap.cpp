@@ -316,9 +316,11 @@ double hilbertmap::getOccupancyProb(const Eigen::Vector3d &x_query) const {
 
 bool hilbertmap::getOccProbAtPosition(const Eigen::Vector3d& x_query, double* occprob) const {
     bool success = false;
+
+    voxblox::timing::Timer query_timer("hilbertmap/query_time");
     *occprob = getOccupancyProb(x_query);
     if(*occprob <= 1.0 && *occprob >=0.0) success = true; //Sanity Check
-
+    query_timer.Stop();
     return success;
 }
 
