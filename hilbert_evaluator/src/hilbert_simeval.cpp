@@ -12,7 +12,7 @@ HSimulationServerImpl::HSimulationServerImpl(const ros::NodeHandle& nh,
 
   hilbertMap_.reset(new hilbertmap(1000));
 
-  double num_tests = 10;
+  double num_tests = 20;
   test_thresholds_.resize(num_tests);
   tp.resize(num_tests);
   fn.resize(num_tests);
@@ -52,34 +52,81 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
+  int benchmark = 1;
+  switch(benchmark){
+    case 1 : //Benchmark tsdf and raw bin source
+      ROS_INFO("[Hilbert Benchmark] Starting benchmark for Bin source");
 
-  //Hilbert map evaluation from TSDF as a source
-  initializeHilbertMap();
-  appendBinfromTSDF();
-    /**
-  * @todo Check how much loops are valid
-  * @body Running `learnHilbertMap()` once is not enough
-  */
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  evaluateHilbertMap();
+      //Hilbert map evaluation from TSDF as a source
+      initializeHilbertMap();
+      appendBinfromTSDF();
+        /**
+      * @todo Check how much loops are valid
+      * @body Running `learnHilbertMap()` once is not enough
+      */
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
 
-  ROS_INFO_STREAM("Timings for TSDF Source: "
-                << std::endl
-                << voxblox::timing::Timing::Print() << std::endl);
+      //Hilbert map evaluation from Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(1.0);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
 
-  //Hilbert map evaluation from Raw pointcloud as a source
-  initializeHilbertMap();
-  appendBinfromRaw();
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  learnHilbertMap();
-  evaluateHilbertMap();
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.25);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.1);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      //Hilbert map evaluation from Sparse Raw pointcloud as a source
+      initializeHilbertMap();
+      appendBinfromRaw(0.05);
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+
+      break;
+    case 2 : //Bench mark resoultion
+      ROS_INFO("[Hilbert Benchmark] Starting benchmark for Map Resoultion");
+      //Hilbert map evaluation from TSDF as a source
+      initializeHilbertMap();
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      evaluateHilbertMap();
+      break;
+
+  }
+
 
   ROS_INFO_STREAM("Timings for Raw pointcloud Source: "
                 << std::endl
@@ -192,11 +239,11 @@ void HSimulationServerImpl::generateSDF() {
   }
 }
 
-void HSimulationServerImpl::appendBinfromRaw(){
-  ROS_INFO("Append Bin from Raw");
+void HSimulationServerImpl::appendBinfromRaw(double sample_rate){
+  ROS_INFO("Append Bin from Raw with sample rate %f", sample_rate);
   hilbertMap_->clearBin();
   for(int i = 0; i < num_viewpoints_; i ++){
-    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i]); 
+    hilbertMap_->appendBinfromRaw(view_ptcloud_[i], view_origin_[i], sample_rate); 
 
   }
 }
@@ -293,7 +340,6 @@ void HSimulationServerImpl::evaluateHilbertMap(){
         //TODO: Accumulate f1 score
         std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ", " << f1_score << ";"<< std::endl;
     }
-    std::cout << "TPR: " << tpr << " FPR: " << fpr << " Precision: " << precision << " Recall: "<< recall << std::endl;
   }
 }
 

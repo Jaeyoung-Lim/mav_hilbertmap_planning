@@ -94,11 +94,11 @@ void hilbertmap::appendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud) {
     appendbin_timer.Stop();
 }
 
-void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position) {
+void hilbertmap::appendBinfromRaw(voxblox::Pointcloud &ptcloud, voxblox::Point &position, double sample_rate) {
 
     double raw_resolution = 1.0;
-    int downsample = 10;
     Eigen::Vector3f view_point;
+    int downsample = int(std::ceil(1/sample_rate));
     view_point << position(0), position(1), position(2);
 
     //Append bin from Raw pointcloud
