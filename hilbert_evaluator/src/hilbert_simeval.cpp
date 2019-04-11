@@ -144,7 +144,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
       evaluateHilbertMap();
 
       break;
-    case 3 : //Analyze error distribution in hilbertmaps
+    case 3 : //Benchmark on occupancy thresholds
       initializeHilbertMap(1.1);
       appendBinfromTSDF();
       learnHilbertMap();
@@ -156,6 +156,19 @@ void HSimulationServerImpl::hilbertBenchmark(){
       analyzeHilbertMapErrors(6.0);
       analyzeHilbertMapErrors(7.0);
       break;
+
+    case 4 : //Benchmark on occupancy thresholds
+      initializeHilbertMap(1.1);
+      //TODO: Benchmark on TSDF thresholds
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      analyzeHilbertMapErrors(5.5);
+      break;
+
 
   }
 
@@ -207,7 +220,6 @@ void HSimulationServerImpl::generateSDF() {
   pcl::PointCloud<pcl::PointXYZRGB> ptcloud_pcl;
 
   for (int i = 0; i < num_viewpoints_; ++i) {
-    //TODO: Get raw bin from view points
     if (!generatePlausibleViewpoint(min_dist_, &view_origin, &view_direction)) {
       ROS_WARN(
           "Could not generate enough viewpoints. Generated: %d, Needed: %d", i,
@@ -376,7 +388,6 @@ void HSimulationServerImpl::evaluateHilbertMap(){
 
         if( recall + precision > 0.0 ) f1_score = 2 * recall * precision / (recall + precision);
         else f1_score = 0.0;
-        //TODO: Accumulate f1 score
         std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ", " << f1_score << ";"<< std::endl;
     }
   }
@@ -403,7 +414,6 @@ void HSimulationServerImpl::analyzeHilbertMapErrors(double occupancythreshold){
     hilbertMap_->getOccProbAtPosition(x_query, &occprob);
     dist_tsdfmap     = getGroundTruthTruncatedDistance(*ptcloud2, i);
     label_tsdfmap    = getGroundTruthLabel(*ptcloud2, i);
-    //TODO: Benchmark on thresholds
     label_hilbertmap = getHilbertLabel(occprob, occupancythreshold);
     
     if(label_tsdfmap > 0.0 && label_hilbertmap > 0.0){ //True Positive
