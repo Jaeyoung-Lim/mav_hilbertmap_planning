@@ -8,6 +8,7 @@
 #include "hilbert_mapper/hilbert_mapper.h"
 #include "hilbert_evaluator/roc_accumulator.h"
 #include <voxblox/utils/timing.h>
+#include <voxblox/mesh/mesh_integrator.h>
 #include <voxblox_ros/esdf_server.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -48,6 +49,9 @@ public:
     voxblox::EsdfServer esdf_server_;
     
     HilbertMapper hilbert_mapper_;
+
+    std::unique_ptr<MeshIntegrator<TsdfVoxel>> mesh_integrator_;
+
 
 };
 

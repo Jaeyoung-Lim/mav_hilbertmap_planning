@@ -83,7 +83,6 @@ void HilbertEvaluator::cmdloopCallback(const ros::TimerEvent& event) {
           roc_accumulator_[j].Add(tpr, fpr);
 
           double f1_score = 2 * recall * precision / (recall + precision);
-          //TODO: Accumulate f1 score
       }
     }
   }
