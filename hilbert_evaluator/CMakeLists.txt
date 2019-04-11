@@ -15,6 +15,7 @@ cs_add_library(${PROJECT_NAME}
         src/hilbert_evaluator.cpp
         src/hilbert_simeval.cpp
         src/roc_accumulator.cpp
+        src/histogram.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############

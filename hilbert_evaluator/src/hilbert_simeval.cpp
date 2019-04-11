@@ -52,7 +52,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
-  int benchmark = 2;
+  int benchmark = 3;
   switch(benchmark){
     case 1 : //Benchmark tsdf and raw bin source
       ROS_INFO("[Hilbert Benchmark] Starting benchmark for Bin source");
@@ -144,6 +144,31 @@ void HSimulationServerImpl::hilbertBenchmark(){
       evaluateHilbertMap();
 
       break;
+    case 3 : //Benchmark on occupancy thresholds
+      initializeHilbertMap(1.1);
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      analyzeHilbertMapErrors(5.5);
+      analyzeHilbertMapErrors(6.0);
+      analyzeHilbertMapErrors(7.0);
+      break;
+
+    case 4 : //Benchmark on occupancy thresholds
+      initializeHilbertMap(1.1);
+      //TODO: Benchmark on TSDF thresholds
+      appendBinfromTSDF();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      learnHilbertMap();
+      analyzeHilbertMapErrors(5.5);
+      break;
+
 
   }
 
@@ -161,17 +186,9 @@ void HSimulationServerImpl::hilbertBenchmark(){
 }
 
 void HSimulationServerImpl::initializeHilbertMap(){
-  int num_samples = 100;
-  double width = 11.0;
-  double height = 11.0;
-  double length = 11.0;
   double resolution = 1.1;
-  double tsdf_threshold = 0.0;
-  Eigen::Vector3d center_pos;
-  center_pos << 0.5, 0.5, 4.5;
+  initializeHilbertMap(resolution);
 
-  hilbertMap_->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
-  hilbertMap_->setMapCenter(center_pos);
 }
 
 void HSimulationServerImpl::initializeHilbertMap(double resolution){
@@ -180,7 +197,7 @@ void HSimulationServerImpl::initializeHilbertMap(double resolution){
   double width = 11.0;
   double height = 11.0;
   double length = 11.0;
-  double tsdf_threshold = 0.0;
+  double tsdf_threshold = 2.0;
   Eigen::Vector3d center_pos;
   center_pos << 0.5, 0.5, 4.5;
 
@@ -203,7 +220,6 @@ void HSimulationServerImpl::generateSDF() {
   pcl::PointCloud<pcl::PointXYZRGB> ptcloud_pcl;
 
   for (int i = 0; i < num_viewpoints_; ++i) {
-    //TODO: Get raw bin from view points
     if (!generatePlausibleViewpoint(min_dist_, &view_origin, &view_direction)) {
       ROS_WARN(
           "Could not generate enough viewpoints. Generated: %d, Needed: %d", i,
@@ -370,11 +386,51 @@ void HSimulationServerImpl::evaluateHilbertMap(){
         precision = double(tp[j]) / double(tp[j] + fp[j]);
         recall = tpr;
 
-        f1_score = 2 * recall * precision / (recall + precision);
-        //TODO: Accumulate f1 score
+        if( recall + precision > 0.0 ) f1_score = 2 * recall * precision / (recall + precision);
+        else f1_score = 0.0;
         std::cout << test_thresholds_[j] << ", " << fpr << ", " << tpr << ", " << f1_score << ";"<< std::endl;
     }
   }
+}
+
+void HSimulationServerImpl::analyzeHilbertMapErrors(double occupancythreshold){
+  //Decide where to query
+  ROS_INFO("Start Error Analysis with Occupancy Threshold %f", occupancythreshold);
+  Eigen::Vector3d x_query;
+  Histogram histogram_tp_(10, 2.0);
+  Histogram histogram_fp_(10, 2.0);
+  Histogram histogram_tn_(10, 2.0);
+  Histogram histogram_fn_(10, 2.0);
+      
+  for(int i = 0; i < binsize_; i++) {
+    double label_hilbertmap, dist_tsdfmap, label_tsdfmap;
+    double occprob;
+
+    pcl::PointXYZI point;
+    // Lets use bin as the ground truth map  (which makes no sense!)
+
+    x_query = getQueryPoint(*ptcloud2, i);
+
+    hilbertMap_->getOccProbAtPosition(x_query, &occprob);
+    dist_tsdfmap     = getGroundTruthTruncatedDistance(*ptcloud2, i);
+    label_tsdfmap    = getGroundTruthLabel(*ptcloud2, i);
+    label_hilbertmap = getHilbertLabel(occprob, occupancythreshold);
+    
+    if(label_tsdfmap > 0.0 && label_hilbertmap > 0.0){ //True Positive
+      histogram_tp_.add(dist_tsdfmap);
+    } else if(label_tsdfmap > 0.0 && !(label_hilbertmap > 0.0)){ //False Negative
+      histogram_fn_.add(dist_tsdfmap);
+    } else if(!(label_tsdfmap > 0.0) && label_hilbertmap > 0.0){ //False Positive
+      histogram_fp_.add(dist_tsdfmap);
+    } else{ //True Negative
+      histogram_tn_.add(dist_tsdfmap);      
+    }
+  }
+  ROS_INFO("False Negative Histogram");
+  histogram_fn_.PrintValues();
+  ROS_INFO("False Positive Histogram");
+  histogram_fp_.PrintValues();
+
 }
 
 Eigen::Vector3d HSimulationServerImpl::getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
@@ -387,6 +443,10 @@ double HSimulationServerImpl::getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI
   double distance = ptcloud[i].intensity;
   if(distance > 0.0) return -1.0; //Unoccupied
   else return 1.0; //Occupied
+}
+
+double HSimulationServerImpl::getGroundTruthTruncatedDistance(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i){
+  return ptcloud[i].intensity;
 }
 
 double HSimulationServerImpl::getHilbertLabel(double occprob, double threshold){
