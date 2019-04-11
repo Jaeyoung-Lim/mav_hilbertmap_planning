@@ -44,7 +44,7 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
     void appendBinfromRaw(double sample_rate);
     void learnHilbertMap();
     void evaluateHilbertMap();
-    void analyzeHilbertMapErrors();
+    void analyzeHilbertMapErrors(double occupancythreshold);
     void visualizeHilbertMap();
     void PublishHilbertMap();
     void PublishBin();

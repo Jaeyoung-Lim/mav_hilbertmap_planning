@@ -152,7 +152,9 @@ void HSimulationServerImpl::hilbertBenchmark(){
       learnHilbertMap();
       learnHilbertMap();
       learnHilbertMap();
-      analyzeHilbertMapErrors();
+      analyzeHilbertMapErrors(5.5);
+      analyzeHilbertMapErrors(6.0);
+      analyzeHilbertMapErrors(7.0);
       break;
 
   }
@@ -380,9 +382,9 @@ void HSimulationServerImpl::evaluateHilbertMap(){
   }
 }
 
-void HSimulationServerImpl::analyzeHilbertMapErrors(){
+void HSimulationServerImpl::analyzeHilbertMapErrors(double occupancythreshold){
   //Decide where to query
-  ROS_INFO("Start Error Analysis");
+  ROS_INFO("Start Error Analysis with Occupancy Threshold %f", occupancythreshold);
   Eigen::Vector3d x_query;
   Histogram histogram_tp_(10, 2.0);
   Histogram histogram_fp_(10, 2.0);
@@ -401,7 +403,8 @@ void HSimulationServerImpl::analyzeHilbertMapErrors(){
     hilbertMap_->getOccProbAtPosition(x_query, &occprob);
     dist_tsdfmap     = getGroundTruthTruncatedDistance(*ptcloud2, i);
     label_tsdfmap    = getGroundTruthLabel(*ptcloud2, i);
-    label_hilbertmap = getHilbertLabel(occprob, 0.55);
+    //TODO: Benchmark on thresholds
+    label_hilbertmap = getHilbertLabel(occprob, occupancythreshold);
     
     if(label_tsdfmap > 0.0 && label_hilbertmap > 0.0){ //True Positive
       histogram_tp_.add(dist_tsdfmap);
