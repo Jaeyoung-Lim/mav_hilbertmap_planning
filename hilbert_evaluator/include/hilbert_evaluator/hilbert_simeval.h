@@ -8,6 +8,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/crop_box.h>
+#include "hilbert_evaluator/histogram.h"
 
 namespace voxblox {
 class HSimulationServerImpl : public voxblox::SimulationServer {
@@ -43,11 +44,13 @@ class HSimulationServerImpl : public voxblox::SimulationServer {
     void appendBinfromRaw(double sample_rate);
     void learnHilbertMap();
     void evaluateHilbertMap();
+    void analyzeHilbertMapErrors();
     void visualizeHilbertMap();
     void PublishHilbertMap();
     void PublishBin();
 
     double getGroundTruthLabel(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
+    double getGroundTruthTruncatedDistance(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
     double getHilbertLabel(double occprob, double threshold);
     int getMapSize(pcl::PointCloud<pcl::PointXYZI> &ptcloud);
     Eigen::Vector3d getQueryPoint(pcl::PointCloud<pcl::PointXYZI> &ptcloud, int i);
