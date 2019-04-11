@@ -26,6 +26,7 @@ class HilbertEvaluator
     Eigen::Vector4d mav_att_;
 
     std::vector<double> test_thresholds_;
+    bool roc_benchmark_;
 
     std::vector<RocAccumulator> roc_accumulator_;
     std::vector<RocAccumulator> f1_accumulator_;

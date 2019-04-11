@@ -8,7 +8,8 @@ HilbertEvaluator::HilbertEvaluator(const ros::NodeHandle& nh, const ros::NodeHan
   nh_(nh),
   nh_private_(nh_private),
   esdf_server_(nh, nh_private),
-  hilbert_mapper_(nh, nh_private) {
+  hilbert_mapper_(nh, nh_private),
+  roc_benchmark_(false) {
 
     cmdloop_timer_ = nh_.createTimer(ros::Duration(1.0), &HilbertEvaluator::cmdloopCallback, this); // Define timer for constant loop rate
     statusloop_timer_ = nh_.createTimer(ros::Duration(0.5), &HilbertEvaluator::statusloopCallback, this); // Define timer for constant loop rate
@@ -16,16 +17,18 @@ HilbertEvaluator::HilbertEvaluator(const ros::NodeHandle& nh, const ros::NodeHan
     posestampedPub_ = nh_.advertise<geometry_msgs::PoseStamped>("/hilbert_evaluator/pose", 1);
     tfstampedSub_ = nh_.subscribe("/vicon/firefly_sbx/firefly_sbx", 1, &HilbertEvaluator::tfStampedCallback, this,ros::TransportHints().tcpNoDelay());
 
-    double num_tests = 10;
-    roc_accumulator_.resize(num_tests);
-    test_thresholds_.resize(num_tests);
-    tp.resize(num_tests);
-    fn.resize(num_tests);
-    fp.resize(num_tests);
-    tn.resize(num_tests);
+    if(roc_benchmark_){
+      double num_tests = 10;
+      roc_accumulator_.resize(num_tests);
+      test_thresholds_.resize(num_tests);
+      tp.resize(num_tests);
+      fn.resize(num_tests);
+      fp.resize(num_tests);
+      tn.resize(num_tests);
 
-    for(size_t i = 0; i < num_tests ; i++){
-      test_thresholds_[i] = i * 1 / double(num_tests);
+      for(size_t i = 0; i < num_tests ; i++){
+        test_thresholds_[i] = i * 1 / double(num_tests);
+      }
     }
 }
 HilbertEvaluator::~HilbertEvaluator() {
@@ -34,68 +37,72 @@ HilbertEvaluator::~HilbertEvaluator() {
 
 void HilbertEvaluator::cmdloopCallback(const ros::TimerEvent& event) {
   
-  //Decide where to query
-  Eigen::Vector3d x_query;
-  for(size_t j = 0; j < test_thresholds_.size() ; j++){
-    tp[j] = 0;
-    fp[j] = 0;
-    tn[j] = 0;
-    fn[j] = 0;
-  }
-
-
-  int binsize = hilbert_mapper_.getHilbertMapPtr()->getBinSize();
-      
-  for(int i = 0; i < binsize; i++) {
-    double label_hilbertmap, label_esdfmap;
-    double occprob;
-
-    pcl::PointXYZI point;
-    // Lets use bin as the ground truth map  (which makes no sense!)
-
-    point = hilbert_mapper_.getHilbertMapPtr()->getbinPoint(i);
-    x_query << point.x, point.y, point.z;
-
-    // Get Label from hilbert maps
-    label_esdfmap = point.intensity;
-    
-    hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(x_query, &occprob);
-
+  if(roc_benchmark_){
+    //Decide where to query
+    Eigen::Vector3d x_query;
     for(size_t j = 0; j < test_thresholds_.size() ; j++){
-      label_hilbertmap = getHilbertLabel(occprob, test_thresholds_[j]);
-      if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp[j]++;
-      else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn[j]++;
-      else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp[j]++;
-      else tn[j]++;
+      tp[j] = 0;
+      fp[j] = 0;
+      tn[j] = 0;
+      fn[j] = 0;
     }
-  }
-  if(binsize > 0){
-    //Count Precision and Recall depending on thresholds
-    for(size_t j = 0; j < test_thresholds_.size() ; j++){
-        double tpr = double(tp[j]) / double(tp[j] + fn[j]);
-        double fpr = double(fp[j]) / double(fp[j] + tn[j]);
-        double precision = double(tp[j]) / double(tp[j] + fp[j]);
-        double recall = tpr;
-        roc_accumulator_[j].Add(tpr, fpr);
 
-        double f1_score = 2 * recall * precision / (recall + precision);
-        //TODO: Accumulate f1 score
+
+    int binsize = hilbert_mapper_.getHilbertMapPtr()->getBinSize();
+        
+    for(int i = 0; i < binsize; i++) {
+      double label_hilbertmap, label_esdfmap;
+      double occprob;
+
+      pcl::PointXYZI point;
+      // Lets use bin as the ground truth map  (which makes no sense!)
+
+      point = hilbert_mapper_.getHilbertMapPtr()->getbinPoint(i);
+      x_query << point.x, point.y, point.z;
+
+      // Get Label from hilbert maps
+      label_esdfmap = point.intensity;
+      
+      hilbert_mapper_.getHilbertMapPtr()->getOccProbAtPosition(x_query, &occprob);
+
+      for(size_t j = 0; j < test_thresholds_.size() ; j++){
+        label_hilbertmap = getHilbertLabel(occprob, test_thresholds_[j]);
+        if(label_esdfmap > 0.0 && label_hilbertmap > 0.0) tp[j]++;
+        else if(label_esdfmap > 0.0 && !(label_hilbertmap > 0.0)) fn[j]++;
+        else if(!(label_esdfmap > 0.0) && label_hilbertmap > 0.0) fp[j]++;
+        else tn[j]++;
+      }
+    }
+    if(binsize > 0){
+      //Count Precision and Recall depending on thresholds
+      for(size_t j = 0; j < test_thresholds_.size() ; j++){
+          double tpr = double(tp[j]) / double(tp[j] + fn[j]);
+          double fpr = double(fp[j]) / double(fp[j] + tn[j]);
+          double precision = double(tp[j]) / double(tp[j] + fp[j]);
+          double recall = tpr;
+          roc_accumulator_[j].Add(tpr, fpr);
+
+          double f1_score = 2 * recall * precision / (recall + precision);
+          //TODO: Accumulate f1 score
+      }
     }
   }
 }
 
 void HilbertEvaluator::statusloopCallback(const ros::TimerEvent &event) {
-  //Slower loop to publish status / info related topics
-  hilbert_mapper_.setMapCenter(mav_pos_);
-  
+  if(roc_benchmark_){
+    //Slower loop to publish status / info related topics
+    hilbert_mapper_.setMapCenter(mav_pos_);
+    
 
-  double mean_recall;
-  double mean_precision;
-  std::cout << "Window Samples: " << roc_accumulator_[0].GetWindowSamples() << std::endl;
-  for(size_t i = 0; i < test_thresholds_.size(); i++){
-      roc_accumulator_[i].GetMeanRecall(mean_recall);
-      roc_accumulator_[i].GetMeanPrecision(mean_precision);
-      std::cout << test_thresholds_[i] << ", " << mean_precision << ", " << mean_recall << ";"<< std::endl;
+    double mean_recall;
+    double mean_precision;
+    std::cout << "Window Samples: " << roc_accumulator_[0].GetWindowSamples() << std::endl;
+    for(size_t i = 0; i < test_thresholds_.size(); i++){
+        roc_accumulator_[i].GetMeanRecall(mean_recall);
+        roc_accumulator_[i].GetMeanPrecision(mean_precision);
+        std::cout << test_thresholds_[i] << ", " << mean_precision << ", " << mean_recall << ";"<< std::endl;
+    }
   }
 }
 
