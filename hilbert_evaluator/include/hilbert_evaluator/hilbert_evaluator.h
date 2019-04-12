@@ -38,19 +38,18 @@ class HilbertEvaluator
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);
-    double getHilbertLabel(double occprob, double threshold);
-    double getEsdfLabel(Eigen::Vector3d &position);
     void tfStampedCallback(const geometry_msgs::TransformStamped& msg);
 
 public:
     HilbertEvaluator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ HilbertEvaluator();
 
-    voxblox::EsdfServer esdf_server_;
+    // voxblox::EsdfServer esdf_server_;
+    voxblox::TsdfServer tsdf_server_;
     
     HilbertMapper hilbert_mapper_;
 
-    std::unique_ptr<MeshIntegrator<TsdfVoxel>> mesh_integrator_;
+    // std::unique_ptr<MeshIntegrator<TsdfVoxel>> mesh_integrator_;
 
 
 };
