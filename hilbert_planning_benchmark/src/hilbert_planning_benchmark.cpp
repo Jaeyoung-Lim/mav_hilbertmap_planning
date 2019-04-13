@@ -1,4 +1,4 @@
-//  July/2018, ETHZ, Jaeyoung Lim, jalim@student.ethz.ch
+//  April/2019, ETHZ, Jaeyoung Lim, jalim@student.ethz.ch
 
 
 #include <mav_planning_common/color_utils.h>
@@ -30,7 +30,8 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
       camera_max_dist_(10.0),
       camera_model_dist_(5.0),
       loco_planner_(nh_, nh_private_),
-      esdf_server_(nh_, nh_private_) {
+      esdf_server_(nh_, nh_private_),
+      hilbert_mapper_(nh_, nh_private_) {
   constraints_.setParametersFromRos(nh_private_);
 
   nh_private_.param("visualize", visualize_, visualize_);
@@ -50,7 +51,8 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
 
   esdf_server_.setClearSphere(true);
 
-  loco_planner_.setEsdfMap(esdf_server_.getEsdfMapPtr());
+  loco_planner_.setHilbertMap(hilbert_mapper_.getHilbertMapPtr());
+
 }
 
 void HilbertPlanningBenchmark::generateWorld(double density) {

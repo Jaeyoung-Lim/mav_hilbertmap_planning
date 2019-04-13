@@ -64,6 +64,8 @@
   <build_depend>voxblox_ros</build_depend>
   <build_depend>hilbert_mapper</build_depend>
   <build_depend>mav_planning_benchmark</build_depend>
+  <build_depend>hilbert_loco_planner</build_depend>
+
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -80,6 +82,7 @@
   <run_depend>voxblox_ros</run_depend>
   <run_depend>hilbert_mapper</run_depend>
   <run_depend>mav_planning_benchmark</run_depend>
+  <run_depend>hilbert_loco_planner</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

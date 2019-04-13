@@ -6,6 +6,9 @@
 #include <voxblox_loco_planner/voxblox_loco_planner.h>
 #include <voxblox_ros/esdf_server.h>
 
+#include <hilbert_loco_planner/hilbert_loco_planner.h>
+#include <hilbert_mapper/hilbert_mapper.h>
+
 namespace mav_planning {
 
 class HilbertPlanningBenchmark {
@@ -123,8 +126,11 @@ class HilbertPlanningBenchmark {
   voxblox::EsdfServer esdf_server_;
   voxblox::SimulationWorld world_;
 
+  // Hilbert Map!
+  HilbertMapper hilbert_mapper_;
+
   // Planners will go here!
-  VoxbloxLocoPlanner loco_planner_;
+  HilbertLocoPlanner loco_planner_;
 
   // Which methods to use.
   std::vector<LocalPlanningMethod> local_planning_methods_;
