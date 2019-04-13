@@ -101,7 +101,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
         mav_trajectory_generation::Trajectory* trajectory) {
     CHECK(hilbert_map_);
 
-    ROS_DEBUG_STREAM("[Voxblox Loco Planner] Start: "
+    ROS_DEBUG_STREAM("[Hilbert Loco Planner] Start: "
                              << start.position_W.transpose()
                              << " goal: " << goal.position_W.transpose());
 
@@ -150,7 +150,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
     }
 
     if (verbose_) {
-        ROS_INFO("[Voxblox Loco Planner] Found solution (%d) after %d restarts.",
+        ROS_INFO("[Hilbert Loco Planner] Found solution (%d) after %d restarts.",
                  success, i);
     }
     return success;
