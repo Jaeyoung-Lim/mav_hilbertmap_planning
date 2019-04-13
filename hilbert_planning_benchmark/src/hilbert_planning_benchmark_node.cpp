@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 
   FLAGS_alsologtostderr = true;
 
-  mav_planning::LocalPlanningBenchmark node(nh, nh_private);
+  mav_planning::HilbertPlanningBenchmark node(nh, nh_private);
   ROS_INFO("Initialized local planning benchmark node.");
 
   int num_trials = 100;
