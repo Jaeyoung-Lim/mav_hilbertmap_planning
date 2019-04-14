@@ -131,7 +131,7 @@ void HilbertPlanningBenchmark::runBenchmark(int trial_number) {
     } else {
       viewpoint = executed_path.back();
     }
-    addViewpointToMap(viewpoint);
+    addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
     if (visualize_) {
       appendViewpointMarker(viewpoint, &additional_markers);
     }
@@ -315,7 +315,7 @@ void HilbertPlanningBenchmark::addViewpointToMap(
   world_.getPointcloudFromViewpoint(view_origin, view_direction,
                                     camera_resolution_, camera_fov_h_rad_,
                                     camera_max_dist_, &ptcloud, &colors);
-
+  
   // Step 3: integrate into the map.
   // Transform back into camera frame.
   voxblox::transformPointcloud(T_G_C.inverse(), ptcloud, &ptcloud_C);
@@ -349,6 +349,13 @@ void HilbertPlanningBenchmark::addViewpointToMap(
 
     view_ptcloud_pub_.publish(ptcloud_pcl);
   }
+
+  //TODO: [Hilbert Benchmark] Reinitialize hilbertmap
+  // createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud);
+  Eigen::Vector3d hilbert_view_origin;
+  hilbert_view_origin = view_origin.cast<double>();
+  hilbert_mapper_.setMapCenter(hilbert_view_origin);
+
 }
 
 double HilbertPlanningBenchmark::getMapDistance(
