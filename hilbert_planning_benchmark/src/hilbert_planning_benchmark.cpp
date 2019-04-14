@@ -350,17 +350,43 @@ void HilbertPlanningBenchmark::addViewpointToMap(
     view_ptcloud_pub_.publish(ptcloud_pcl);
   }
 
-  //TODO: [Hilbert Benchmark] Reinitialize hilbertmap
+  //Generate Hilbertmap from the TSDF Map
+  pcl::PointCloud<pcl::PointXYZI> ptcloud1;
+  voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud1);
+  HilbertMapAppendBin(ptcloud1, view_origin.cast<double>());
+  hilbert_mapper_.getHilbertMapPtr->updateWeights();
+}
 
-  pcl::PointCloud<pcl::PointXYZI> ptcloud2;
-  voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud2);
+void HilbertPlanningBenchmark::HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud1, Eigen::Vector3d map_center){
+  pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
+  *ptcloud2 = ptcloud1;
 
-  Eigen::Vector3d hilbert_view_origin;
-  hilbert_view_origin = view_origin.cast<double>();
-  hilbert_mapper_.setMapCenter(hilbert_view_origin);
+  //Crop and append TSDF map to hilbert map bin
+  // HilbertMapAppendBin(&ptcloud2, view_origin.cast<double>());
+  // Crop PointCloud around map center
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::CropBox<pcl::PointXYZI> boxfilter;
+  float map_width, map_length, map_height;
+  // Eigen::Vector3d map_center = view_origin.cast<double>();
+  map_width = 0.5 * float(hilbert_mapper_.getHilbertMapPtr()->getMapWidth());
+  map_length = 0.5 * float(hilbert_mapper_.getHilbertMapPtr()->getMapLength());
+  map_height = 0.5 * float(hilbert_mapper_.getHilbertMapPtr()->getMapHeight());
+  float minX = float(map_center(0) - map_width);
+  float minY = float(map_center(1) - map_length);
+  float minZ = float(map_center(2) - map_height);
+  float maxX = float(map_center(0) + map_width);
+  float maxY = float(map_center(1) + map_length);
+  float maxZ = float(map_center(2) + map_height);
+  boxfilter.setMin(Eigen::Vector4f(minX, minY, minZ, 0.0));
+  boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
+  boxfilter.setInputCloud(ptcloud2);
+  boxfilter.filter(*cropped_ptcloud);
+  
+  hilbert_mapper_.setMapCenter(map_center);
 
   //Append bin for hilbert map
-  hilbert_mapper_.getHilbertMapPtr()->appendBin(ptcloud2);
+  hilbert_mapper_.getHilbertMapPtr()->appendBin(*cropped_ptcloud);
+
 }
 
 double HilbertPlanningBenchmark::getMapDistance(
