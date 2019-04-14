@@ -351,11 +351,16 @@ void HilbertPlanningBenchmark::addViewpointToMap(
   }
 
   //TODO: [Hilbert Benchmark] Reinitialize hilbertmap
-  // createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud);
+
+  pcl::PointCloud<pcl::PointXYZI> ptcloud2;
+  voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud2);
+
   Eigen::Vector3d hilbert_view_origin;
   hilbert_view_origin = view_origin.cast<double>();
   hilbert_mapper_.setMapCenter(hilbert_view_origin);
 
+  //Append bin for hilbert map
+  hilbert_mapper_.getHilbertMapPtr()->appendBin(ptcloud2);
 }
 
 double HilbertPlanningBenchmark::getMapDistance(
