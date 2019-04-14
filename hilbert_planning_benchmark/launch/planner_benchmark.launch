@@ -1,12 +1,14 @@
 <launch>
   <arg name="results_path" default="/home/helen/data/jfr_2018/local_benchmark/local_24_10_2018_continue.csv" />
 
-  <arg name="frame_id" default="odom" />
+  <arg name="frame_id" default="world" />
 
   <node name="hilbert_planning_benchmark" pkg="hilbert_planning_benchmark" type="hilbert_planning_benchmark_node" output="screen" args="--alsologtostderr">
     <param name="results_path" value="$(arg results_path)" />
-    <param name="visualize" value="false" />
+    <param name="visualize" value="true" />
     <param name="robot_radius" value="0.5" />
+    <param name="publish_tsdf_map" value="true" />
+    <param name="publish_esdf_map" value="true" />
     <param name="tsdf_voxel_size" value="0.20" />
     <param name="tsdf_voxels_per_side" value="16" />
     <param name="clear_sphere_radius" value="1.5" />
