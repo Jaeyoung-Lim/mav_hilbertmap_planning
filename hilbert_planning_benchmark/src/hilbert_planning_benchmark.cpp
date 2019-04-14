@@ -353,16 +353,19 @@ void HilbertPlanningBenchmark::addViewpointToMap(
   //Generate Hilbertmap from the TSDF Map
   pcl::PointCloud<pcl::PointXYZI> ptcloud1;
   voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud1);
+  //Crop and append TSDF map to hilbert map bin
   HilbertMapAppendBin(ptcloud1, view_origin.cast<double>());
-  hilbert_mapper_.getHilbertMapPtr->updateWeights();
+  hilbert_mapper_.getHilbertMapPtr()->updateWeights();
 }
 
 void HilbertPlanningBenchmark::HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud1, Eigen::Vector3d map_center){
+
+  hilbert_mapper_.setMapCenter(map_center);
+
   pcl::PointCloud<pcl::PointXYZI>::Ptr ptcloud2;
+  ptcloud2.reset(new pcl::PointCloud<pcl::PointXYZI>);
   *ptcloud2 = ptcloud1;
 
-  //Crop and append TSDF map to hilbert map bin
-  // HilbertMapAppendBin(&ptcloud2, view_origin.cast<double>());
   // Crop PointCloud around map center
   pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
   pcl::CropBox<pcl::PointXYZI> boxfilter;
@@ -381,12 +384,8 @@ void HilbertPlanningBenchmark::HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZ
   boxfilter.setMax(Eigen::Vector4f(maxX, maxY, maxZ, 1.0));
   boxfilter.setInputCloud(ptcloud2);
   boxfilter.filter(*cropped_ptcloud);
-  
-  hilbert_mapper_.setMapCenter(map_center);
-
-  //Append bin for hilbert map
+  // Append bin for hilbert map
   hilbert_mapper_.getHilbertMapPtr()->appendBin(*cropped_ptcloud);
-
 }
 
 double HilbertPlanningBenchmark::getMapDistance(
