@@ -157,7 +157,7 @@ void MavHilbertPlanner::planningTimerCallback(const ros::TimerEvent& event) {
 
 void MavHilbertPlanner::hilbertmapTimerCallback(const ros::TimerEvent& event) {
     //Refresh map center to the current position
-    hilbert_mapper_.setMapCenter(odometry_.position_W);
+    hilbert_mapper_.setMapCenter(future_mapcenter_);
 }
 
 void MavHilbertPlanner::planningStep() {
@@ -272,6 +272,8 @@ void MavHilbertPlanner::avoidCollisionsTowardWaypoint() {
                            new_path_chunk.end());
       }
     }
+    future_mapcenter_ = path_chunk.front().position_W;
+
   } else {
     ROS_INFO("[Mav Local Planner][Plan Step] Trying to plan from scratch.");
 
@@ -279,6 +281,7 @@ void MavHilbertPlanner::avoidCollisionsTowardWaypoint() {
     mav_msgs::EigenTrajectoryPoint current_point;
     current_point.position_W = odometry_.position_W;
     current_point.orientation_W_B = odometry_.orientation_W_B;
+    future_mapcenter_ = odometry_.position_W;
 
     // Check if the current waypoint is basically the odometry.
     if ((current_point.position_W - waypoint.position_W).norm() <
