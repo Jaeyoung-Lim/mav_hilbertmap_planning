@@ -10,7 +10,7 @@
 #include <voxblox/core/common.h>
 #include <voxblox/utils/planning_utils.h>
 
-#include "hilbert_planning_benchmark/local_hilbert_planning_benchmark.h"
+#include "hilbert_planning_benchmark/hilbert_planning_benchmark.h"
 
 namespace mav_planning {
 
