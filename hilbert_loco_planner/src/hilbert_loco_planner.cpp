@@ -93,6 +93,16 @@ bool HilbertLocoPlanner::getTrajectoryTowardGoalFromInitialTrajectory(
     if (!success) {
         return false;
     }
+    success = getTrajectoryTowardGoal(start, goal, trajectory);
+    const bool attempt_to_use_initial = true;
+    if (!success && attempt_to_use_initial) {
+        // Ok that failed, let's just see if we can get the existing trajectory
+        // going.
+        mav_msgs::EigenTrajectoryPoint back;
+        sampleTrajectoryAtTime(trajectory_in, trajectory_in.getMaxTime(), &back);
+        success = getTrajectoryBetweenWaypoints(start, back, trajectory);
+    }
+    return success;
 }
 
 bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
