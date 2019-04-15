@@ -25,26 +25,25 @@ HilbertMapper::HilbertMapper(const ros::NodeHandle& nh, const ros::NodeHandle& n
     binPub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/binpoints", 1);
     gridmapPub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/hilbert_mapper/gridmap", 1);
     collisionsurfacePub_ = nh_.advertise<sensor_msgs::PointCloud2>("/hilbert_mapper/collisionsurface", 1);
-
     pointcloudSub_ = nh_.subscribe("/hilbert_mapper/tsdf_pointcloud", 1, &HilbertMapper::pointcloudCallback, this,ros::TransportHints().tcpNoDelay());
 
     int num_samples, num_features;
     double width, length, height;
 
-    nh_.param<int>("/hilbert_mapper/num_parsingsampels", num_samples, 100);
-    nh_.param<string>("/hilbert_mapper/frame_id", frame_id_, "world");
-    nh_.param<double>("/hilbert_mapper/map/resolution", resolution_, 0.5);
-    nh_.param<double>("/hilbert_mapper/map/width", width, 5.0);
-    nh_.param<double>("/hilbert_mapper/map/length", length, 5.0);
-    nh_.param<double>("/hilbert_mapper/map/height", height, 5.0);
-    nh_.param<float>("/hilbert_mapper/map/tsdf_threshold", tsdf_threshold_, 0.0);
-    nh_.param<bool>("/hilbert_mapper/publsih_hilbertmap", publish_hilbertmap_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_mapinfo", publish_mapinfo_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_debuginfo", publish_debuginfo_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_gridmap", publish_gridmap_, false);
-    nh_.param<bool>("/hilbert_mapper/publsih_anchorpoints", publish_anchorpoints_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_binpoints", publish_binpoints_, true);
-    nh_.param<bool>("/hilbert_mapper/publsih_collisionsurface", publish_collisionsurface_, false);
+    nh_private_.param<int>("hilbertmap/num_parsingsampels", num_samples, 100);
+    nh_private_.param<string>("frame_id", frame_id_, "world");
+    nh_private_.param<double>("hilbertmap/resolution", resolution_, 0.5);
+    nh_private_.param<double>("hilbertmap/width", width, 5.0);
+    nh_private_.param<double>("hilbertmap/length", length, 5.0);
+    nh_private_.param<double>("hilbertmap/height", height, 5.0);
+    nh_private_.param<float>("hilbertmap/tsdf_threshold", tsdf_threshold_, 0.0);
+    nh_private_.param<bool>("hilbertmap/publsih_hilbertmap", publish_hilbertmap_, true);
+    nh_private_.param<bool>("hilbertmap/publsih_mapinfo", publish_mapinfo_, true);
+    nh_private_.param<bool>("hilbertmap/publsih_debuginfo", publish_debuginfo_, true);
+    nh_private_.param<bool>("hilbertmap/publsih_gridmap", publish_gridmap_, false);
+    nh_private_.param<bool>("hilbertmap/publsih_anchorpoints", publish_anchorpoints_, true);
+    nh_private_.param<bool>("hilbertmap/publsih_binpoints", publish_binpoints_, true);
+    nh_private_.param<bool>("hilbertmap/publsih_collisionsurface", publish_collisionsurface_, false);
     hilbertMap_->setMapProperties(num_samples, width, length, height, resolution_, tsdf_threshold_);
 }
 HilbertMapper::~HilbertMapper() {
