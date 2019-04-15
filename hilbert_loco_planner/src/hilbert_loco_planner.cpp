@@ -33,7 +33,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     loco_.setWg(15.0); // Default 2.5
     loco_.setWc(10.0); // Default 10.0
     loco_.setWd(0.1); // Default 0.1
-    loco_.setWw(0.0); // Default 1.0
+    loco_.setWw(15.0); // Default 1.0
     loco_.setWh(0.5); // Default 1.0
 }
 
