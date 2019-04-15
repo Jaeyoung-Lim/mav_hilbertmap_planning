@@ -263,14 +263,14 @@ void HilbertMapper::publishCollisionSurface(){
         x_query = hilbertMap_->getFeature(i);
         occprob = hilbertMap_->getOccupancyProb(x_query);
         
-        if(occprob > 0.5) continue;
+        if(occprob > 0.5){
+            point.intensity = occprob;
+            point.x = x_query(0);
+            point.y = x_query(1);
+            point.z = x_query(2);
 
-        point.intensity = occprob;
-        point.x = x_query(0);
-        point.y = x_query(1);
-        point.z = x_query(2);
-
-        pointCloud.points.push_back(point);
+            pointCloud.points.push_back(point);
+        } 
     }
 
     pcl::toROSMsg(pointCloud, collisionmap_surface);

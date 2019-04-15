@@ -149,7 +149,7 @@ void hilbertmap::setMapProperties(int num_samples, double width, double length, 
 
     // Reinitialize anchor points
     prelearned_anchorpoints_.clear();
-    generateGridPoints(prelearned_anchorpoints_, map_center_, width_, width_, width_, resolution_);
+    generateGridPoints(prelearned_anchorpoints_, map_center_, width_, length_, height_, resolution_);
 
 }
 
