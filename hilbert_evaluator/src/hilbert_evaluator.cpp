@@ -20,7 +20,7 @@ HilbertEvaluator::HilbertEvaluator(const ros::NodeHandle& nh, const ros::NodeHan
     double width = 6.0;
     double length = 6.0;
     double height = 3.0;
-    double resolution = 0.6;
+    double resolution = 0.3;
     double tsdf_threshold = 0.0;
 
     hilbert_mapper_.getHilbertMapPtr()->setMapProperties(num_samples, width, length, height, resolution, tsdf_threshold);
@@ -33,7 +33,6 @@ HilbertEvaluator::~HilbertEvaluator() {
 
 void HilbertEvaluator::cmdloopCallback(const ros::TimerEvent& event) {
   
-
 }
 
 void HilbertEvaluator::statusloopCallback(const ros::TimerEvent &event) {
