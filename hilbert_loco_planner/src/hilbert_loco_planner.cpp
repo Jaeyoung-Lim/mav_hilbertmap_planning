@@ -33,7 +33,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
     loco_.setWg(15.0); // Default 2.5
     loco_.setWc(10.0); // Default 10.0
     loco_.setWd(0.1); // Default 0.1
-    loco_.setWw(0.0); // Default 1.0
+    loco_.setWw(15.0); // Default 1.0
     loco_.setWh(0.5); // Default 1.0
 }
 
@@ -93,6 +93,16 @@ bool HilbertLocoPlanner::getTrajectoryTowardGoalFromInitialTrajectory(
     if (!success) {
         return false;
     }
+    success = getTrajectoryTowardGoal(start, goal, trajectory);
+    const bool attempt_to_use_initial = true;
+    if (!success && attempt_to_use_initial) {
+        // Ok that failed, let's just see if we can get the existing trajectory
+        // going.
+        mav_msgs::EigenTrajectoryPoint back;
+        sampleTrajectoryAtTime(trajectory_in, trajectory_in.getMaxTime(), &back);
+        success = getTrajectoryBetweenWaypoints(start, back, trajectory);
+    }
+    return success;
 }
 
 bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(

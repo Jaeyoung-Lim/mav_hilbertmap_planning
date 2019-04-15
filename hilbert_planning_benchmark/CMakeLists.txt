@@ -13,7 +13,7 @@ add_definitions(-std=c++11)
 ############
 cs_add_library(${PROJECT_NAME}
         src/trajectory_plotter.cpp
-        src/hilbert_planning_benchmark.cpp
+        src/local_hilbert_planning_benchmark.cpp
         )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############
@@ -24,10 +24,10 @@ cs_add_executable(trajectory_plotter_node
         )
 target_link_libraries(trajectory_plotter_node ${PROJECT_NAME})
 
-cs_add_executable(hilbert_planning_benchmark_node
-        src/hilbert_planning_benchmark_node.cpp
+cs_add_executable(local_hilbert_planning_benchmark_node
+        src/local_hilbert_planning_benchmark_node.cpp
         )
-target_link_libraries(hilbert_planning_benchmark_node ${PROJECT_NAME})
+target_link_libraries(local_hilbert_planning_benchmark_node ${PROJECT_NAME})
 
 ##########
 cs_install()

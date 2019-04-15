@@ -1,6 +1,6 @@
 //  April/2019, ETHZ, Jaeyoung Lim, jalim@student.ethz.ch
 
-#include "hilbert_planning_benchmark/hilbert_planning_benchmark.h"
+#include "hilbert_planning_benchmark/local_hilbert_planning_benchmark.h"
 
 
 int main(int argc, char** argv) {
