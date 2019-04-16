@@ -39,7 +39,9 @@ class HilbertPlanningBenchmark {
 
   // General trajectory benchmark tools: call these in order.
   void generateWorld(double density);
-  void runBenchmark(int trial_number);
+  void runLocalBenchmark(int trial_number);
+  void runGlobalBenchmark(int trial_number);
+
   void outputResults(const std::string& filename);
 
   // Accessors.
@@ -69,6 +71,8 @@ class HilbertPlanningBenchmark {
   // Path helpers.
   void setYawFromVelocity(double default_yaw,
                           mav_msgs::EigenTrajectoryPointVector* path);
+
+  void UpdateHilbertMap(Eigen::Vector3f view_origin);
   
   void HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d map_center);
 
@@ -111,6 +115,7 @@ class HilbertPlanningBenchmark {
   // Map settings.
   Eigen::Vector3d lower_bound_;
   Eigen::Vector3d upper_bound_;
+  Eigen::Vector3f hilbertmap_center_;
 
   // Camera parameters for both the NBVP (and other) camera simulations and
   // the camera simulation with the voxblox sim world.

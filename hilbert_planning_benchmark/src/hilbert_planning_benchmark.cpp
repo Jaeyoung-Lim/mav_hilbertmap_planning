@@ -10,7 +10,7 @@
 #include <voxblox/core/common.h>
 #include <voxblox/utils/planning_utils.h>
 
-#include "hilbert_planning_benchmark/local_hilbert_planning_benchmark.h"
+#include "hilbert_planning_benchmark/hilbert_planning_benchmark.h"
 
 namespace mav_planning {
 
@@ -40,6 +40,13 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
   nh_private_.param("camera_max_dist", camera_max_dist_, camera_max_dist_);
   nh_private_.param("camera_model_dist", camera_model_dist_,
                     camera_model_dist_);
+  float hilbertmap_x, hilbertmap_y, hilbertmap_z;
+  
+  nh_private_.param<float>("hilbertmap/center_x", hilbertmap_x, 0.0);
+  nh_private_.param<float>("hilbertmap/center_y", hilbertmap_y, 0.0);
+  nh_private_.param<float>("hilbertmap/center_z", hilbertmap_z, 0.0);
+
+  hilbertmap_center_ << hilbertmap_x, hilbertmap_y, hilbertmap_z;
 
   path_marker_pub_ =
       nh_private_.advertise<visualization_msgs::MarkerArray>("path", 1, true);
@@ -63,7 +70,7 @@ void HilbertPlanningBenchmark::generateWorld(double density) {
   generateCustomWorld(Eigen::Vector3d(kWorldXY, kWorldXY, kWorldZ), density);
 }
 
-void HilbertPlanningBenchmark::runBenchmark(int trial_number) {
+void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
   constexpr double kPlanningHeight = 1.5;
   constexpr double kMinDistanceToGoal = 0.1;
 
@@ -132,6 +139,167 @@ void HilbertPlanningBenchmark::runBenchmark(int trial_number) {
       viewpoint = executed_path.back();
     }
     addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
+    UpdateHilbertMap(viewpoint.position_W.cast<float>());
+    if (visualize_) {
+      appendViewpointMarker(viewpoint, &additional_markers);
+    }
+
+    // Cache last real trajectory.
+    last_trajectory = trajectory;
+
+    // Actually plan the path.
+    mav_trajectory_generation::timing::MiniTimer timer;
+    bool success = false;
+
+    if (i == 0) {
+      success = loco_planner_.getTrajectoryTowardGoal(start, goal, &trajectory);
+    } else {
+      success = loco_planner_.getTrajectoryTowardGoalFromInitialTrajectory(
+          start_time, last_trajectory, goal, &trajectory);
+    }
+    plan_elapsed_time += timer.stop();
+
+    if (!success) {
+      break;
+    }
+
+    // Sample the trajectory, set the yaw, and append to the executed path.
+    mav_msgs::EigenTrajectoryPointVector path;
+    mav_trajectory_generation::sampleWholeTrajectory(
+        trajectory, constraints_.sampling_dt, &path);
+    setYawFromVelocity(start.getYaw(), &path);
+
+    // Append the next stretch of the trajectory. This will also take care of
+    // the end.
+    size_t max_index = std::min(
+        static_cast<size_t>(std::floor(replan_dt_ / constraints_.sampling_dt)),
+        path.size() - 1);
+    executed_path.insert(executed_path.end(), path.begin(),
+                         path.begin() + max_index);
+    if (visualize_) {
+      marker_array.markers.push_back(createMarkerForPath(
+          path, frame_id_,
+          percentToRainbowColor(static_cast<double>(i) / max_replans_), "loco",
+          0.075));
+      marker_array.markers.back().id = i;
+      path_marker_pub_.publish(marker_array);
+      additional_marker_pub_.publish(additional_markers);
+      ros::spinOnce();
+      ros::Duration(0.05).sleep();
+    }
+
+    if ((executed_path.back().position_W - goal.position_W).norm() <
+        kMinDistanceToGoal) {
+      break;
+    }
+  }
+
+  if (visualize_) {
+    marker_array.markers.push_back(createMarkerForPath(
+        executed_path, frame_id_, mav_visualization::Color::Black(),
+        "executed_path", 0.1));
+    path_marker_pub_.publish(marker_array);
+    additional_marker_pub_.publish(additional_markers);
+    ros::spinOnce();
+  }
+  double path_length = computePathLength(executed_path);
+  double distance_from_goal = (start.position_W - goal.position_W).norm();
+  if (!executed_path.empty()) {
+    distance_from_goal =
+        (executed_path.back().position_W - goal.position_W).norm();
+  }
+
+  result_template.total_path_length_m = path_length;
+  result_template.distance_from_goal = distance_from_goal;
+  result_template.planning_success = distance_from_goal < kMinDistanceToGoal;
+  result_template.num_replans = i;
+  result_template.computation_time_sec = plan_elapsed_time;
+  // Rough estimate. ;)
+  result_template.total_path_time_sec =
+      constraints_.sampling_dt * executed_path.size();
+  result_template.is_collision_free = isPathCollisionFree(executed_path);
+  result_template.is_feasible = isPathFeasible(executed_path);
+  result_template.local_planning_method = kLoco;
+
+  results_.push_back(result_template);
+  ROS_INFO(
+      "[Local Planning Benchmark] Trial number: %d Success: %d Replans: %d "
+      "Final path length: %f Distance from goal: %f",
+      trial_number, result_template.planning_success, i, path_length,
+      distance_from_goal);
+}
+
+void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
+  constexpr double kPlanningHeight = 1.5;
+  constexpr double kMinDistanceToGoal = 0.1;
+
+  srand(trial_number);
+  esdf_server_.clear();
+  LocalBenchmarkResult result_template;
+
+  result_template.trial_number = trial_number;
+  result_template.seed = trial_number;
+  result_template.density = density_;
+  result_template.robot_radius_m = constraints_.robot_radius;
+  result_template.v_max = constraints_.v_max;
+  result_template.a_max = constraints_.a_max;
+
+  mav_msgs::EigenTrajectoryPoint start, goal;
+  start.position_W =
+      Eigen::Vector3d(1.0, upper_bound_.y() / 2.0, kPlanningHeight);
+  goal.position_W = upper_bound_ - start.position_W;
+  goal.position_W.z() = kPlanningHeight;
+
+  start.setFromYaw(0.0);
+  goal.setFromYaw(0.0);
+  result_template.straight_line_path_length_m =
+      (goal.position_W - start.position_W).norm();
+
+  visualization_msgs::MarkerArray marker_array, additional_markers;
+  mav_trajectory_generation::Trajectory trajectory;
+  mav_trajectory_generation::Trajectory last_trajectory;
+  mav_msgs::EigenTrajectoryPointVector executed_path;
+
+  // Clear the visualization markers, if visualizing.
+  if (visualize_) {
+    visualization_msgs::Marker marker;
+    for (int i = 0; i < max_replans_; ++i) {
+      // Clear all existing stuff.
+      marker.ns = "loco";
+      marker.id = i;
+      marker.action = visualization_msgs::Marker::DELETEALL;
+      marker_array.markers.push_back(marker);
+    }
+    marker.ns = "executed_path";
+    marker.id = 0;
+    marker_array.markers.push_back(marker);
+    path_marker_pub_.publish(marker_array);
+    marker_array.markers.clear();
+    ros::spinOnce();
+  }
+
+  // In case we're finding new goal if needed, we have to keep track of which
+  // goal we're currently tracking.
+  mav_msgs::EigenTrajectoryPoint current_goal = goal;
+
+  double start_time = 0.0;
+  double plan_elapsed_time = 0.0;
+  double total_path_distance = 0.0;
+
+  int i = 0;
+  for (i = 0; i < max_replans_; ++i) {
+    if (i > 0 && !trajectory.empty()) {
+      start_time = replan_dt_;
+    }
+    // Generate a viewpoint and add it to the map.
+    mav_msgs::EigenTrajectoryPoint viewpoint;
+    if (i == 0 || executed_path.empty()) {
+      viewpoint = start;
+    } else {
+      viewpoint = executed_path.back();
+    }
+    addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
+    UpdateHilbertMap(hilbertmap_center_); //Fixed map center for global hilbertmap
     if (visualize_) {
       appendViewpointMarker(viewpoint, &additional_markers);
     }
@@ -349,7 +517,9 @@ void HilbertPlanningBenchmark::addViewpointToMap(
 
     view_ptcloud_pub_.publish(ptcloud_pcl);
   }
+}
 
+void HilbertPlanningBenchmark::UpdateHilbertMap(Eigen::Vector3f view_origin){
   //Generate Hilbertmap from the TSDF Map
   pcl::PointCloud<pcl::PointXYZI> ptcloud1;
   voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud1);
