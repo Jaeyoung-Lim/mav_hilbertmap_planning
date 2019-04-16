@@ -115,6 +115,7 @@ class HilbertPlanningBenchmark {
   // Map settings.
   Eigen::Vector3d lower_bound_;
   Eigen::Vector3d upper_bound_;
+  Eigen::Vector3f hilbertmap_center_;
 
   // Camera parameters for both the NBVP (and other) camera simulations and
   // the camera simulation with the voxblox sim world.

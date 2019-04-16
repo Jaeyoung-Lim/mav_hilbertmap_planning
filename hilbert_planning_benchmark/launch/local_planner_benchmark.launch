@@ -26,4 +26,5 @@
     <param name="hilbertmap/height" value="3.0"/>
     <param name="hilbertmap/resolution" value="0.5"/>
   </node>
+  <node type="rviz" name="rviz" pkg="rviz"/>
 </launch>

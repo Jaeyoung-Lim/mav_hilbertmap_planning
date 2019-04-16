@@ -40,6 +40,13 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
   nh_private_.param("camera_max_dist", camera_max_dist_, camera_max_dist_);
   nh_private_.param("camera_model_dist", camera_model_dist_,
                     camera_model_dist_);
+  float hilbertmap_x, hilbertmap_y, hilbertmap_z;
+  
+  nh_private_.param<float>("hilbertmap/center_x", hilbertmap_x, 0.0);
+  nh_private_.param<float>("hilbertmap/center_y", hilbertmap_y, 0.0);
+  nh_private_.param<float>("hilbertmap/center_z", hilbertmap_z, 0.0);
+
+  hilbertmap_center_ << hilbertmap_x, hilbertmap_y, hilbertmap_z;
 
   path_marker_pub_ =
       nh_private_.advertise<visualization_msgs::MarkerArray>("path", 1, true);
@@ -278,8 +285,7 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
   double start_time = 0.0;
   double plan_elapsed_time = 0.0;
   double total_path_distance = 0.0;
-  Eigen::Vector3f hilbertmap_center;
-  hilbertmap_center << 0.0, 0.0, 1.5;
+
   int i = 0;
   for (i = 0; i < max_replans_; ++i) {
     if (i > 0 && !trajectory.empty()) {
@@ -293,7 +299,7 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
       viewpoint = executed_path.back();
     }
     addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
-    UpdateHilbertMap(hilbertmap_center);
+    UpdateHilbertMap(hilbertmap_center_); //Fixed map center for global hilbertmap
     if (visualize_) {
       appendViewpointMarker(viewpoint, &additional_markers);
     }
