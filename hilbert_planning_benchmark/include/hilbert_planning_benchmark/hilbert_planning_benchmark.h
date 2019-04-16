@@ -39,7 +39,9 @@ class HilbertPlanningBenchmark {
 
   // General trajectory benchmark tools: call these in order.
   void generateWorld(double density);
-  void runBenchmark(int trial_number);
+  void runLocalBenchmark(int trial_number);
+  void runGlobalBenchmark(int trial_number);
+
   void outputResults(const std::string& filename);
 
   // Accessors.

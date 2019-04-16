@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
       }
       srand(trial_number);
       node.generateWorld(density);
-      node.runBenchmark(trial_number);
+      node.runGlobalBenchmark(trial_number);
       trial_number++;
     }
   }
