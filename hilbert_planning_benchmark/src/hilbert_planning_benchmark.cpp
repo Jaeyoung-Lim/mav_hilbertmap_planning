@@ -132,6 +132,7 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
       viewpoint = executed_path.back();
     }
     addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
+    UpdateHilbertMap(viewpoint.position_W.cast<float>());
     if (visualize_) {
       appendViewpointMarker(viewpoint, &additional_markers);
     }
