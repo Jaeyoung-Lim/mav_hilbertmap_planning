@@ -21,12 +21,12 @@
     <param name="world_frame" value="$(arg frame_id)" />
     <param name="publish_pointclouds" value="true" />
     <param name="verbose" value="true" />
-    <param name="hilbertmap/width" value="15.0"/>
+    <param name="hilbertmap/width" value="18.0"/>
     <param name="hilbertmap/length" value="7.0"/>
     <param name="hilbertmap/height" value="3.0"/>
     <param name="hilbertmap/resolution" value="0.5"/>
-    <param name="hilbertmap/center_x" value="1.5"/>
-    <param name="hilbertmap/center_y" value="2.5"/>
+    <param name="hilbertmap/center_x" value="8"/>
+    <param name="hilbertmap/center_y" value="7.5"/>
     <param name="hilbertmap/center_z" value="1.5"/>
 
   </node>
