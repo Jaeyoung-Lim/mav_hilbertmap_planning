@@ -278,6 +278,8 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
   double start_time = 0.0;
   double plan_elapsed_time = 0.0;
   double total_path_distance = 0.0;
+  Eigen::Vector3f hilbertmap_center;
+  hilbertmap_center << 0.0, 0.0, 1.5;
   int i = 0;
   for (i = 0; i < max_replans_; ++i) {
     if (i > 0 && !trajectory.empty()) {
@@ -291,6 +293,7 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
       viewpoint = executed_path.back();
     }
     addViewpointToMap(viewpoint); //[Hilbert Benchmark] This is where the new viewpoint is added!
+    UpdateHilbertMap(hilbertmap_center);
     if (visualize_) {
       appendViewpointMarker(viewpoint, &additional_markers);
     }
@@ -508,7 +511,6 @@ void HilbertPlanningBenchmark::addViewpointToMap(
 
     view_ptcloud_pub_.publish(ptcloud_pcl);
   }
-  UpdateHilbertMap();
 }
 
 void HilbertPlanningBenchmark::UpdateHilbertMap(Eigen::Vector3f view_origin){
