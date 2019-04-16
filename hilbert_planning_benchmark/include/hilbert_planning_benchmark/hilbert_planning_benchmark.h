@@ -71,6 +71,8 @@ class HilbertPlanningBenchmark {
   // Path helpers.
   void setYawFromVelocity(double default_yaw,
                           mav_msgs::EigenTrajectoryPointVector* path);
+
+  void UpdateHilbertMap(Eigen::Vector3f view_origin);
   
   void HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d map_center);
 

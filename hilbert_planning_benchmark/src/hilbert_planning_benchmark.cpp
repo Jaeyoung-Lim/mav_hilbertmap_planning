@@ -507,7 +507,10 @@ void HilbertPlanningBenchmark::addViewpointToMap(
 
     view_ptcloud_pub_.publish(ptcloud_pcl);
   }
+  UpdateHilbertMap();
+}
 
+void HilbertPlanningBenchmark::UpdateHilbertMap(Eigen::Vector3f view_origin){
   //Generate Hilbertmap from the TSDF Map
   pcl::PointCloud<pcl::PointXYZI> ptcloud1;
   voxblox::createDistancePointcloudFromTsdfLayer(esdf_server_.getTsdfMapPtr()->getTsdfLayer(), &ptcloud1);
