@@ -410,7 +410,16 @@ void HilbertPlanningBenchmark::outputResults(const std::string& filename) {
             result.straight_line_path_length_m);
   }
   fclose(fp);
-  ROS_INFO_STREAM("[Local Planning Benchmark] Output results to: " << filename);
+  ROS_INFO_STREAM("[Hilbert Planning Benchmark] Output results to: " << filename);
+}
+
+void HilbertPlanningBenchmark::outputTrajectory(const std::string& filename){
+  FILE* fp = fopen(filename.c_str(), "w+");
+  if (fp == NULL) {
+    return;
+  }
+  fclose(fp);
+  ROS_INFO_STREAM("[Hilbert Planning Benchmark] Output trajectories to: " << filename);
 }
 
 void HilbertPlanningBenchmark::generateCustomWorld(const Eigen::Vector3d& size,

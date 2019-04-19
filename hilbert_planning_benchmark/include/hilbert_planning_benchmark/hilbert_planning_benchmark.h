@@ -44,6 +44,9 @@ class HilbertPlanningBenchmark {
 
   void outputResults(const std::string& filename);
 
+  // Output trajectory of resulting path
+  void outputTrajectory(const std::string& filename);
+
   // Accessors.
   bool visualize() const { return visualize_; }
 
