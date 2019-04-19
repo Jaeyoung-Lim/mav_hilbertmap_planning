@@ -3,7 +3,7 @@
 
   <arg name="frame_id" default="world" />
 
-  <node name="hilbert_local_planning_benchmark" pkg="hilbert_local_planning_benchmark" type="hilbert_local_planning_benchmark_node" output="screen" args="--alsologtostderr">
+  <node name="hilbert_local_planning_benchmark" pkg="hilbert_planning_benchmark" type="local_hilbert_planning_benchmark_node" output="screen" args="--alsologtostderr">
     <param name="results_path" value="$(arg results_path)" />
     <param name="visualize" value="true" />
     <param name="robot_radius" value="0.5" />
@@ -26,5 +26,6 @@
     <param name="hilbertmap/height" value="3.0"/>
     <param name="hilbertmap/resolution" value="0.5"/>
   </node>
-  <node type="rviz" name="rviz" pkg="rviz"/>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find hilbert_planning_benchmark)/launch/config.rviz" />
+
 </launch>

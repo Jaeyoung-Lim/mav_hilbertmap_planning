@@ -30,5 +30,5 @@
     <param name="hilbertmap/center_z" value="1.5"/>
 
   </node>
-   <node type="rviz" name="rviz" pkg="rviz"/>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find hilbert_planning_benchmark)/launch/config.rviz" />
 </launch>
