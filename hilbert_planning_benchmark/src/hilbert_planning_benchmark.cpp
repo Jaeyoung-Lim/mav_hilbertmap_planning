@@ -668,17 +668,16 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
     //TODO: Implement trajectory within the actual path window
     record.trial_number = number;
-    record.acc_x = point.acceleration_W(0);
-    record.acc_y = point.acceleration_W(1);
-    record.acc_z = point.acceleration_W(2);
-
+    record.pos_x = point.position_W(0);
+    record.pos_y = point.position_W(1);
+    record.pos_z = point.position_W(2);
     record.vel_x = point.velocity_W(0);
     record.vel_y = point.velocity_W(1);
     record.vel_z = point.velocity_W(2);
 
-    record.pos_x = point.velocity_W(0);
-    record.pos_y = point.velocity_W(1);
-    record.pos_z = point.velocity_W(2);
+    record.acc_x = point.acceleration_W(0);
+    record.acc_y = point.acceleration_W(1);
+    record.acc_z = point.acceleration_W(2);
 
     trajectory_recorder_.push_back(record);
   }
