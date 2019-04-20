@@ -34,6 +34,19 @@ class HilbertPlanningBenchmark {
     double straight_line_path_length_m = 0.0;
   };
 
+  struct TrajectoryRecorder {
+    double pos_x;
+    double pox_y;
+    double pox_z;
+    double vel_x;
+    double vel_y;
+    double vel_z;
+    double acc_x;
+    double acc_y;
+    double acc_z;
+  };
+
+
   HilbertPlanningBenchmark(const ros::NodeHandle& nh,
                          const ros::NodeHandle& nh_private);
 
@@ -78,6 +91,8 @@ class HilbertPlanningBenchmark {
   void UpdateHilbertMap(Eigen::Vector3f view_origin);
   
   void HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d map_center);
+
+  TrajectoryRecorder recordTrajectory(const mav_msgs::EigenTrajectoryPointVector& path);
 
   /*
   // Functions to actually run the planners.
@@ -148,6 +163,9 @@ class HilbertPlanningBenchmark {
 
   // Results.
   std::vector<LocalBenchmarkResult> results_;
+
+  std::vector<TrajectoryRecorder> trajectory_recorder_;
+
 };
 
 }  // namespace mav_planning

@@ -176,6 +176,7 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
         path.size() - 1);
     executed_path.insert(executed_path.end(), path.begin(),
                          path.begin() + max_index);
+    
     if (visualize_) {
       marker_array.markers.push_back(createMarkerForPath(
           path, frame_id_,
@@ -227,6 +228,8 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
       "Final path length: %f Distance from goal: %f",
       trial_number, result_template.planning_success, i, path_length,
       distance_from_goal);
+  TrajectoryRecorder trajectory_profile = recordTrajectory(executed_path); 
+  trajectory_recorder_.push_back(trajectory_profile);
 }
 
 void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
@@ -336,6 +339,7 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
         path.size() - 1);
     executed_path.insert(executed_path.end(), path.begin(),
                          path.begin() + max_index);
+
     if (visualize_) {
       marker_array.markers.push_back(createMarkerForPath(
           path, frame_id_,
@@ -642,6 +646,23 @@ void HilbertPlanningBenchmark::setYawFromVelocity(
     } else {
       point.setFromYaw(default_yaw);
     }
+  }
+}
+
+HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTrajectory(
+  const mav_msgs::EigenTrajectoryPointVector& path){
+  // This is easier to check in the trajectory but then we are limited in how
+  // we do the smoothing.
+  TrajectoryRecorder record;
+  for (const mav_msgs::EigenTrajectoryPoint& point : path) {
+    //TODO: Implement trajectory within the actual path window
+    record.acc_x = point.acceleration_W(0);
+    record.acc_y = point.acceleration_W(1);
+    record.acc_z = point.acceleration_W(2);
+
+    record.vel_x = point.velocity_W(0);
+    record.vel_y = point.velocity_W(1);
+    record.vel_z = point.velocity_W(2);
   }
 }
 
