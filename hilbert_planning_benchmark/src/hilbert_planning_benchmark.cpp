@@ -230,7 +230,6 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
       distance_from_goal);
   if(isPathCollisionFree(executed_path)){
     TrajectoryRecorder trajectory_template = recordTrajectory(executed_path, trial_number); 
-    trajectory_recorder_.push_back(trajectory_template);
   }
 }
 
@@ -681,7 +680,9 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
     record.pos_y = point.velocity_W(1);
     record.pos_z = point.velocity_W(2);
 
+    trajectory_recorder_.push_back(record);
   }
+  return record;
 }
 
 }  // namespace mav_planning
