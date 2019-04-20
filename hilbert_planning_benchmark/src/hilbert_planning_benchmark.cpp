@@ -693,7 +693,6 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
   // we do the smoothing.
   TrajectoryRecorder record;
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
-    //TODO: Implement trajectory within the actual path window
     record.trial_number = number;
     record.pos_x = point.position_W(0);
     record.pos_y = point.position_W(1);
