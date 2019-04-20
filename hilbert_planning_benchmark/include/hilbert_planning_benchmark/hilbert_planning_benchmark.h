@@ -34,15 +34,43 @@ class HilbertPlanningBenchmark {
     double straight_line_path_length_m = 0.0;
   };
 
+  struct TrajectoryRecorder {
+    int trial_number;
+    double pos_x;
+    double pos_y;
+    double pos_z;
+    double vel_x;
+    double vel_y;
+    double vel_z;
+    double acc_x;
+    double acc_y;
+    double acc_z;
+  };
+
+  struct EnvironmentTemplate {
+    int trial_number;
+    std::vector<Eigen::Vector3d> obstacle_position;
+    std::vector<double> obstacle_height;
+    std::vector<double> obstacle_radius;
+  };
+
+
+
   HilbertPlanningBenchmark(const ros::NodeHandle& nh,
                          const ros::NodeHandle& nh_private);
 
   // General trajectory benchmark tools: call these in order.
-  void generateWorld(double density);
+  void generateWorld(double density, int number);
   void runLocalBenchmark(int trial_number);
   void runGlobalBenchmark(int trial_number);
 
   void outputResults(const std::string& filename);
+
+  // Output trajectory of resulting path
+  void outputTrajectory(const std::string& filename);
+
+  // Output Environment structure
+  void outputEnvironmentStructure(const std::string& filename);
 
   // Accessors.
   bool visualize() const { return visualize_; }
@@ -50,7 +78,7 @@ class HilbertPlanningBenchmark {
  private:
   void setupPlanners();
 
-  void generateCustomWorld(const Eigen::Vector3d& size, double density);
+  void generateCustomWorld(const Eigen::Vector3d& size, double density, int number);
   // Generates a synthetic viewpoint, and adds it to the voxblox map.
   void addViewpointToMap(const mav_msgs::EigenTrajectoryPoint& viewpoint);
 
@@ -75,6 +103,8 @@ class HilbertPlanningBenchmark {
   void UpdateHilbertMap(Eigen::Vector3f view_origin);
   
   void HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d map_center);
+
+  TrajectoryRecorder recordTrajectory(const mav_msgs::EigenTrajectoryPointVector& path, int number);
 
   /*
   // Functions to actually run the planners.
@@ -145,6 +175,10 @@ class HilbertPlanningBenchmark {
 
   // Results.
   std::vector<LocalBenchmarkResult> results_;
+
+  std::vector<TrajectoryRecorder> trajectory_recorder_;
+  std::vector<EnvironmentTemplate> environment_structure_;
+
 };
 
 }  // namespace mav_planning

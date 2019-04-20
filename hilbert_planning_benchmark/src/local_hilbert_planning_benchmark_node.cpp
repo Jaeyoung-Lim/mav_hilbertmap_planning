@@ -16,10 +16,14 @@ int main(int argc, char** argv) {
   mav_planning::HilbertPlanningBenchmark node(nh, nh_private);
   ROS_INFO("Initialized local planning benchmark node.");
 
-  int num_trials = 100;
+  int num_trials = 10;
   std::string results_path;
+  std::string trajectory_path;
+  std::string environment_path;
   nh_private.param("results_path", results_path, results_path);
   nh_private.param("num_trials", num_trials, num_trials);
+  nh_private.param("trajectory_output_path", trajectory_path, trajectory_path);
+  nh_private.param("environment_output_path", environment_path, environment_path);
 
   const double min_density = 0.05;
   const double max_density = 0.50;
@@ -45,7 +49,7 @@ int main(int argc, char** argv) {
         break;
       }
       srand(trial_number);
-      node.generateWorld(density);
+      node.generateWorld(density, trial_number);
       node.runLocalBenchmark(trial_number);
       trial_number++;
     }
@@ -53,6 +57,11 @@ int main(int argc, char** argv) {
 
   if (!results_path.empty()) {
     node.outputResults(results_path);
+  }
+
+  if(!trajectory_path.empty()){
+    node.outputTrajectory(trajectory_path);
+    node.outputEnvironmentStructure(environment_path);
   }
 
   ROS_INFO_STREAM("All timings: "
