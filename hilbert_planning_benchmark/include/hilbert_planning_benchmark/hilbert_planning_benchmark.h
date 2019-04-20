@@ -37,8 +37,8 @@ class HilbertPlanningBenchmark {
   struct TrajectoryRecorder {
     int trial_number;
     double pos_x;
-    double pox_y;
-    double pox_z;
+    double pos_y;
+    double pos_z;
     double vel_x;
     double vel_y;
     double vel_z;

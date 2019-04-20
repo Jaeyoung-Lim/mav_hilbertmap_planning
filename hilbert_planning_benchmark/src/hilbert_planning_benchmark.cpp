@@ -425,19 +425,13 @@ void HilbertPlanningBenchmark::outputTrajectory(const std::string& filename){
     return;
   }
   fprintf(fp,
-        "#trial,seed,density,robot_radius,v_max,a_max,local_method,planning_"
-        "success,is_collision_free,is_feasible,num_replans,distance_from_"
-        "goal,computation_time_sec,total_path_time_sec,total_path_length_m,"
-        "straight_line_path_length_m\n");
-  for (const LocalBenchmarkResult& result : results_) {
-    fprintf(fp, "%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f\n",
-            result.trial_number, result.seed, result.density,
-            result.robot_radius_m, result.v_max, result.a_max,
-            result.local_planning_method, result.planning_success,
-            result.is_collision_free, result.is_feasible, result.num_replans,
-            result.distance_from_goal, result.computation_time_sec,
-            result.total_path_time_sec, result.total_path_length_m,
-            result.straight_line_path_length_m);
+        "#trial,pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, acc_x, acc_y, acc_z\n");
+  for (const TrajectoryRecorder& trajectory_template : trajectory_recorder_) {
+    fprintf(fp, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
+            trajectory_template.trial_number,
+            trajectory_template.pos_x, trajectory_template.pos_y, trajectory_template.pos_z,
+            trajectory_template.vel_x, trajectory_template.vel_y, trajectory_template.vel_z,
+            trajectory_template.acc_x, trajectory_template.acc_y, trajectory_template.acc_z);
   }
 
   fclose(fp);
@@ -684,8 +678,8 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
     record.vel_z = point.velocity_W(2);
 
     record.pos_x = point.velocity_W(0);
-    record.vel_y = point.velocity_W(1);
-    record.vel_z = point.velocity_W(2);
+    record.pos_y = point.velocity_W(1);
+    record.pos_z = point.velocity_W(2);
 
   }
 }
