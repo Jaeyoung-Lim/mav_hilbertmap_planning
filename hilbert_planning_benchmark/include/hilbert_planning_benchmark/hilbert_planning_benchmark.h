@@ -35,6 +35,7 @@ class HilbertPlanningBenchmark {
   };
 
   struct TrajectoryRecorder {
+    int trial_number;
     double pos_x;
     double pox_y;
     double pox_z;
@@ -92,7 +93,7 @@ class HilbertPlanningBenchmark {
   
   void HilbertMapAppendBin(pcl::PointCloud<pcl::PointXYZI> &ptcloud, Eigen::Vector3d map_center);
 
-  TrajectoryRecorder recordTrajectory(const mav_msgs::EigenTrajectoryPointVector& path);
+  TrajectoryRecorder recordTrajectory(const mav_msgs::EigenTrajectoryPointVector& path, int number);
 
   /*
   // Functions to actually run the planners.

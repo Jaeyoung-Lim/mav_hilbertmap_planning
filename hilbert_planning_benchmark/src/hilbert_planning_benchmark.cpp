@@ -228,8 +228,10 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
       "Final path length: %f Distance from goal: %f",
       trial_number, result_template.planning_success, i, path_length,
       distance_from_goal);
-  TrajectoryRecorder trajectory_profile = recordTrajectory(executed_path); 
-  trajectory_recorder_.push_back(trajectory_profile);
+  if(isPathCollisionFree(executed_path)){
+    TrajectoryRecorder trajectory_template = recordTrajectory(executed_path, trial_number); 
+    trajectory_recorder_.push_back(trajectory_template);
+  }
 }
 
 void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
@@ -422,6 +424,22 @@ void HilbertPlanningBenchmark::outputTrajectory(const std::string& filename){
   if (fp == NULL) {
     return;
   }
+  fprintf(fp,
+        "#trial,seed,density,robot_radius,v_max,a_max,local_method,planning_"
+        "success,is_collision_free,is_feasible,num_replans,distance_from_"
+        "goal,computation_time_sec,total_path_time_sec,total_path_length_m,"
+        "straight_line_path_length_m\n");
+  for (const LocalBenchmarkResult& result : results_) {
+    fprintf(fp, "%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f\n",
+            result.trial_number, result.seed, result.density,
+            result.robot_radius_m, result.v_max, result.a_max,
+            result.local_planning_method, result.planning_success,
+            result.is_collision_free, result.is_feasible, result.num_replans,
+            result.distance_from_goal, result.computation_time_sec,
+            result.total_path_time_sec, result.total_path_length_m,
+            result.straight_line_path_length_m);
+  }
+
   fclose(fp);
   ROS_INFO_STREAM("[Hilbert Planning Benchmark] Output trajectories to: " << filename);
 }
@@ -650,12 +668,13 @@ void HilbertPlanningBenchmark::setYawFromVelocity(
 }
 
 HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTrajectory(
-  const mav_msgs::EigenTrajectoryPointVector& path){
+  const mav_msgs::EigenTrajectoryPointVector& path, int number){
   // This is easier to check in the trajectory but then we are limited in how
   // we do the smoothing.
   TrajectoryRecorder record;
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
     //TODO: Implement trajectory within the actual path window
+    record.trial_number = number;
     record.acc_x = point.acceleration_W(0);
     record.acc_y = point.acceleration_W(1);
     record.acc_z = point.acceleration_W(2);
@@ -663,6 +682,11 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
     record.vel_x = point.velocity_W(0);
     record.vel_y = point.velocity_W(1);
     record.vel_z = point.velocity_W(2);
+
+    record.pos_x = point.velocity_W(0);
+    record.vel_y = point.velocity_W(1);
+    record.vel_z = point.velocity_W(2);
+
   }
 }
 
