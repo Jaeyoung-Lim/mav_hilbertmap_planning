@@ -62,12 +62,12 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
 
 }
 
-void HilbertPlanningBenchmark::generateWorld(double density) {
+void HilbertPlanningBenchmark::generateWorld(double density, int number) {
   // There's a 2 meter padding on each side of the map that's free.
   const double kWorldXY = 15.0;
   const double kWorldZ = 5.0;
 
-  generateCustomWorld(Eigen::Vector3d(kWorldXY, kWorldXY, kWorldZ), density);
+  generateCustomWorld(Eigen::Vector3d(kWorldXY, kWorldXY, kWorldZ), density, number);
 }
 
 void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
@@ -437,8 +437,27 @@ void HilbertPlanningBenchmark::outputTrajectory(const std::string& filename){
   ROS_INFO_STREAM("[Hilbert Planning Benchmark] Output trajectories to: " << filename);
 }
 
+void HilbertPlanningBenchmark::outputEnvironmentStructure(const std::string& filename){
+  FILE* fp = fopen(filename.c_str(), "w+");
+  if (fp == NULL) {
+    return;
+  }
+  fprintf(fp,
+        "#trial, pos_x, pos_y, pos_z, radius, height\n");
+  for (const EnvironmentTemplate& environment_template : environment_structure_) {
+    for(size_t i = 0; i < environment_template.obstacle_position.size(); i ++){
+      fprintf(fp, "%d,%f,%f,%f,%f,%f\n",
+        environment_template.trial_number,
+        environment_template.obstacle_position[i](0), environment_template.obstacle_position[i](1), environment_template.obstacle_position[i](2),
+        environment_template.obstacle_radius[i], environment_template.obstacle_height[i]);
+    }
+  }
+  fclose(fp);
+  ROS_INFO_STREAM("[Hilbert Planning Benchmark] Output trajectories to: " << filename);
+}
+
 void HilbertPlanningBenchmark::generateCustomWorld(const Eigen::Vector3d& size,
-                                                 double density) {
+                                                 double density, int number) {
   esdf_server_.clear();
 
   lower_bound_ = Eigen::Vector3d::Zero();
@@ -466,6 +485,8 @@ void HilbertPlanningBenchmark::generateCustomWorld(const Eigen::Vector3d& size,
                        (size.y() - 2 * free_space_bounds.y());
   int num_objects = static_cast<int>(std::floor(density * usable_area));
 
+  EnvironmentTemplate customworld_structure;
+
   for (int i = 0; i < num_objects; ++i) {
     // First select size; pose depends on size in z.
     double height = randMToN(kMinHeight, kMaxHeight);
@@ -478,7 +499,13 @@ void HilbertPlanningBenchmark::generateCustomWorld(const Eigen::Vector3d& size,
 
     world_.addObject(std::unique_ptr<voxblox::Object>(new voxblox::Cylinder(
         position.cast<float>(), radius, height, voxblox::Color::Gray())));
+    customworld_structure.trial_number = number;
+    customworld_structure.obstacle_position.push_back(position);
+    customworld_structure.obstacle_height.push_back(height);
+    customworld_structure.obstacle_radius.push_back(radius);
   }
+
+  environment_structure_.push_back(customworld_structure);
 
   esdf_server_.setSliceLevel(1.5);
 

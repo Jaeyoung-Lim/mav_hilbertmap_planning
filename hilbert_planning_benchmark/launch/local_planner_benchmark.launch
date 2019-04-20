@@ -1,12 +1,14 @@
 <launch>
   <arg name="results_path" default="/home/jaeyoung/data/local_benchmark/local_benchmark.csv" />
   <arg name="trajectory_path" default="/home/jaeyoung/data/local_benchmark/local_trajectory.csv" />
+  <arg name="environment_path" default="/home/jaeyoung/data/local_benchmark/environment.csv" />
 
   <arg name="frame_id" default="world" />
 
   <node name="hilbert_local_planning_benchmark" pkg="hilbert_planning_benchmark" type="local_hilbert_planning_benchmark_node" output="screen" args="--alsologtostderr">
     <param name="results_path" value="$(arg results_path)" />
     <param name="trajectory_output_path" value="$(arg trajectory_path)"/>
+    <param name="environment_output_path" value="$(arg environment_path)"/>
     <param name="visualize" value="true" />
     <param name="robot_radius" value="0.5" />
     <param name="publish_tsdf_map" value="true" />

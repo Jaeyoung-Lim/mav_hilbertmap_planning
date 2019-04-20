@@ -47,12 +47,20 @@ class HilbertPlanningBenchmark {
     double acc_z;
   };
 
+  struct EnvironmentTemplate {
+    int trial_number;
+    std::vector<Eigen::Vector3d> obstacle_position;
+    std::vector<double> obstacle_height;
+    std::vector<double> obstacle_radius;
+  };
+
+
 
   HilbertPlanningBenchmark(const ros::NodeHandle& nh,
                          const ros::NodeHandle& nh_private);
 
   // General trajectory benchmark tools: call these in order.
-  void generateWorld(double density);
+  void generateWorld(double density, int number);
   void runLocalBenchmark(int trial_number);
   void runGlobalBenchmark(int trial_number);
 
@@ -61,13 +69,16 @@ class HilbertPlanningBenchmark {
   // Output trajectory of resulting path
   void outputTrajectory(const std::string& filename);
 
+  // Output Environment structure
+  void outputEnvironmentStructure(const std::string& filename);
+
   // Accessors.
   bool visualize() const { return visualize_; }
 
  private:
   void setupPlanners();
 
-  void generateCustomWorld(const Eigen::Vector3d& size, double density);
+  void generateCustomWorld(const Eigen::Vector3d& size, double density, int number);
   // Generates a synthetic viewpoint, and adds it to the voxblox map.
   void addViewpointToMap(const mav_msgs::EigenTrajectoryPoint& viewpoint);
 
@@ -166,6 +177,7 @@ class HilbertPlanningBenchmark {
   std::vector<LocalBenchmarkResult> results_;
 
   std::vector<TrajectoryRecorder> trajectory_recorder_;
+  std::vector<EnvironmentTemplate> environment_structure_;
 
 };
 
