@@ -293,7 +293,6 @@ void HSimulationServerImpl::appendBinfromTSDF(){
   createDistancePointcloudFromTsdfLayer(*tsdf_test_, &ptcloud);
 
   *ptcloud2 = ptcloud;
-  binsize_ = getMapSize(*ptcloud2);
 
   Eigen::Vector3d map_center;
   // Eigen::Vector3d map_center;
@@ -336,6 +335,8 @@ void HSimulationServerImpl::evaluateHilbertMap(){
     tn[j] = 0;
     fn[j] = 0;
   }
+
+  binsize_ = hilbertMap_->getBinSize();
 
       
   for(int i = 0; i < binsize_; i++) {
