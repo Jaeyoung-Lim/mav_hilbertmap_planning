@@ -235,7 +235,7 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
 
 void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
   constexpr double kPlanningHeight = 1.5;
-  constexpr double kMinDistanceToGoal = 0.1;
+  constexpr double kMinDistanceToGoal = 0.2;
 
   srand(trial_number);
   esdf_server_.clear();

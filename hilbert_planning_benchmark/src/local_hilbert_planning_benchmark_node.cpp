@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   mav_planning::HilbertPlanningBenchmark node(nh, nh_private);
   ROS_INFO("Initialized local planning benchmark node.");
 
-  int num_trials = 10;
+  int num_trials = 20;
   std::string results_path;
   std::string trajectory_path;
   std::string environment_path;
