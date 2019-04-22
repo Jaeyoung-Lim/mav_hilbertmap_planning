@@ -13,7 +13,7 @@ HilbertLocoPlanner::HilbertLocoPlanner(const ros::NodeHandle& nh, const ros::Nod
   num_segments_(2),
   num_random_restarts_(5),
   random_restart_magnitude_(5.0),
-  planning_horizon_m_(4.0),
+  planning_horizon_m_(5.0),
   loco_(3){
     constraints_.setParametersFromRos(nh_private_);
 
@@ -116,6 +116,7 @@ bool HilbertLocoPlanner::getTrajectoryBetweenWaypoints(
                              << " goal: " << goal.position_W.transpose());
 
     constexpr double kTotalTimeScale = 1.2;
+
     double total_time =
             kTotalTimeScale * mav_trajectory_generation::computeTimeVelocityRamp(
                     start.position_W, goal.position_W,

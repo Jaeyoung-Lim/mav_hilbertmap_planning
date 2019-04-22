@@ -25,10 +25,13 @@
     <param name="world_frame" value="$(arg frame_id)" />
     <param name="publish_pointclouds" value="true" />
     <param name="verbose" value="true" />
-    <param name="hilbertmap/width" value="7.0"/>
-    <param name="hilbertmap/length" value="7.0"/>
-    <param name="hilbertmap/height" value="3.0"/>
-    <param name="hilbertmap/resolution" value="0.5"/>
+    <param name="camera_max_dist" value="4.0"/>
+    <param name="v_max" value="2.0"/>
+    <param name="a_max" value="2.0"/>
+    <param name="hilbertmap/width" value="8.0"/>
+    <param name="hilbertmap/length" value="8.0"/>
+    <param name="hilbertmap/height" value="4.0"/>
+    <param name="hilbertmap/resolution" value="0.8"/>
   </node>
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find hilbert_planning_benchmark)/launch/config.rviz" />
 
