@@ -83,8 +83,8 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Alpha: 0.5
-      Autocompute Intensity Bounds: true
+    - Alpha: 0.200000003
+      Autocompute Intensity Bounds: false
       Autocompute Value Bounds:
         Max Value: 10
         Min Value: -10
@@ -98,9 +98,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.974993169
+      Max Intensity: 1
       Min Color: 0; 0; 0
-      Min Intensity: 0.0115217566
+      Min Intensity: 0
       Name: PointCloud2
       Position Transformer: XYZ
       Queue Size: 10
@@ -171,7 +171,8 @@ Visualization Manager:
       Marker Topic: /hilbert_planning_benchmark/path
       Name: MarkerArray
       Namespaces:
-        {}
+        executed_path: true
+        loco: true
       Queue Size: 100
       Value: true
     - Class: voxblox_rviz_plugin/VoxbloxMesh
@@ -185,8 +186,7 @@ Visualization Manager:
       Marker Topic: /hilbert_local_planning_benchmark/path
       Name: MarkerArray
       Namespaces:
-        executed_path: true
-        loco: true
+        {}
       Queue Size: 100
       Value: true
     - Class: voxblox_rviz_plugin/VoxbloxMesh
@@ -257,18 +257,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 9.31825066
-        Y: 8.0118866
-        Z: 5.17406273
+        X: 7.74304152
+        Y: 8.20466709
+        Z: 3.54800582
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.594796777
+      Pitch: 0.794796348
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.0281682
+      Yaw: 3.98816204
     Saved: ~
 Window Geometry:
   Displays:
