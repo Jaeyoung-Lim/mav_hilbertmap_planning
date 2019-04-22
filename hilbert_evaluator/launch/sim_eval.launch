@@ -12,5 +12,6 @@
     <param name="max_attempts_to_generate_viewpoint" value="50" />
     <param name="world_frame" value="world" />
   </node>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find hilbert_evaluator)/launch/config.rviz" />
 
 </launch>
