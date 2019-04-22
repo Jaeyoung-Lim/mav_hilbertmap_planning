@@ -52,7 +52,7 @@ void HSimulationServerImpl::hilbertBenchmark(){
   generateSDF();
   evaluate();
   visualize();
-  int benchmark = 2;
+  int benchmark = 1;
   switch(benchmark){
     case 1 : //Benchmark tsdf and raw bin source
       ROS_INFO("[Hilbert Benchmark] Starting benchmark for Bin source");
@@ -290,7 +290,7 @@ void HSimulationServerImpl::appendBinfromTSDF(){
   pcl::PointCloud<pcl::PointXYZI>::Ptr cropped_ptcloud(new pcl::PointCloud<pcl::PointXYZI>);
   ptcloud.header.frame_id = "world";
 
-  createDistancePointcloudFromTsdfLayer(*tsdf_gt_, &ptcloud); //TODO: This should not be the groundtruth tsdf map
+  createDistancePointcloudFromTsdfLayer(*tsdf_test_, &ptcloud);
 
   *ptcloud2 = ptcloud;
   binsize_ = getMapSize(*ptcloud2);
