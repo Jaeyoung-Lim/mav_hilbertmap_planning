@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   mav_planning::HilbertPlanningBenchmark node(nh, nh_private);
   ROS_INFO("Initialized local planning benchmark node.");
 
-  int num_trials = 20;
+  int num_trials = 100;
   std::string results_path;
   std::string trajectory_path;
   std::string environment_path;
@@ -25,9 +25,9 @@ int main(int argc, char** argv) {
   nh_private.param("trajectory_output_path", trajectory_path, trajectory_path);
   nh_private.param("environment_output_path", environment_path, environment_path);
 
-  const double min_density = 0.05;
+  const double min_density = 0.1;
   const double max_density = 0.50;
-  const double density_increment = 0.05;
+  const double density_increment = 0.1;
 
   // Derived...
   int num_densities = static_cast<int>(std::round((max_density - min_density) /
