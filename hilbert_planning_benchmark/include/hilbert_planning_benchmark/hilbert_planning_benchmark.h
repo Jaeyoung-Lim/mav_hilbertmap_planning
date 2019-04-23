@@ -129,6 +129,7 @@ class HilbertPlanningBenchmark {
   ros::Publisher path_marker_pub_;
   ros::Publisher view_ptcloud_pub_;
   ros::Publisher additional_marker_pub_;
+  ros::Publisher tsdf_gt_mesh_pub_;
 
   // Settings for physical constriants.
   PhysicalConstraints constraints_;
@@ -178,6 +179,8 @@ class HilbertPlanningBenchmark {
 
   std::vector<TrajectoryRecorder> trajectory_recorder_;
   std::vector<EnvironmentTemplate> environment_structure_;
+
+  std::unique_ptr<voxblox::Layer<voxblox::TsdfVoxel> > tsdf_gt_;
 
 };
 

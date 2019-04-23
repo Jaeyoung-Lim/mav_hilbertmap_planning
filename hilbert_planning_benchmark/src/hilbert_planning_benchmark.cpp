@@ -56,9 +56,15 @@ HilbertPlanningBenchmark::HilbertPlanningBenchmark(
       nh_private_.advertise<visualization_msgs::MarkerArray>("path_additions",
                                                              1, true);
 
+  tsdf_gt_mesh_pub_ = nh_private_.advertise<visualization_msgs::MarkerArray>(
+      "tsdf_gt_mesh", 1, true);
+
   esdf_server_.setClearSphere(true);
 
   loco_planner_.setHilbertMap(hilbert_mapper_.getHilbertMapPtr());
+
+  tsdf_gt_.reset(new voxblox::Layer<voxblox::TsdfVoxel>(0.1f, 8u));
+
 
 }
 
@@ -69,6 +75,11 @@ void HilbertPlanningBenchmark::generateWorld(double density, int number) {
 
   generateCustomWorld(Eigen::Vector3d(kWorldXY, kWorldXY, kWorldZ), density, number);
 }
+
+void HilbertPlanningBenchmark::generateWorld(int number) {
+
+}
+
 
 void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
   constexpr double kPlanningHeight = 1.5;
@@ -363,6 +374,21 @@ void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
         "executed_path", 0.1));
     path_marker_pub_.publish(marker_array);
     additional_marker_pub_.publish(additional_markers);
+
+    //Generate Mesh
+    voxblox::MeshIntegratorConfig mesh_config;
+    voxblox::MeshLayer::Ptr mesh(new voxblox::MeshLayer(tsdf_gt_->block_size()));
+    voxblox::MeshIntegrator<voxblox::TsdfVoxel> mesh_integrator(mesh_config, tsdf_gt_.get(),
+                                              mesh.get());
+    constexpr bool only_mesh_updated_blocks = false;
+    constexpr bool clear_updated_flag = true;
+    mesh_integrator.generateMesh(only_mesh_updated_blocks, clear_updated_flag);
+    visualization_msgs::MarkerArray marker_array;
+    marker_array.markers.resize(1);
+    voxblox::ColorMode color_mode = voxblox::ColorMode::kNormals;
+    voxblox::fillMarkerWithMesh(mesh, color_mode, &marker_array.markers[0]);
+    marker_array.markers[0].header.frame_id = frame_id_;
+    tsdf_gt_mesh_pub_.publish(marker_array);
     ros::spinOnce();
   }
   double path_length = computePathLength(executed_path);
@@ -509,6 +535,7 @@ void HilbertPlanningBenchmark::generateCustomWorld(const Eigen::Vector3d& size,
 
   // Cache the TSDF voxel size.
   voxel_size_ = esdf_server_.getTsdfMapPtr()->getTsdfLayerPtr()->voxel_size();
+  world_.generateSdfFromWorld(2.0, tsdf_gt_.get());
 }
 
 // Generates a synthetic viewpoint, and adds it to the voxblox map.
