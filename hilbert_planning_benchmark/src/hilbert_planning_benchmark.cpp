@@ -212,6 +212,23 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
         "executed_path", 0.1));
     path_marker_pub_.publish(marker_array);
     additional_marker_pub_.publish(additional_markers);
+
+
+    //Generate Mesh
+    voxblox::MeshIntegratorConfig mesh_config;
+    voxblox::MeshLayer::Ptr mesh(new voxblox::MeshLayer(tsdf_gt_->block_size()));
+    voxblox::MeshIntegrator<voxblox::TsdfVoxel> mesh_integrator(mesh_config, tsdf_gt_.get(),
+                                              mesh.get());
+    constexpr bool only_mesh_updated_blocks = false;
+    constexpr bool clear_updated_flag = true;
+    mesh_integrator.generateMesh(only_mesh_updated_blocks, clear_updated_flag);
+    visualization_msgs::MarkerArray marker_array;
+    marker_array.markers.resize(1);
+    voxblox::ColorMode color_mode = voxblox::ColorMode::kNormals;
+    voxblox::fillMarkerWithMesh(mesh, color_mode, &marker_array.markers[0]);
+    marker_array.markers[0].header.frame_id = frame_id_;
+    tsdf_gt_mesh_pub_.publish(marker_array);
+
     ros::spinOnce();
   }
   double path_length = computePathLength(executed_path);
