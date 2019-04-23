@@ -228,9 +228,7 @@ void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
       "Final path length: %f Distance from goal: %f",
       trial_number, result_template.planning_success, i, path_length,
       distance_from_goal);
-  if(isPathCollisionFree(executed_path)){
-    TrajectoryRecorder trajectory_template = recordTrajectory(executed_path, trial_number); 
-  }
+  recordTrajectory(executed_path, trial_number);
 }
 
 void HilbertPlanningBenchmark::runGlobalBenchmark(int trial_number) {
@@ -687,12 +685,12 @@ void HilbertPlanningBenchmark::setYawFromVelocity(
   }
 }
 
-HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTrajectory(
+void HilbertPlanningBenchmark::recordTrajectory(
   const mav_msgs::EigenTrajectoryPointVector& path, int number){
   // This is easier to check in the trajectory but then we are limited in how
   // we do the smoothing.
-  TrajectoryRecorder record;
   for (const mav_msgs::EigenTrajectoryPoint& point : path) {
+    TrajectoryRecorder record;
     record.trial_number = number;
     record.pos_x = point.position_W(0);
     record.pos_y = point.position_W(1);
@@ -707,7 +705,5 @@ HilbertPlanningBenchmark::TrajectoryRecorder HilbertPlanningBenchmark::recordTra
 
     trajectory_recorder_.push_back(record);
   }
-  return record;
 }
-
 }  // namespace mav_planning
