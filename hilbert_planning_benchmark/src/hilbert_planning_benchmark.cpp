@@ -70,6 +70,73 @@ void HilbertPlanningBenchmark::generateWorld(double density, int number) {
   generateCustomWorld(Eigen::Vector3d(kWorldXY, kWorldXY, kWorldZ), density, number);
 }
 
+void HilbertPlanningBenchmark::generateWorld(int number){
+  const double kWorldXY = 15.0;
+  const double kWorldZ = 5.0;
+  
+  Eigen::Vector3d size(kWorldXY, kWorldXY, kWorldZ);
+
+  esdf_server_.clear();
+
+  lower_bound_ = Eigen::Vector3d::Zero();
+  upper_bound_ <<15.0, 15.0, 5.0;
+
+  world_.clear();
+  world_.addPlaneBoundaries(0.0, 15.0, 0.0, 15.0);
+  world_.addGroundLevel(0.0);
+  // Sets the display bounds.
+  world_.setBounds(
+      Eigen::Vector3f(-1.0, -1.0, -1.0),
+      size.cast<voxblox::FloatingPoint>() + Eigen::Vector3f(1.0, 1.0, 1.0));
+
+  // Free space around the edges (so we know we don't start in collision).
+  Eigen::Vector3d free_space_bounds(4.0, 4.0, 4.0);
+
+  // Some mins and maxes... All objects gotta be on the floor. Just because.
+  const double kMinHeight = 2.0;
+  const double kMaxHeight = 5.0;
+  const double kMinRadius = 0.25;
+  const double kMaxRadius = 1.0;
+
+  double usable_area = (size.x() - 2 * free_space_bounds.x()) *
+                       (size.y() - 2 * free_space_bounds.y());
+  int num_objects = 3;
+
+  EnvironmentTemplate customworld_structure;
+
+  Eigen::Vector3d height_list, radius_list, positionx_list, positiony_list;
+  height_list << 2.0, 5.0, 3.5;
+  radius_list << 1.0, 1.0, 1.0;
+  radius_list << 1.0, 1.0, 1.0;
+  radius_list << 1.0, 1.0, 1.0;
+
+  for (int i = 0; i < num_objects; ++i) {
+    // First select size; pose depends on size in z.
+    double height = randMToN(kMinHeight, kMaxHeight);
+    double radius = randMToN(kMinRadius, kMaxRadius);
+    // First select its pose.
+    Eigen::Vector3d position(
+        randMToN(free_space_bounds.x(), size.x() - free_space_bounds.x()),
+        randMToN(free_space_bounds.y(), size.y() - free_space_bounds.y()),
+        height / 2.0);
+
+    world_.addObject(std::unique_ptr<voxblox::Object>(new voxblox::Cylinder(
+        position.cast<float>(), radius, height, voxblox::Color::Gray())));
+    customworld_structure.trial_number = number;
+    customworld_structure.obstacle_position.push_back(position);
+    customworld_structure.obstacle_height.push_back(height);
+    customworld_structure.obstacle_radius.push_back(radius);
+  }
+
+  environment_structure_.push_back(customworld_structure);
+
+  esdf_server_.setSliceLevel(1.5);
+
+  // Cache the TSDF voxel size.
+  voxel_size_ = esdf_server_.getTsdfMapPtr()->getTsdfLayerPtr()->voxel_size();
+
+}
+
 void HilbertPlanningBenchmark::runLocalBenchmark(int trial_number) {
   constexpr double kPlanningHeight = 1.5;
   constexpr double kMinDistanceToGoal = 0.1;
