@@ -60,6 +60,7 @@ class HilbertPlanningBenchmark {
                          const ros::NodeHandle& nh_private);
 
   // General trajectory benchmark tools: call these in order.
+  void generateWorld(int number);
   void generateWorld(double density, int number);
   void runLocalBenchmark(int trial_number);
   void runGlobalBenchmark(int trial_number);

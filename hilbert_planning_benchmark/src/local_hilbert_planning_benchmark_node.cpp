@@ -20,40 +20,54 @@ int main(int argc, char** argv) {
   std::string results_path;
   std::string trajectory_path;
   std::string environment_path;
+  bool is_density_fixed;
   nh_private.param("results_path", results_path, results_path);
   nh_private.param("num_trials", num_trials, num_trials);
   nh_private.param("trajectory_output_path", trajectory_path, trajectory_path);
   nh_private.param("environment_output_path", environment_path, environment_path);
+  nh_private.param("fix_density", is_density_fixed, false);
 
-  const double min_density = 0.1;
-  const double max_density = 0.50;
-  const double density_increment = 0.1;
-
-  // Derived...
-  int num_densities = static_cast<int>(std::round((max_density - min_density) /
-                                                  density_increment)) +
-                      1;
-
-  int trials_per_density = num_trials / num_densities;
-  std::cout << "Trials per density: " << trials_per_density
-            << " num densities: " << num_densities;
   int trial_number = 0;
+  if(!is_density_fixed){
+    //Benchmark on environment density
+    const double min_density = 0.1;
+    const double max_density = 0.50;
+    const double density_increment = 0.1;
 
-  for (int i = 0; i < num_densities; ++i) {
-    if (!ros::ok()) {
-      break;
-    }
-    double density = min_density + i * density_increment;
-    for (int j = 0; j < trials_per_density; ++j) {
+    // Derived...
+    int num_densities = static_cast<int>(std::round((max_density - min_density) /
+                                                    density_increment)) +
+                        1;
+
+    int trials_per_density = num_trials / num_densities;
+    std::cout << "Trials per density: " << trials_per_density
+              << " num densities: " << num_densities;
+
+
+    for (int i = 0; i < num_densities; ++i) {
       if (!ros::ok()) {
         break;
       }
-      srand(trial_number);
-      node.generateWorld(density, trial_number);
-      node.runLocalBenchmark(trial_number);
-      trial_number++;
+      double density = min_density + i * density_increment;
+      for (int j = 0; j < trials_per_density; ++j) {
+        if (!ros::ok()) {
+          break;
+        }
+        srand(trial_number);      
+        node.generateWorld(density, trial_number);
+        node.runLocalBenchmark(trial_number);
+        trial_number++;
+      }
     }
+  } else {
+
+    node.generateWorld(trial_number);
+    node.runLocalBenchmark(trial_number);
+    trial_number++;
+
   }
+  
+
 
   if (!results_path.empty()) {
     node.outputResults(results_path);
